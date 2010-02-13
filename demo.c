@@ -1,6 +1,6 @@
 /* demo.c
  * Demo capabilities of libdict
- * Copyright (C) 2001-2004 Farooq Mela <fmela@uci.edu> */
+ * Copyright (C) 2001-2010 Farooq Mela */
 
 #include <stdio.h>
 #include <stdlib.h>
