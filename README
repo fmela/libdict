@@ -1,12 +1,8 @@
-libdict 0.3.0
--------------
-
 This is version 0.3.0 of libdict, an ANSI C library which provides a set of
 data structures for manipulating key-data pairs and provides a generic
 interface for the data structures.
 
-libdict is licensed under a BSD-style license; please refer to the file LICENSE
-for more information.
+libdict is released under the BSD license; please refer to the file LICENSE for
+more information.
 
-Bug reports, comments, and requests may be sent to <farooq.mela@gmail.com>
-
+Bug reports may be sent to <farooq.mela@gmail.com>
