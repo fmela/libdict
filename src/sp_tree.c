@@ -2,7 +2,7 @@
  * sp_tree.c
  *
  * Implementation for splay binary search tree.
- * Copyright (C) 2001-2008 Farooq Mela.
+ * Copyright (C) 2001-2010 Farooq Mela.
  *
  * $Id$
  *
@@ -76,8 +76,8 @@ struct itor_vtable sp_tree_itor_vtable = {
 	(data_func)sp_itor_data,
 	(cdata_func)sp_itor_cdata,
 	(dataset_func)sp_itor_set_data,
-	(iremove_func)sp_itor_remove,
-	(compare_func)NULL /* compare */
+	(iremove_func)NULL, /* sp_itor_remove not implemented yet */
+	(compare_func)NULL /* compare not implemented yet */
 };
 
 static void rot_left(sp_tree *tree, sp_node *node);

@@ -2,7 +2,7 @@
  * tr_tree.c
  *
  * Implementation of treap.
- * Copyright (C) 2001-2008 Farooq Mela.
+ * Copyright (C) 2001-2010 Farooq Mela.
  *
  * $Id$
  *
@@ -91,8 +91,8 @@ struct itor_vtable tr_tree_itor_vtable = {
 	(data_func)tr_itor_data,
 	(cdata_func)tr_itor_cdata,
 	(dataset_func)tr_itor_set_data,
-	(iremove_func)tr_itor_remove,
-	(compare_func)NULL /* compare */
+	(iremove_func)NULL, /* tr_itor_remove not implemented yet */
+	(compare_func)NULL /* tr_itor_compare not implemented yet */
 };
 
 static void rot_left(tr_tree *tree, tr_node *node);
