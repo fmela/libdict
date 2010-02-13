@@ -1,7 +1,7 @@
-libdict 0.2.0
+libdict 0.3.0
 -------------
 
-This is version 0.2.0 of libdict, an ANSI C library which provides a set of
+This is version 0.3.0 of libdict, an ANSI C library which provides a set of
 data structures for manipulating key-data pairs and provides a generic
 interface for the data structures.
 
