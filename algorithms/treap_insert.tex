@@ -1,0 +1,118 @@
+% treap_insert.tex
+% 11-21-2001
+\nopagenumbers
+\parskip=2pt
+\parindent=0pt
+
+{\sl An Iterative Algorithm for Treap Insertion
+	\hfill \rm Farooq Mela $<$farooq.mela@gmail.com$>$}
+
+\medskip
+
+\noindent {\bf Algorithm I} ({\it Treap Insertion}).
+Given a set of nodes which form a treap {\tt T}, and a key to insert
+{\tt K}, this algorithm will insert the node into the treap while maintaining
+it's heap properties. Each node is assumed to contain {\tt KEY}, {\tt PRIO},
+{\tt LLINK}, {\tt RLINK}, and {\tt PARENT} fields. For any given node {\tt N},
+{\tt KEY(N)} gives the key field of {\tt N}, {\tt PRIO(N)} gives the priority
+field of {\tt N}, {\tt LLINK(N)} and {\tt RLINK(N)} are pointers to {\tt N}'s
+left and right subtrees, respectively, and {\tt PARENT(N)} is a pointer to the
+node of which {\tt N} is a subtree. Any or all of these three link fields may
+be $\Lambda$, which for {\tt LLINK(N)} and {\tt RLINK(N)} indicates that {\tt
+N} has no left or right subtree, respectively, and for {\tt PARENT(N)}
+indicates that {\tt N} is the root of the treap. The treap has a field
+{\tt ROOT} which is a pointer to the root node of the treap.
+
+\medskip
+You can find an implementation of this algorithm, as well as many others, in
+{\bf libdict}, which is available on the web at
+{\tt http://www.crazycoder.org/libdict.html}.
+\medskip
+
+\parindent=36pt
+
+\item{\bf I1.} [Initialize.]
+Set ${\tt N} \gets {\tt ROOT(T)}$, ${\tt P} \gets \Lambda$.
+
+\item{\bf I2.} [Find insertion point.]
+If ${\tt N} = \Lambda$, go to step I3.
+If ${\tt K} = {\tt KEY(N)}$,
+the key is already in the treap and the algorithm terminates with an error.
+Set ${\tt P} \gets {\tt N}$;
+if ${\tt K} < {\tt KEY(N)}$,
+then set ${\tt N} \gets {\tt LLINK(N)}$,
+otherwise set ${\tt N} \gets {\tt RLINK(N)}$. Repeat this step.
+
+\item{\bf I3.} [Insert.]
+Set ${\tt N} \gets {\tt AVAIL}$.
+If ${\tt N} = \Lambda$, the algorithm terminates with an out of memory error.
+Set ${\tt KEY(N)} \gets {\tt K}$,
+${\tt LLINK(N)} \gets {\tt RLINK(N)} \gets \Lambda$, and
+${\tt PARENT(N)} \gets {\tt P}$.
+Set {\tt PRIO(N)} equal to a random integer.
+If ${\tt P} = \Lambda$, set ${\tt ROOT(T)} \gets {\tt N}$, and go to step I5.
+If ${\tt K} < {\tt KEY(P)}$,
+set ${\tt LLINK(P)} \gets {\tt N}$; otherwise,
+set ${\tt RLINK(P)} \gets {\tt N}$.
+
+\item{\bf I4.} [Sift up.]
+If ${\tt P} = \Lambda$ or ${\tt PRIO(P)} \leq {\tt PRIO(N)}$, go to step I5.
+If ${\tt LLINK(P)} = {\tt N}$, rotate {\tt P} right; otherwise,
+rotate {\tt P} left. Then set ${\tt P} \gets {\tt PARENT(N)}$, and repeat this
+step.
+
+\item{\bf I5.} [All done.] The algorithm terminates successfully.
+
+\medskip
+\parindent=0pt
+{\bf Rotations}
+
+\noindent {\bf Algorithm R} ({\it Right Rotation}).
+Given a treap {\tt T} and a node in the treap {\tt N}, this routine will rotate
+{\tt N} right.
+
+\parindent=36pt
+\item{\bf R1.} [Do the rotation.]
+Set
+${\tt L} \gets {\tt LLINK(N)}$ and
+${\tt LLINK(N)} \gets {\tt RLINK(L)}$.
+If ${\tt RLINK(L)} \neq \Lambda$,
+then set ${\tt PARENT(RLINK(L))} \gets {\tt N}$.
+Set ${\tt P} \gets {\tt PARENT(N)}$, ${\tt PARENT(L)} \gets {\tt P}$.
+If ${\tt P} = \Lambda$, then set ${\tt ROOT(T)} \gets {\tt L}$;
+if ${\tt P} \neq \Lambda$ and ${\tt LLINK(P)} = {\tt N}$,
+set ${\tt LLINK(P)} \gets {\tt L}$, otherwise
+set ${\tt RLINK(P)} \gets {\tt L}$.
+Finally, set ${\tt RLINK(L)} \gets {\tt N}$,
+and ${\tt PARENT(N)} \gets {\tt L}$.
+
+\parindent=0pt
+
+\medskip
+The code for a left rotation is symmetric. At the risk of being repetitive, it
+appears below.
+\medskip
+
+\noindent {\bf Algorithm L} ({\it Left Rotation}).
+Given a treap {\tt T} and a node in the treap {\tt N}, this routine will rotate
+{\tt N} left.
+
+\parindent=36pt
+\item{\bf L1.} [Do the rotation.]
+Set
+${\tt R} \gets {\tt RLINK(N)}$ and
+${\tt RLINK(N)} \gets {\tt LLINK(R)}$.
+If ${\tt LLINK(R)} \neq \Lambda$,
+then set ${\tt PARENT(LLINK(R))} \gets {\tt N}$.
+Set ${\tt P} \gets {\tt PARENT(N)}$, ${\tt PARENT(R)} \gets {\tt P}$.
+If ${\tt P} = \Lambda$, then set ${\tt ROOT(T)} \gets {\tt R}$;
+if ${\tt P} \neq \Lambda$ and ${\tt LLINK(P)} = {\tt N}$,
+set ${\tt LLINK(P)} \gets {\tt R}$, otherwise
+set ${\tt RLINK(P)} \gets {\tt R}$.
+Finally, set ${\tt LLINK(R)} \gets {\tt N}$,
+and ${\tt PARENT(N)} \gets {\tt R}$.
+
+\parindent=0pt
+
+\bye
+% EOF
