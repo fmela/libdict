@@ -2,9 +2,7 @@
  * wb_tree.h
  *
  * Interface for weight balanced tree.
- * Copyright (C) 2001-2008 Farooq Mela.
- *
- * $Id$
+ * Copyright (C) 2001-2010 Farooq Mela.
  */
 
 #ifndef _WB_TREE_H_

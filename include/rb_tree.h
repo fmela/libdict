@@ -2,7 +2,7 @@
  * rb_tree.h
  *
  * Definitions for red-black binary search tree.
- * Copyright (C) 2001-2008 Farooq Mela.
+ * Copyright (C) 2001-2010 Farooq Mela.
  *
  * $Id$
  */

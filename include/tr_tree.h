@@ -2,9 +2,7 @@
  * tr_tree.h
  *
  * Interface for treap.
- * Copyright (C) 2001 Farooq Mela.
- *
- * $Id: tr_tree.h,v 1.2 2001/09/10 06:51:39 farooq Exp $
+ * Copyright (C) 2001-2010 Farooq Mela.
  */
 
 #ifndef _TR_TREE_H_
