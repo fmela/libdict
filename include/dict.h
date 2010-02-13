@@ -13,8 +13,8 @@
 #include <stddef.h>
 
 #define DICT_VERSION_MAJOR		0
-#define DICT_VERSION_MINOR		2
-#define DICT_VERSION_PATCH		1
+#define DICT_VERSION_MINOR		3
+#define DICT_VERSION_PATCH		0
 
 #ifndef FALSE
 #define FALSE	0
