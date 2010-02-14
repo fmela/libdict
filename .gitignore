@@ -1,0 +1,12 @@
+data-1
+data-2
+reverse.pl
+mktgz.sh
+demo
+test
+build/*
+algorithms/*.log
+algorithms/*.pdf
+algorithms/*.aux
+*.a
+*.so
