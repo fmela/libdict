@@ -115,12 +115,11 @@ sp_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
 			dict_del_func dat_del)
 {
 	dict *dct;
-	sp_tree *tree;
 
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((tree = sp_tree_new(key_cmp, key_del, dat_del)) == NULL) {
+	if ((dct->_object = sp_tree_new(key_cmp, key_del, dat_del)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}

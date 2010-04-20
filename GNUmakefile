@@ -15,7 +15,7 @@ P_LIB = lib$(LIB)_p.a
 S_LIB = lib$(LIB).so
 
 CC = gcc
-CFLAGS = -Wall -W -ansi -pedantic -DNDEBUG -g -O3 -march=nocona -Iinclude -Isrc
+CFLAGS = -Wall -W -ansi -pedantic -g -O2 -Iinclude -Isrc
 
 AR = ar
 ARFLAGS = cru

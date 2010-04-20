@@ -112,7 +112,6 @@ hashtable_dict_new(dict_cmp_func key_cmp, dict_hsh_func key_hash,
 				   dict_del_func key_del, dict_del_func dat_del, unsigned size)
 {
 	dict *dct;
-	hashtable *table;
 
 	ASSERT(key_hash != NULL);
 	ASSERT(size != 0);
@@ -120,13 +119,10 @@ hashtable_dict_new(dict_cmp_func key_cmp, dict_hsh_func key_hash,
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	table = hashtable_new(key_cmp, key_hash, key_del, dat_del, size);
-	if (table == NULL) {
+	if ((dct->_object = hashtable_new(key_cmp, key_hash, key_del, dat_del, size)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}
-
-	dct->_object = table;
 	dct->_vtable = &hashtable_vtable;
 
 	return dct;

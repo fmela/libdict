@@ -30,21 +30,15 @@
  * per level (thus the number of rotations after insertion or deletion is
  * O(lg N)).
  *
- * These are the parameters for alpha = 1 - sqrt(2)/2 == .292893
- * These are the values recommended in [Gonnet 1984]. The author of this
- * library has experimented with these values to some extent and found that
- * this value of alpha typically gives the best performance. */
+ * These are the parameters for alpha = 1 - sqrt(2)/2 == .292893, as
+ * recommended in [Gonnet 1984]. */
 
 #define ALPHA_0		.292893f	/* 1 - sqrt(2)/2		*/
-#define ALPHA_1		.707106f	/* 1 - (1 - sqrt(2)/2)	*/
+#define ALPHA_1		.707106f	/* sqrt(2)/2			*/
 #define ALPHA_2		.414213f	/* sqrt(2) - 1			*/
-#define ALPHA_3		.585786f	/* 1 - (sqrt(2) - 1)	*/
+#define ALPHA_3		.585786f	/* 2 - sqrt(2)			*/
 
-#if UINT_MAX == 0xffffffffUL
 typedef unsigned int	weight_t;
-#else
-typedef unsigned long	weight_t;
-#endif
 
 typedef struct wb_node wb_node;
 struct wb_node {
@@ -137,17 +131,15 @@ wb_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
 			dict_del_func dat_del)
 {
 	dict *dct;
-	wb_tree *tree;
 
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((tree = wb_tree_new(key_cmp, key_del, dat_del)) == NULL) {
+	if ((dct->_object = wb_tree_new(key_cmp, key_del, dat_del)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}
 
-	dct->_object = tree;
 	dct->_vtable = &wb_tree_vtable;
 
 	return dct;
@@ -396,6 +388,8 @@ wb_tree_remove(wb_tree *tree, const void *key, int del)
 		}
 
 		if (--tree->count) {
+			extern int printf(const char *, ...);
+		/*	printf("tree->count=%d\n", tree->count); */
 			while (out) {
 				out->weight--;
 				out = out->parent;
@@ -929,4 +923,22 @@ wb_itor_set_data(wb_itor *itor, void *dat, int del)
 		itor->tree->dat_del(itor->node->dat);
 	itor->node->dat = dat;
 	return 0;
+}
+
+static void
+wb_node_verify(wb_node *node, wb_node *parent)
+{
+	if (node) {
+		ASSERT(node->parent == parent);
+		wb_node_verify(node->llink, node);
+		wb_node_verify(node->rlink, node);
+	}
+}
+
+void
+wb_tree_verify(const wb_tree *tree)
+{
+	ASSERT(tree != NULL);
+
+	wb_node_verify(tree->root, NULL);
 }

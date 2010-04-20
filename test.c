@@ -175,6 +175,7 @@ main(int argc, char **argv)
 		ptr = words[i];
 		if ((rv = dict_remove(dct, ptr, TRUE)) != 0)
 			quit("removing `%s' failed (%d)!\n", ptr, rv);
+	/*	wb_tree_verify(dct->_object); */
 	}
 	getrusage(RUSAGE_SELF, &end);
 	if (end.ru_utime.tv_usec < start.ru_utime.tv_usec)
