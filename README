@@ -1,14 +1,12 @@
 This is version 0.3.0 of libdict.
 
 Libdict is an ANSI C library which provides a set of efficient data
-structures for storing key-data pairs. Libdict includes height-balanced
+structures for storing key-data pairs, including height-balanced
 (AVL) trees, red-black trees, splay trees, weight-balanced trees,
-path-reduction trees, treaps, and hashtables. In addition, these
-data structures can be accessed through a generic interface, so that the
-underlying data structure used can be changed without the need to modify
-the calling code.
+path-reduction trees, treaps, and hashtables. A generic, object-oriented
+interface for these data structures is provided.
 
 libdict is released under the BSD license; please refer to the file
-LICENSE for more information.
+LICENSE for details.
 
-Bug reports may be sent to <farooq.mela@gmail.com>
+Please submit comments and bug reports to farooq DOT mela AT gmail.com
