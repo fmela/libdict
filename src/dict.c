@@ -88,11 +88,11 @@ dict_str_cmp(const void *k1, const void *k2)
 }
 
 void
-dict_destroy(dict *dct, int del)
+dict_destroy(dict *dct)
 {
 	ASSERT(dct != NULL);
 
-	dct->_vtable->destroy(dct->_object, del);
+	dct->_vtable->destroy(dct->_object);
 	FREE(dct);
 }
 
