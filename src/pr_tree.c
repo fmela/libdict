@@ -14,16 +14,16 @@
 #include "pr_tree.h"
 #include "dict_private.h"
 
-typedef unsigned long weight_t;
+typedef unsigned int weight_t;
 
 typedef struct pr_node pr_node;
 struct pr_node {
-	void		*key;
-	void		*datum;
-	pr_node		*parent;
-	pr_node		*llink;
-	pr_node		*rlink;
-	weight_t	 weight;
+	void*				key;
+	void*				datum;
+	pr_node*			parent;
+	pr_node*			llink;
+	pr_node*			rlink;
+	weight_t			weight;
 };
 
 #define WEIGHT(n)	((n) ? (n)->weight : 1)
@@ -37,52 +37,52 @@ struct pr_tree {
 };
 
 struct pr_itor {
-	pr_tree	*tree;
-	pr_node	*node;
+	pr_tree*			tree;
+	pr_node*			node;
 };
 
 static dict_vtable pr_tree_vtable = {
-	(inew_func)pr_itor_new,
-	(destroy_func)pr_tree_destroy,
-	(insert_func)pr_tree_insert,
-	(probe_func)pr_tree_probe,
-	(search_func)pr_tree_search,
-	(csearch_func)pr_tree_csearch,
-	(remove_func)pr_tree_remove,
-	(empty_func)pr_tree_empty,
-	(walk_func)pr_tree_walk,
-	(count_func)pr_tree_count
+	(inew_func)			pr_itor_new,
+	(destroy_func)		pr_tree_destroy,
+	(insert_func)		pr_tree_insert,
+	(probe_func)		pr_tree_probe,
+	(search_func)		pr_tree_search,
+	(csearch_func)		pr_tree_csearch,
+	(remove_func)		pr_tree_remove,
+	(empty_func)		pr_tree_empty,
+	(walk_func)			pr_tree_walk,
+	(count_func)		pr_tree_count
 };
 
 static itor_vtable pr_tree_itor_vtable = {
-	(idestroy_func)pr_itor_destroy,
-	(valid_func)pr_itor_valid,
-	(invalidate_func)pr_itor_invalidate,
-	(next_func)pr_itor_next,
-	(prev_func)pr_itor_prev,
-	(nextn_func)pr_itor_nextn,
-	(prevn_func)pr_itor_prevn,
-	(first_func)pr_itor_first,
-	(last_func)pr_itor_last,
-	(key_func)pr_itor_key,
-	(data_func)pr_itor_data,
-	(cdata_func)pr_itor_cdata,
-	(dataset_func)pr_itor_set_data,
-	(iremove_func)NULL, /* pr_itor_remove not implemented */
-	(compare_func)NULL /* compare */
+	(idestroy_func)		pr_itor_destroy,
+	(valid_func)		pr_itor_valid,
+	(invalidate_func)	pr_itor_invalidate,
+	(next_func)			pr_itor_next,
+	(prev_func)			pr_itor_prev,
+	(nextn_func)		pr_itor_nextn,
+	(prevn_func)		pr_itor_prevn,
+	(first_func)		pr_itor_first,
+	(last_func)			pr_itor_last,
+	(key_func)			pr_itor_key,
+	(data_func)			pr_itor_data,
+	(cdata_func)		pr_itor_cdata,
+	(dataset_func)		pr_itor_set_data,
+	(iremove_func)		NULL,/* pr_itor_remove not implemented yet */
+	(compare_func)		NULL /* pr_itor_compare not implemented yet */
 };
 
-static void fixup(pr_tree *tree, pr_node *node);
-static void rot_left(pr_tree *tree, pr_node *node);
-static void rot_right(pr_tree *tree, pr_node *node);
-static unsigned node_height(const pr_node *node);
-static unsigned node_mheight(const pr_node *node);
-static unsigned node_pathlen(const pr_node *node, unsigned level);
-static pr_node *node_new(void *key, void *datum);
-static pr_node *node_min(pr_node *node);
-static pr_node *node_max(pr_node *node);
-static pr_node *node_next(pr_node *node);
-static pr_node *node_prev(pr_node *node);
+static void		fixup(pr_tree *tree, pr_node *node);
+static void		rot_left(pr_tree *tree, pr_node *node);
+static void		rot_right(pr_tree *tree, pr_node *node);
+static unsigned	node_height(const pr_node *node);
+static unsigned	node_mheight(const pr_node *node);
+static unsigned	node_pathlen(const pr_node *node, unsigned level);
+static pr_node*	node_new(void *key, void *datum);
+static pr_node*	node_min(pr_node *node);
+static pr_node*	node_max(pr_node *node);
+static pr_node*	node_next(pr_node *node);
+static pr_node*	node_prev(pr_node *node);
 
 pr_tree *
 pr_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
