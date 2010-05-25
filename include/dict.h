@@ -42,7 +42,8 @@ dict_free_func		dict_set_free(dict_free_func func);
 
 /* A pointer to a function that compares two keys. It needs to return a
  * negative value if k1<k2, a positive value if k1>k2, and zero if the keys are
- * equal. The comparison should be reflexive, symmetric and transitive. */
+ * equal. The comparison should be reflexive (k1>k2 implies k1<k2, etc.),
+ * symmetric (k1=k1) and transitive (k1>k2 and k2>k3 -> k1>k3). */
 typedef int			(*dict_compare_func)(const void *, const void *);
 /* A pointer to a function that is called when a key-value pair gets removed from a dictionary. */
 typedef void		(*dict_delete_func)	(void *, void *);
@@ -57,13 +58,13 @@ typedef struct dict_itor	dict_itor;
 
 typedef dict_itor*	(*inew_func)	(void *obj);
 typedef void		(*destroy_func)	(void *obj);
-typedef int			(*insert_func)	(void *obj, void *k, void *d, int ow);
-typedef int			(*probe_func)	(void *obj, void *key, void **dat);
+typedef int			(*insert_func)	(void *obj, void *key, void *datum, int overwrite);
+typedef int			(*probe_func)	(void *obj, void *key, void **datum);
 typedef void*		(*search_func)	(void *obj, const void *key);
 typedef const void*	(*csearch_func)	(const void *obj, const void *key);
 typedef int			(*remove_func)	(void *obj, const void *key);
 typedef void		(*empty_func)	(void *obj);
-typedef void		(*walk_func)	(void *obj, dict_visit_func visit_func);
+typedef unsigned	(*walk_func)	(void *obj, dict_visit_func visit_func);
 typedef unsigned	(*count_func)	(const void *obj);
 
 struct dict_vtable {
@@ -91,8 +92,8 @@ typedef int			(*last_func)		(void *itor);
 typedef void*		(*key_func)			(void *itor);
 typedef void*		(*data_func)		(void *itor);
 typedef const void*	(*cdata_func)		(const void *itor);
-typedef int			(*dataset_func)		(void *itor, void *dat, int del);
-typedef int			(*iremove_func)		(void *itor, int del);
+typedef int			(*dataset_func)		(void *itor, void *datum, void **old_datum);
+typedef int			(*iremove_func)		(void *itor);
 typedef int			(*compare_func)		(void *itor1, void *itor2);
 
 struct itor_vtable {
