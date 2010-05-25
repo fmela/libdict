@@ -35,39 +35,39 @@ struct hb_tree {
 };
 
 struct hb_itor {
-	hb_tree	*tree;
-	hb_node	*node;
+	hb_tree*			tree;
+	hb_node*			node;
 };
 
 static dict_vtable hb_tree_vtable = {
-	(inew_func)		hb_itor_new,
-	(destroy_func)	hb_tree_destroy,
-	(insert_func)	hb_tree_insert,
-	(probe_func)	hb_tree_probe,
-	(search_func)	hb_tree_search,
-	(csearch_func)	hb_tree_csearch,
-	(remove_func)	hb_tree_remove,
-	(empty_func)	hb_tree_empty,
-	(walk_func)		hb_tree_walk,
-	(count_func)	hb_tree_count
+	(inew_func)			hb_itor_new,
+	(destroy_func)		hb_tree_destroy,
+	(insert_func)		hb_tree_insert,
+	(probe_func)		hb_tree_probe,
+	(search_func)		hb_tree_search,
+	(csearch_func)		hb_tree_csearch,
+	(remove_func)		hb_tree_remove,
+	(empty_func)		hb_tree_empty,
+	(walk_func)			hb_tree_walk,
+	(count_func)		hb_tree_count
 };
 
 static itor_vtable hb_tree_itor_vtable = {
-	(idestroy_func)	hb_itor_destroy,
-	(valid_func)	hb_itor_valid,
-	(invalidate_func)hb_itor_invalidate,
-	(next_func)		hb_itor_next,
-	(prev_func)		hb_itor_prev,
-	(nextn_func)	hb_itor_nextn,
-	(prevn_func)	hb_itor_prevn,
-	(first_func)	hb_itor_first,
-	(last_func)		hb_itor_last,
-	(key_func)		hb_itor_key,
-	(data_func)		hb_itor_data,
-	(cdata_func)	hb_itor_cdata,
-	(dataset_func)	hb_itor_set_data,
-	(iremove_func)	NULL, /* hb_itor_remove not implemented */
-	(compare_func)	NULL /* not implemented */
+	(idestroy_func)		hb_itor_destroy,
+	(valid_func)		hb_itor_valid,
+	(invalidate_func)	hb_itor_invalidate,
+	(next_func)			hb_itor_next,
+	(prev_func)			hb_itor_prev,
+	(nextn_func)		hb_itor_nextn,
+	(prevn_func)		hb_itor_prevn,
+	(first_func)		hb_itor_first,
+	(last_func)			hb_itor_last,
+	(key_func)			hb_itor_key,
+	(data_func)			hb_itor_data,
+	(cdata_func)		hb_itor_cdata,
+	(dataset_func)		hb_itor_set_data,
+	(iremove_func)		NULL,/* hb_itor_remove not implemented yet */
+	(compare_func)		NULL /* hb_itor_compare not implemented yet */
 };
 
 static int		rot_left(hb_tree *tree, hb_node *node);
