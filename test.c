@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdarg.h>
+#include <assert.h>
 #include <errno.h>
 #include <time.h>
 
@@ -58,7 +59,15 @@ shuffle(char **p, unsigned size)
 	}
 }
 
-#define HSIZE		599
+void
+key_str_free(void *key, void *datum)
+{
+	assert(key == datum);
+	free(key);
+}
+
+/* #define HSIZE		599 */
+#define HSIZE		997
 
 /*#define NWORDS	235881*/
 
@@ -90,26 +99,26 @@ main(int argc, char **argv)
 	++argv;
 	switch (argv[0][0]) {
 	case 'h':
-		dct = hb_dict_new(dict_str_cmp, free, NULL);
+		dct = hb_dict_new(dict_str_cmp, key_str_free);
 		break;
 	case 'p':
-		dct = pr_dict_new(dict_str_cmp, free, NULL);
+		dct = pr_dict_new(dict_str_cmp, key_str_free);
 		break;
 	case 'r':
-		dct = rb_dict_new(dict_str_cmp, free, NULL);
+		dct = rb_dict_new(dict_str_cmp, key_str_free);
 		break;
 	case 't':
-		dct = tr_dict_new(dict_str_cmp, free, NULL);
+		dct = tr_dict_new(dict_str_cmp, key_str_free);
 		break;
 	case 's':
-		dct = sp_dict_new(dict_str_cmp, free, NULL);
+		dct = sp_dict_new(dict_str_cmp, key_str_free);
 		break;
 	case 'w':
-		dct = wb_dict_new(dict_str_cmp, free, NULL);
+		dct = wb_dict_new(dict_str_cmp, key_str_free);
 		break;
 	case 'H':
 		dct = hashtable_dict_new(dict_str_cmp,
-								 (dict_hsh_func)s_hash, free, NULL, HSIZE);
+								 (dict_hash_func)s_hash, key_str_free, HSIZE);
 		break;
 	default:
 		quit("type must be one of h, p, r, t, s, w or H");
@@ -151,6 +160,8 @@ main(int argc, char **argv)
 	if ((i = dict_count(dct)) != NWORDS)
 		quit("bad count (%u)!", i);
 
+	shuffle(words, NWORDS);
+
 	getrusage(RUSAGE_SELF, &start);
 	for (i = 0; i < NWORDS; i++) {
 		ptr = words[i];
@@ -170,10 +181,12 @@ main(int argc, char **argv)
 	printf("search = %02f s\n",
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0);
 
+	shuffle(words, NWORDS);
+
 	getrusage(RUSAGE_SELF, &start);
 	for (i = 0; i < NWORDS; i++) {
 		ptr = words[i];
-		if ((rv = dict_remove(dct, ptr, TRUE)) != 0)
+		if ((rv = dict_remove(dct, ptr)) != 0)
 			quit("removing `%s' failed (%d)!\n", ptr, rv);
 	/*	wb_tree_verify(dct->_object); */
 	}
@@ -191,7 +204,7 @@ main(int argc, char **argv)
 	if ((i = dict_count(dct)) != 0)
 		quit("error - count not zero (%u)!", i);
 
-	dict_destroy(dct, TRUE);
+	dict_destroy(dct);
 
 	printf(" total = %02f s\n",
 		   (total.tv_sec * 1000000 + total.tv_usec) / 1000000.0);
