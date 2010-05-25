@@ -30,18 +30,17 @@
 typedef struct sp_node sp_node;
 struct sp_node {
 	void		*key;
-	void		*dat;
+	void		*datum;
 	sp_node		*parent;
 	sp_node		*llink;
 	sp_node		*rlink;
 };
 
 struct sp_tree {
-	sp_node			*root;
-	unsigned		 count;
-	dict_cmp_func	 key_cmp;
-	dict_del_func	 key_del;
-	dict_del_func	 dat_del;
+	sp_node*			root;
+	unsigned			count;
+	dict_compare_func	key_cmp;
+	dict_delete_func	del_func;
 };
 
 struct sp_itor {
@@ -49,7 +48,7 @@ struct sp_itor {
 	sp_node	*node;
 };
 
-struct dict_vtable sp_tree_vtable = {
+static dict_vtable sp_tree_vtable = {
 	(inew_func)sp_itor_new,
 	(destroy_func)sp_tree_destroy,
 	(insert_func)sp_tree_insert,
@@ -62,7 +61,7 @@ struct dict_vtable sp_tree_vtable = {
 	(count_func)sp_tree_count
 };
 
-struct itor_vtable sp_tree_itor_vtable = {
+static itor_vtable sp_tree_itor_vtable = {
 	(idestroy_func)sp_itor_destroy,
 	(valid_func)sp_itor_valid,
 	(invalidate_func)sp_itor_invalidate,
@@ -76,14 +75,14 @@ struct itor_vtable sp_tree_itor_vtable = {
 	(data_func)sp_itor_data,
 	(cdata_func)sp_itor_cdata,
 	(dataset_func)sp_itor_set_data,
-	(iremove_func)NULL, /* sp_itor_remove not implemented yet */
-	(compare_func)NULL /* compare not implemented yet */
+	(iremove_func)NULL,/* sp_itor_remove not implemented yet */
+	(compare_func)NULL /* sp_itor_compare not implemented yet */
 };
 
 static void rot_left(sp_tree *tree, sp_node *node);
 static void rot_right(sp_tree *tree, sp_node *node);
 
-static sp_node *node_new(void *key, void *dat);
+static sp_node *node_new(void *key, void *datum);
 static sp_node *node_next(sp_node *node);
 static sp_node *node_prev(sp_node *node);
 static sp_node *node_max(sp_node *node);
@@ -93,8 +92,7 @@ static unsigned node_mheight(const sp_node *node);
 static unsigned node_pathlen(const sp_node *node, unsigned level);
 
 sp_tree *
-sp_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
-			dict_del_func dat_del)
+sp_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
 {
 	sp_tree *tree;
 
@@ -104,22 +102,20 @@ sp_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	tree->root = NULL;
 	tree->count = 0;
 	tree->key_cmp = key_cmp ? key_cmp : dict_ptr_cmp;
-	tree->key_del = key_del;
-	tree->dat_del = dat_del;
+	tree->del_func = del_func;
 
 	return tree;
 }
 
 dict *
-sp_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
-			dict_del_func dat_del)
+sp_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
 {
 	dict *dct;
 
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((dct->_object = sp_tree_new(key_cmp, key_del, dat_del)) == NULL) {
+	if ((dct->_object = sp_tree_new(key_cmp, del_func)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}
@@ -129,24 +125,29 @@ sp_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	return dct;
 }
 
-void
-sp_tree_destroy(sp_tree *tree, int del)
+unsigned
+sp_tree_destroy(sp_tree *tree)
 {
+	unsigned count = 0;
+
 	ASSERT(tree != NULL);
 
 	if (tree->root)
-		sp_tree_empty(tree, del);
+		count = sp_tree_empty(tree);
 
 	FREE(tree);
+	return count;
 }
 
-void
-sp_tree_empty(sp_tree *tree, int del)
+unsigned
+sp_tree_empty(sp_tree *tree)
 {
 	sp_node *node, *parent;
+	unsigned count = 0;
 
 	ASSERT(tree != NULL);
 
+	count = tree->count;
 	node = tree->root;
 	while (node) {
 		parent = node->parent;
@@ -159,12 +160,8 @@ sp_tree_empty(sp_tree *tree, int del)
 			continue;
 		}
 
-		if (del) {
-			if (tree->key_del)
-				tree->key_del(node->key);
-			if (tree->dat_del)
-				tree->dat_del(node->dat);
-		}
+		if (tree->del_func)
+			tree->del_func(node->key, node->datum);
 		FREE(node);
 		tree->count--;
 
@@ -179,6 +176,7 @@ sp_tree_empty(sp_tree *tree, int del)
 
 	tree->root = NULL;
 	ASSERT(tree->count == 0);
+	return count;
 }
 
 /*
@@ -250,7 +248,7 @@ sp_tree_empty(sp_tree *tree, int del)
 }
 
 int
-sp_tree_insert(sp_tree *tree, void *key, void *dat, int overwrite)
+sp_tree_insert(sp_tree *tree, void *key, void *datum, int overwrite)
 {
 	int rv = 0; /* shut up GCC */
 	sp_node *node, *parent = NULL;
@@ -267,17 +265,15 @@ sp_tree_insert(sp_tree *tree, void *key, void *dat, int overwrite)
 		else {
 			if (overwrite == 0)
 				return 1;
-			if (tree->key_del)
-				tree->key_del(node->key);
-			if (tree->dat_del)
-				tree->dat_del(node->dat);
+			if (tree->del_func)
+				tree->del_func(node->key, node->datum);
 			node->key = key;
-			node->dat = dat;
+			node->datum = datum;
 			return 0;
 		}
 	}
 
-	if ((node = node_new(key, dat)) == NULL)
+	if ((node = node_new(key, datum)) == NULL)
 		return -1;
 
 	if ((node->parent = parent) == NULL) {
@@ -299,7 +295,7 @@ sp_tree_insert(sp_tree *tree, void *key, void *dat, int overwrite)
 }
 
 int
-sp_tree_probe(sp_tree *tree, void *key, void **dat)
+sp_tree_probe(sp_tree *tree, void *key, void **datum)
 {
 	int rv = 0;
 	sp_node *node, *parent = NULL;
@@ -316,12 +312,12 @@ sp_tree_probe(sp_tree *tree, void *key, void **dat)
 		else {
 			while (node->parent)
 				SPLAY(tree, node);
-			*dat = node->dat;
+			*datum = node->datum;
 			return 0;
 		}
 	}
 
-	if ((node = node_new(key, *dat)) == NULL)
+	if ((node = node_new(key, *datum)) == NULL)
 		return -1;
 
 	if ((node->parent = parent) == NULL) {
@@ -360,7 +356,7 @@ sp_tree_search(sp_tree *tree, const void *key)
 		else {
 			while (node->parent)
 				SPLAY(tree, node);
-			return node->dat;
+			return node->datum;
 		}
 	}
 	/* XXX This is questionable. Just because a node is the nearest match
@@ -382,7 +378,7 @@ sp_tree_csearch(const sp_tree *tree, const void *key)
 }
 
 int
-sp_tree_remove(sp_tree *tree, const void *key, int del)
+sp_tree_remove(sp_tree *tree, const void *key)
 {
 	int rv;
 	sp_node *node, *temp, *out, *parent;
@@ -414,7 +410,7 @@ sp_tree_remove(sp_tree *tree, const void *key, int del)
 		for (out = node->rlink; out->llink; out = out->llink)
 			/* void */;
 		SWAP(node->key, out->key, tmp);
-		SWAP(node->dat, out->dat, tmp);
+		SWAP(node->datum, out->datum, tmp);
 	}
 
 	temp = out->llink ? out->llink : out->rlink;
@@ -429,12 +425,8 @@ sp_tree_remove(sp_tree *tree, const void *key, int del)
 	} else {
 		tree->root = temp;
 	}
-	if (del) {
-		if (tree->key_del)
-			tree->key_del(out->key);
-		if (tree->dat_del)
-			tree->dat_del(out->dat);
-	}
+	if (tree->del_func)
+		tree->del_func(out->key, out->datum);
 
 	/* Splay an adjacent node to the root, if possible. */
 	temp =
@@ -451,20 +443,24 @@ sp_tree_remove(sp_tree *tree, const void *key, int del)
 	return 0;
 }
 
-void
-sp_tree_walk(sp_tree *tree, dict_vis_func visit)
+unsigned
+sp_tree_walk(sp_tree *tree, dict_visit_func visit)
 {
 	sp_node *node;
+	unsigned count = 0;
 
 	ASSERT(tree != NULL);
 	ASSERT(visit != NULL);
 
 	if (tree->root == NULL)
-		return;
+		return 0;
 
-	for (node = node_min(tree->root); node; node = node_next(node))
-		if (visit(node->key, node->dat) == 0)
+	for (node = node_min(tree->root); node; node = node_next(node)) {
+		++count;
+		if (!visit(node->key, node->datum))
 			break;
+	}
+	return count;
 }
 
 unsigned
@@ -584,7 +580,7 @@ rot_right(sp_tree *tree, sp_node *node)
 }
 
 static sp_node *
-node_new(void *key, void *dat)
+node_new(void *key, void *datum)
 {
 	sp_node *node;
 
@@ -592,7 +588,7 @@ node_new(void *key, void *dat)
 		return NULL;
 
 	node->key = key;
-	node->dat = dat;
+	node->datum = datum;
 	node->parent = NULL;
 	node->llink = NULL;
 	node->rlink = NULL;
@@ -844,7 +840,7 @@ sp_itor_search(sp_itor *itor, const void *key)
 {
 	int rv;
 	sp_node *node;
-	dict_cmp_func cmp;
+	dict_compare_func cmp;
 
 	ASSERT(itor != NULL);
 
@@ -877,7 +873,7 @@ sp_itor_data(sp_itor *itor)
 {
 	ASSERT(itor != NULL);
 
-	return itor->node ? itor->node->dat : NULL;
+	return itor->node ? itor->node->datum : NULL;
 }
 
 const void *
@@ -885,19 +881,19 @@ sp_itor_cdata(const sp_itor *itor)
 {
 	ASSERT(itor != NULL);
 
-	return itor->node ? itor->node->dat : NULL;
+	return itor->node ? itor->node->datum : NULL;
 }
 
 int
-sp_itor_set_data(sp_itor *itor, void *dat, int del)
+sp_itor_set_data(sp_itor *itor, void *datum, void **old_datum)
 {
 	ASSERT(itor != NULL);
 
 	if (itor->node == NULL)
 		return -1;
 
-	if (del && itor->tree->dat_del)
-		itor->tree->dat_del(itor->node->dat);
-	itor->node->dat = dat;
+	if (old_datum)
+		old_datum = itor->node->datum;
+	itor->node->datum = datum;
 	return 0;
 }
