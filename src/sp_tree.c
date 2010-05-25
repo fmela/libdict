@@ -29,11 +29,11 @@
 
 typedef struct sp_node sp_node;
 struct sp_node {
-	void		*key;
-	void		*datum;
-	sp_node		*parent;
-	sp_node		*llink;
-	sp_node		*rlink;
+	void*				key;
+	void*				datum;
+	sp_node*			parent;
+	sp_node*			llink;
+	sp_node*			rlink;
 };
 
 struct sp_tree {
@@ -44,52 +44,51 @@ struct sp_tree {
 };
 
 struct sp_itor {
-	sp_tree	*tree;
-	sp_node	*node;
+	sp_tree*			tree;
+	sp_node*			node;
 };
 
 static dict_vtable sp_tree_vtable = {
-	(inew_func)sp_itor_new,
-	(destroy_func)sp_tree_destroy,
-	(insert_func)sp_tree_insert,
-	(probe_func)sp_tree_probe,
-	(search_func)sp_tree_search,
-	(csearch_func)sp_tree_csearch,
-	(remove_func)sp_tree_remove,
-	(empty_func)sp_tree_empty,
-	(walk_func)sp_tree_walk,
-	(count_func)sp_tree_count
+	(inew_func)			sp_itor_new,
+	(destroy_func)		sp_tree_destroy,
+	(insert_func)		sp_tree_insert,
+	(probe_func)		sp_tree_probe,
+	(search_func)		sp_tree_search,
+	(csearch_func)		sp_tree_csearch,
+	(remove_func)		sp_tree_remove,
+	(empty_func)		sp_tree_empty,
+	(walk_func)			sp_tree_walk,
+	(count_func)		sp_tree_count
 };
 
 static itor_vtable sp_tree_itor_vtable = {
-	(idestroy_func)sp_itor_destroy,
-	(valid_func)sp_itor_valid,
-	(invalidate_func)sp_itor_invalidate,
-	(next_func)sp_itor_next,
-	(prev_func)sp_itor_prev,
-	(nextn_func)sp_itor_nextn,
-	(prevn_func)sp_itor_prevn,
-	(first_func)sp_itor_first,
-	(last_func)sp_itor_last,
-	(key_func)sp_itor_key,
-	(data_func)sp_itor_data,
-	(cdata_func)sp_itor_cdata,
-	(dataset_func)sp_itor_set_data,
-	(iremove_func)NULL,/* sp_itor_remove not implemented yet */
-	(compare_func)NULL /* sp_itor_compare not implemented yet */
+	(idestroy_func)		sp_itor_destroy,
+	(valid_func)		sp_itor_valid,
+	(invalidate_func)	sp_itor_invalidate,
+	(next_func)			sp_itor_next,
+	(prev_func)			sp_itor_prev,
+	(nextn_func)		sp_itor_nextn,
+	(prevn_func)		sp_itor_prevn,
+	(first_func)		sp_itor_first,
+	(last_func)			sp_itor_last,
+	(key_func)			sp_itor_key,
+	(data_func)			sp_itor_data,
+	(cdata_func)		sp_itor_cdata,
+	(dataset_func)		sp_itor_set_data,
+	(iremove_func)		NULL,/* sp_itor_remove not implemented yet */
+	(compare_func)		NULL /* sp_itor_compare not implemented yet */
 };
 
-static void rot_left(sp_tree *tree, sp_node *node);
-static void rot_right(sp_tree *tree, sp_node *node);
-
-static sp_node *node_new(void *key, void *datum);
-static sp_node *node_next(sp_node *node);
-static sp_node *node_prev(sp_node *node);
-static sp_node *node_max(sp_node *node);
-static sp_node *node_min(sp_node *node);
-static unsigned node_height(const sp_node *node);
-static unsigned node_mheight(const sp_node *node);
-static unsigned node_pathlen(const sp_node *node, unsigned level);
+static void		rot_left(sp_tree *tree, sp_node *node);
+static void		rot_right(sp_tree *tree, sp_node *node);
+static sp_node*	node_new(void *key, void *datum);
+static sp_node*	node_next(sp_node *node);
+static sp_node*	node_prev(sp_node *node);
+static sp_node*	node_max(sp_node *node);
+static sp_node*	node_min(sp_node *node);
+static unsigned	node_height(const sp_node *node);
+static unsigned	node_mheight(const sp_node *node);
+static unsigned	node_pathlen(const sp_node *node, unsigned level);
 
 sp_tree *
 sp_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
