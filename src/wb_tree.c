@@ -42,75 +42,73 @@ typedef unsigned int	weight_t;
 
 typedef struct wb_node wb_node;
 struct wb_node {
-	void		*key;
-	void		*dat;
-	wb_node		*parent;
-	wb_node		*llink;
-	wb_node		*rlink;
-	weight_t	 weight;
+	void*				key;
+	void*				datum;
+	wb_node*			parent;
+	wb_node*			llink;
+	wb_node*			rlink;
+	weight_t			weight;
 };
 
 #define WEIGHT(n)	((n) ? (n)->weight : 1)
 #define REWEIGH(n)	(n)->weight = WEIGHT((n)->llink) + WEIGHT((n)->rlink)
 
 struct wb_tree {
-	wb_node			*root;
-	unsigned		 count;
-	dict_cmp_func	 key_cmp;
-	dict_del_func	 key_del;
-	dict_del_func	 dat_del;
+	wb_node*			root;
+	unsigned			count;
+	dict_compare_func	key_cmp;
+	dict_delete_func	del_func;
 };
 
 struct wb_itor {
-	wb_tree	*tree;
-	wb_node	*node;
+	wb_tree*			tree;
+	wb_node*			node;
 };
 
-struct dict_vtable wb_tree_vtable = {
-	(inew_func)wb_itor_new,
-	(destroy_func)wb_tree_destroy,
-	(insert_func)wb_tree_insert,
-	(probe_func)wb_tree_probe,
-	(search_func)wb_tree_search,
-	(csearch_func)wb_tree_csearch,
-	(remove_func)wb_tree_remove,
-	(empty_func)wb_tree_empty,
-	(walk_func)wb_tree_walk,
-	(count_func)wb_tree_count
+static dict_vtable wb_tree_vtable = {
+	(inew_func)			wb_itor_new,
+	(destroy_func)		wb_tree_destroy,
+	(insert_func)		wb_tree_insert,
+	(probe_func)		wb_tree_probe,
+	(search_func)		wb_tree_search,
+	(csearch_func)		wb_tree_csearch,
+	(remove_func)		wb_tree_remove,
+	(empty_func)		wb_tree_empty,
+	(walk_func)			wb_tree_walk,
+	(count_func)		wb_tree_count
 };
 
-struct itor_vtable wb_tree_itor_vtable = {
-	(idestroy_func)wb_itor_destroy,
-	(valid_func)wb_itor_valid,
-	(invalidate_func)wb_itor_invalidate,
-	(next_func)wb_itor_next,
-	(prev_func)wb_itor_prev,
-	(nextn_func)wb_itor_nextn,
-	(prevn_func)wb_itor_prevn,
-	(first_func)wb_itor_first,
-	(last_func)wb_itor_last,
-	(key_func)wb_itor_key,
-	(data_func)wb_itor_data,
-	(cdata_func)wb_itor_cdata,
-	(dataset_func)wb_itor_set_data,
-	(iremove_func)NULL, /* wb_itor_remove not implemented */
-	(compare_func)NULL /* not implemented */
+static itor_vtable wb_tree_itor_vtable = {
+	(idestroy_func)		wb_itor_destroy,
+	(valid_func)		wb_itor_valid,
+	(invalidate_func)	wb_itor_invalidate,
+	(next_func)			wb_itor_next,
+	(prev_func)			wb_itor_prev,
+	(nextn_func)		wb_itor_nextn,
+	(prevn_func)		wb_itor_prevn,
+	(first_func)		wb_itor_first,
+	(last_func)			wb_itor_last,
+	(key_func)			wb_itor_key,
+	(data_func)			wb_itor_data,
+	(cdata_func)		wb_itor_cdata,
+	(dataset_func)		wb_itor_set_data,
+	(iremove_func)		NULL,/* wb_itor_remove not implemented yet */
+	(compare_func)		NULL /* wb_itor_compare not implemented yet */
 };
 
-static void rot_left(wb_tree *tree, wb_node *node);
-static void rot_right(wb_tree *tree, wb_node *node);
-static unsigned node_height(const wb_node *node);
-static unsigned node_mheight(const wb_node *node);
-static unsigned node_pathlen(const wb_node *node, unsigned level);
-static wb_node *node_new(void *key, void *dat);
-static wb_node *node_min(wb_node *node);
-static wb_node *node_max(wb_node *node);
-static wb_node *node_next(wb_node *node);
-static wb_node *node_prev(wb_node *node);
+static void		rot_left(wb_tree *tree, wb_node *node);
+static void		rot_right(wb_tree *tree, wb_node *node);
+static unsigned	node_height(const wb_node *node);
+static unsigned	node_mheight(const wb_node *node);
+static unsigned	node_pathlen(const wb_node *node, unsigned level);
+static wb_node*	node_new(void *key, void *datum);
+static wb_node*	node_min(wb_node *node);
+static wb_node*	node_max(wb_node *node);
+static wb_node*	node_next(wb_node *node);
+static wb_node*	node_prev(wb_node *node);
 
 wb_tree *
-wb_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
-			dict_del_func dat_del)
+wb_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
 {
 	wb_tree *tree;
 
@@ -120,22 +118,20 @@ wb_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	tree->root = NULL;
 	tree->count = 0;
 	tree->key_cmp = key_cmp ? key_cmp : dict_ptr_cmp;
-	tree->key_del = key_del;
-	tree->dat_del = dat_del;
+	tree->del_func = del_func;
 
 	return tree;
 }
 
 dict *
-wb_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
-			dict_del_func dat_del)
+wb_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
 {
 	dict *dct;
 
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((dct->_object = wb_tree_new(key_cmp, key_del, dat_del)) == NULL) {
+	if ((dct->_object = wb_tree_new(key_cmp, del_func)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}
@@ -145,15 +141,19 @@ wb_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	return dct;
 }
 
-void
-wb_tree_destroy(wb_tree *tree, int del)
+unsigned
+wb_tree_destroy(wb_tree *tree)
 {
+	unsigned count = 0;
+
 	ASSERT(tree != NULL);
 
 	if (tree->root)
-		wb_tree_empty(tree, del);
+		count = wb_tree_empty(tree);
 
 	FREE(tree);
+
+	return count;
 }
 
 void *
@@ -172,7 +172,7 @@ wb_tree_search(wb_tree *tree, const void *key)
 		else if (rv > 0)
 			node = node->rlink;
 		else
-			return node->dat;
+			return node->datum;
 	}
 
 	return NULL;
@@ -185,7 +185,7 @@ wb_tree_csearch(const wb_tree *tree, const void *key)
 }
 
 int
-wb_tree_insert(wb_tree *tree, void *key, void *dat, int overwrite)
+wb_tree_insert(wb_tree *tree, void *key, void *datum, int overwrite)
 {
 	int rv = 0;
 	wb_node *node, *parent = NULL;
@@ -203,17 +203,15 @@ wb_tree_insert(wb_tree *tree, void *key, void *dat, int overwrite)
 		else {
 			if (overwrite == 0)
 				return 1;
-			if (tree->key_del)
-				tree->key_del(node->key);
-			if (tree->dat_del)
-				tree->dat_del(node->dat);
+			if (tree->del_func)
+				tree->del_func(node->key, node->datum);
 			node->key = key;
-			node->dat = dat;
+			node->datum = datum;
 			return 0;
 		}
 	}
 
-	if ((node = node_new(key, dat)) == NULL)
+	if ((node = node_new(key, datum)) == NULL)
 		return -1;
 	if ((node->parent = parent) == NULL) {
 		ASSERT(tree->count == 0);
@@ -253,7 +251,7 @@ wb_tree_insert(wb_tree *tree, void *key, void *dat, int overwrite)
 }
 
 int
-wb_tree_probe(wb_tree *tree, void *key, void **dat)
+wb_tree_probe(wb_tree *tree, void *key, void **datum)
 {
 	int rv = 0;
 	wb_node *node, *parent = NULL;
@@ -269,12 +267,12 @@ wb_tree_probe(wb_tree *tree, void *key, void **dat)
 		else if (rv > 0)
 			parent = node, node = node->rlink;
 		else {
-			*dat = node->dat;
+			*datum = node->datum;
 			return 0;
 		}
 	}
 
-	if ((node = node_new(key, *dat)) == NULL)
+	if ((node = node_new(key, *datum)) == NULL)
 		return -1;
 	if ((node->parent = parent) == NULL) {
 		ASSERT(tree->count == 0);
@@ -314,7 +312,7 @@ wb_tree_probe(wb_tree *tree, void *key, void **dat)
 }
 
 int
-wb_tree_remove(wb_tree *tree, const void *key, int del)
+wb_tree_remove(wb_tree *tree, const void *key)
 {
 	int rv;
 	wb_node *node, *temp, *out = NULL; /* ergh @ GCC unitializated warning */
@@ -329,17 +327,13 @@ wb_tree_remove(wb_tree *tree, const void *key, int del)
 			node = rv < 0 ? node->llink : node->rlink;
 			continue;
 		}
-		if (node->llink == NULL) {
+		if (node->llink == NULL || node->rlink == NULL) {
 			temp = node;
-			out = node->rlink;
+			out = node->llink ? node->llink : node->rlink;
 			if (out)
 				out->parent = node->parent;
-			if (del) {
-				if (tree->key_del)
-					tree->key_del(node->key);
-				if (tree->dat_del)
-					tree->dat_del(node->dat);
-			}
+			if (tree->del_func)
+				tree->del_func(node->key, node->datum);
 			if (node->parent) {
 				if (node->parent->llink == node)
 					node->parent->llink = out;
@@ -350,28 +344,7 @@ wb_tree_remove(wb_tree *tree, const void *key, int del)
 			}
 			FREE(node);
 			out = temp;
-		} else if (node->rlink == NULL) {
-			temp = node;
-			out = node->llink;
-			if (out)
-				out->parent = node->parent;
-			if (del) {
-				if (tree->key_del)
-					tree->key_del(node->key);
-				if (tree->dat_del)
-					tree->dat_del(node->dat);
-			}
-			if (node->parent) {
-				if (node->parent->llink == node)
-					node->parent->llink = out;
-				else
-					node->parent->rlink = out;
-			} else {
-				tree->root = out;
-			}
-			FREE(node);
-			out = temp;
-		} else if (WEIGHT(node->llink) > WEIGHT(node->rlink)) {
+		} else if (node->llink->weight > node->rlink->weight) {	/* We know llink and rlink are both not NULL. */
 			if (WEIGHT(node->llink->llink) < WEIGHT(node->llink->rlink))
 				rot_left(tree, node->llink);
 			out = node->llink;
@@ -388,8 +361,8 @@ wb_tree_remove(wb_tree *tree, const void *key, int del)
 		}
 
 		if (--tree->count) {
-			extern int printf(const char *, ...);
-		/*	printf("tree->count=%d\n", tree->count); */
+		/*	extern int printf(const char *, ...);
+			printf("tree->count=%d\n", tree->count); */
 			while (out) {
 				out->weight--;
 				out = out->parent;
@@ -400,13 +373,15 @@ wb_tree_remove(wb_tree *tree, const void *key, int del)
 	return -1;
 }
 
-void
-wb_tree_empty(wb_tree *tree, int del)
+unsigned
+wb_tree_empty(wb_tree *tree)
 {
 	wb_node *node, *parent;
+	unsigned count = 0;
 
 	ASSERT(tree != NULL);
 
+	count = tree->count;
 	node = tree->root;
 
 	while (node) {
@@ -415,12 +390,8 @@ wb_tree_empty(wb_tree *tree, int del)
 			continue;
 		}
 
-		if (del) {
-			if (tree->key_del)
-				tree->key_del(node->key);
-			if (tree->dat_del)
-				tree->dat_del(node->dat);
-		}
+		if (tree->del_func)
+			tree->del_func(node->key, node->datum);
 
 		parent = node->parent;
 		FREE(node);
@@ -436,6 +407,7 @@ wb_tree_empty(wb_tree *tree, int del)
 
 	tree->root = NULL;
 	tree->count = 0;
+	return count;
 }
 
 const void *
@@ -468,18 +440,23 @@ wb_tree_max(const wb_tree *tree)
 	return node->key;
 }
 
-void
-wb_tree_walk(wb_tree *tree, dict_vis_func visit)
+unsigned
+wb_tree_walk(wb_tree *tree, dict_visit_func visit)
 {
 	wb_node *node;
+	unsigned count = 0;
 
 	ASSERT(tree != NULL);
 
 	if (tree->root == NULL)
-		return;
-	for (node = node_min(tree->root); node; node = node_next(node))
-		if (visit(node->key, node->dat) == 0)
+		return 0;
+
+	for (node = node_min(tree->root); node; node = node_next(node)) {
+		++count;
+		if (!visit(node->key, node->datum))
 			break;
+	}
+	return count;
 }
 
 unsigned
@@ -515,7 +492,7 @@ wb_tree_pathlen(const wb_tree *tree)
 }
 
 static wb_node *
-node_new(void *key, void *dat)
+node_new(void *key, void *datum)
 {
 	wb_node *node;
 
@@ -523,7 +500,7 @@ node_new(void *key, void *dat)
 		return NULL;
 
 	node->key = key;
-	node->dat = dat;
+	node->datum = datum;
 	node->parent = NULL;
 	node->llink = NULL;
 	node->rlink = NULL;
@@ -867,7 +844,7 @@ wb_itor_search(wb_itor *itor, const void *key)
 {
 	int rv;
 	wb_node *node;
-	dict_cmp_func cmp;
+	dict_compare_func cmp;
 
 	ASSERT(itor != NULL);
 
@@ -900,7 +877,7 @@ wb_itor_data(wb_itor *itor)
 {
 	ASSERT(itor != NULL);
 
-	return itor->node ? itor->node->dat : NULL;
+	return itor->node ? itor->node->datum : NULL;
 }
 
 const void *
@@ -908,20 +885,20 @@ wb_itor_cdata(const wb_itor *itor)
 {
 	ASSERT(itor != NULL);
 
-	return itor->node ? itor->node->dat : NULL;
+	return itor->node ? itor->node->datum : NULL;
 }
 
 int
-wb_itor_set_data(wb_itor *itor, void *dat, int del)
+wb_itor_set_data(wb_itor *itor, void *datum, void **old_datum)
 {
 	ASSERT(itor != NULL);
 
 	if (itor->node == NULL)
 		return -1;
 
-	if (del && itor->tree->dat_del)
-		itor->tree->dat_del(itor->node->dat);
-	itor->node->dat = dat;
+	if (old_datum)
+		*old_datum = itor->node->datum;
+	itor->node->datum = datum;
 	return 0;
 }
 
