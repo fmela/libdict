@@ -42,6 +42,13 @@ s_hash(const unsigned char *p)
 	return hash;
 }
 
+void
+key_val_free(void *key, void *datum)
+{
+	free(key);
+	free(datum);
+}
+
 #define HSIZE		30011
 
 int
@@ -61,26 +68,26 @@ main(int argc, char **argv)
 	++argv;
 	switch (argv[0][0]) {
 	case 'h':
-		dct = hb_dict_new((dict_cmp_func)strcmp, free, free);
+		dct = hb_dict_new((dict_compare_func)strcmp, key_val_free);
 		break;
 	case 'p':
-		dct = pr_dict_new((dict_cmp_func)strcmp, free, free);
+		dct = pr_dict_new((dict_compare_func)strcmp, key_val_free);
 		break;
 	case 'r':
-		dct = rb_dict_new((dict_cmp_func)strcmp, free, free);
+		dct = rb_dict_new((dict_compare_func)strcmp, key_val_free);
 		break;
 	case 't':
-		dct = tr_dict_new((dict_cmp_func)strcmp, free, free);
+		dct = tr_dict_new((dict_compare_func)strcmp, key_val_free);
 		break;
 	case 's':
-		dct = sp_dict_new((dict_cmp_func)strcmp, free, free);
+		dct = sp_dict_new((dict_compare_func)strcmp, key_val_free);
 		break;
 	case 'w':
-		dct = wb_dict_new((dict_cmp_func)strcmp, free, free);
+		dct = wb_dict_new((dict_compare_func)strcmp, key_val_free);
 		break;
 	case 'H':
-		dct = hashtable_dict_new((dict_cmp_func)strcmp, (dict_hsh_func)s_hash,
-								 free, free, HSIZE);
+		dct = hashtable_dict_new((dict_compare_func)strcmp, (dict_hash_func)s_hash,
+								 key_val_free, HSIZE);
 		break;
 	default:
 		quit("type must be one of h, p, r, t, s, w, or H");
@@ -128,7 +135,7 @@ main(int argc, char **argv)
 				printf("usage: remove <key>\n");
 				continue;
 			}
-			rv = dict_remove(dct, ptr, TRUE);
+			rv = dict_remove(dct, ptr);
 			if (rv == 0)
 				printf("removed `%s' from dict\n", ptr);
 			else
@@ -142,7 +149,7 @@ main(int argc, char **argv)
 			}
 			itor = dict_itor_new(dct);
 			for (; dict_itor_valid(itor); dict_itor_next(itor))
-				printf("`%s' ==> `%s'\n",
+				printf("`%p' ==> `%p'\n",
 					   (char *)dict_itor_key(itor),
 					   (char *)dict_itor_data(itor));
 			dict_itor_destroy(itor);
@@ -151,7 +158,7 @@ main(int argc, char **argv)
 				printf("usage: empty\n");
 				continue;
 			}
-			dict_empty(dct, TRUE);
+			dict_empty(dct);
 		} else if (strcmp(buf, "count") == 0) {
 			if (ptr) {
 				printf("usage: count\n");
@@ -172,7 +179,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	dict_destroy(dct, TRUE);
+	dict_destroy(dct);
 
 	exit(0);
 }
