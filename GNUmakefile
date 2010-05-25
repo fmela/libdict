@@ -1,21 +1,29 @@
-HDR = dict.h hashtable.h hb_tree.h pr_tree.h rb_tree.h sp_tree.h tr_tree.h wb_tree.h
-SRC = dict.c hashtable.c hb_tree.c pr_tree.c rb_tree.c sp_tree.c tr_tree.c wb_tree.c
-SRC := $(SRC:%=src/%)
-HDR := $(HDR:%=include/%)
-AOBJ = $(SRC:src/%.c=build/%.o)
-POBJ = $(SRC:src/%.c=build/%.po)
-SOBJ = $(SRC:src/%.c=build/%.So)
+SOURCE_DIR = src
+HEADER_DIR = include
+OUTPUT_DIR = bin
 
-DEPDIR = .depend
-DEP = $(SRC:%.c=$(DEPDIR)/%.dep)
+SOURCE := $(wildcard $(SOURCE_DIR)/*.c)
+HEADER := $(wildcard $(HEADER_DIR)/*.h $(SOURCE_DIR)/*.h)
+
+STATIC_OBJ = $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.o)
+PROFIL_OBJ = $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.po)
+SHARED_OBJ = $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.So)
+PROG_SRC = $(wildcard *.c)
+PROG = $(PROG_SRC:%.c=$(OUTPUT_DIR)/%)
 
 LIB = dict
-A_LIB = lib$(LIB).a
-P_LIB = lib$(LIB)_p.a
-S_LIB = lib$(LIB).so
+STATIC_LIB = $(OUTPUT_DIR)/lib$(LIB).a
+PROFIL_LIB = $(OUTPUT_DIR)/lib$(LIB)_p.a
+SHARED_LIB = $(OUTPUT_DIR)/lib$(LIB).so
 
-CC = gcc
-CFLAGS = -Wall -W -ansi -pedantic -g -O2 -Iinclude -Isrc
+OS=$(shell uname)
+ifeq ($(OS),Darwin)
+	CC=/Developer/usr/bin/clang
+else
+	CC=gcc
+endif
+CFLAGS = -Wall -W -ansi -pedantic -g -O2 -I$(HEADER_DIR) -I$(SOURCE_DIR)
+#CFLAGS = -Wall -W -ansi -pedantic -g -I$(HEADER_DIR) -I$(SOURCE_DIR)
 
 AR = ar
 ARFLAGS = cru
@@ -27,59 +35,49 @@ INCDIR = $(PREFIX)/include/dict
 MANDIR = $(PREFIX)/man
 INSTALL ?= install
 LIBVER = 2
-SHLIB = $(S_LIB).$(LIBVER)
+SHLIB = $(SHARED_LIB).$(LIBVER)
 USER ?= 0
 GROUP ?= 0
 
-all : $(A_LIB) $(S_LIB)
+all: $(STATIC_LIB) $(PROG)
 
-$(A_LIB) : $(AOBJ)
-	$(AR) $(ARFLAGS) $(A_LIB) $(AOBJ)
+$(STATIC_LIB): $(STATIC_OBJ)
+	$(AR) $(ARFLAGS) $(STATIC_LIB) $(STATIC_OBJ)
 
-$(P_LIB) : $(POBJ)
-	$(AR) $(ARFLAGS) $(P_LIB) $(POBJ)
+$(PROFIL_LIB): $(PROFIL_OBJ)
+	$(AR) $(ARFLAGS) $(PROFIL_LIB) $(PROFIL_OBJ)
 
-$(S_LIB) : $(SOBJ)
-	$(CC) -shared -o $(S_LIB) $(SOBJ)
+$(SHARED_LIB): $(SHARED_OBJ)
+	$(CC) -shared -o $(SHARED_LIB) $(SHARED_OBJ)
 
-build/%.o: src/%.c
+$(OUTPUT_DIR)/%.o: $(SOURCE_DIR)/%.c $(HEADER)
 	$(CC) $(CFLAGS) -c $(<) -o $(@)
 
-build/%.po: src/%.c
+$(OUTPUT_DIR)/%.po: $(SOURCE_DIR)/%.c $(HEADER)
 	$(CC) $(CFLAGS) -pg -c $(<) -o $(@)
 
-build/%.So : src/%.c
+$(OUTPUT_DIR)/%.So: $(SOURCE_DIR)/%.c $(HEADER)
 	$(CC) $(CFLAGS) -fPIC -DPIC -c $(<) -o $(@)
 
-.PHONY : clean
+.PHONY: clean
 clean :
-	rm -f $(AOBJ) $(POBJ) $(SOBJ) $(A_LIB) $(P_LIB) $(S_LIB)
-	-rm -rf $(DEPDIR)
+	rm -f $(STATIC_LIB) $(STATIC_OBJ)
+	rm -f $(PROFIL_LIB) $(PROFIL_OBJ)
+	rm -f $(SHARED_LIB) $(SHARED_OBJ)
+	rm -f $(PROG)
 
-install : $(A_LIB) $(P_LIB) $(S_LIB)
+install: $(STATIC_LIB) $(PROFIL_LIB) $(SHARED_LIB)
 	[ -d $(INCDIR) ] || mkdir -m 755 $(INCDIR)
-	$(INSTALL) -o $(USER) -g $(GROUP) -m 644 $(HDR) $(INCDIR)
-	$(INSTALL) -s -o $(USER) -g $(GROUP) -m 644 $(A_LIB) $(LIBDIR)
-	$(INSTALL) -s -o $(USER) -g $(GROUP) -m 644 $(P_LIB) $(LIBDIR)
-	$(INSTALL) -s -o $(USER) -g $(GROUP) -m 755 $(S_LIB) $(LIBDIR)/$(SHLIB)
-	$(SHELL) -ec 'cd $(LIBDIR) && ln -sf $(SHLIB) $(S_LIB)'
+	$(INSTALL) -o $(USER) -g $(GROUP) -m 644 $(HEADER) $(INCDIR)
+	$(INSTALL) -s -o $(USER) -g $(GROUP) -m 644 $(STATIC_LIB) $(LIBDIR)
+	$(INSTALL) -s -o $(USER) -g $(GROUP) -m 644 $(PROFIL_LIB) $(LIBDIR)
+	$(INSTALL) -s -o $(USER) -g $(GROUP) -m 755 $(SHARED_LIB) $(LIBDIR)/$(SHLIB)
+	$(SHELL) -ec 'cd $(LIBDIR) && ln -sf $(SHLIB) $(SHARED_LIB)'
 
 uninstall :
 	-rm -rf $(INCDIR)
-	-rm -f $(LIBDIR)/$(A_LIB)
-	-rm -f $(LIBDIR)/$(S_LIB)
+	-rm -f $(LIBDIR)/$(STATIC_LIB)
+	-rm -f $(LIBDIR)/$(SHARED_LIB)
 
-test : test.c $(A_LIB)
-	$(CC) $(CFLAGS) -o $(@) $(<) $(A_LIB)
-demo : demo.c $(A_LIB)
-	$(CC) $(CFLAGS) -o $(@) $(<) $(A_LIB)
-
-$(DEPDIR)/%.dep : %.c
-	@$(SHELL) -c '[ -d $(DEPDIR) ] || mkdir $(DEPDIR)'
-	@$(SHELL) -ec 'echo -n "Rebuilding dependencies for $< - "; \
-		$(CC) -M $(CFLAGS) $< > $@; \
-		sed "s/^$(<:%.c=%.o)/& $(<:%.c=%.po) $(<:%.c=%.So)/" $@ > $(DEPDIR)/$(<:%.c=%.dep2); \
-		mv -f $(DEPDIR)/$(<:%.c=%.dep2) $@; \
-		echo ok.'
-
-#-include $(DEP)
+$(OUTPUT_DIR)/%: %.c $(STATIC_LIB)
+	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_LIB)
