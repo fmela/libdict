@@ -19,7 +19,7 @@ typedef unsigned long weight_t;
 typedef struct pr_node pr_node;
 struct pr_node {
 	void		*key;
-	void		*dat;
+	void		*datum;
 	pr_node		*parent;
 	pr_node		*llink;
 	pr_node		*rlink;
@@ -30,11 +30,10 @@ struct pr_node {
 #define REWEIGH(n)	(n)->weight = WEIGHT((n)->llink) + WEIGHT((n)->rlink)
 
 struct pr_tree {
-	pr_node			*root;
-	unsigned		 count;
-	dict_cmp_func	 key_cmp;
-	dict_del_func	 key_del;
-	dict_del_func	 dat_del;
+	pr_node*			root;
+	unsigned			count;
+	dict_compare_func	key_cmp;
+	dict_delete_func	del_func;
 };
 
 struct pr_itor {
@@ -42,7 +41,7 @@ struct pr_itor {
 	pr_node	*node;
 };
 
-static struct dict_vtable pr_tree_vtable = {
+static dict_vtable pr_tree_vtable = {
 	(inew_func)pr_itor_new,
 	(destroy_func)pr_tree_destroy,
 	(insert_func)pr_tree_insert,
@@ -55,7 +54,7 @@ static struct dict_vtable pr_tree_vtable = {
 	(count_func)pr_tree_count
 };
 
-static struct itor_vtable pr_tree_itor_vtable = {
+static itor_vtable pr_tree_itor_vtable = {
 	(idestroy_func)pr_itor_destroy,
 	(valid_func)pr_itor_valid,
 	(invalidate_func)pr_itor_invalidate,
@@ -79,15 +78,14 @@ static void rot_right(pr_tree *tree, pr_node *node);
 static unsigned node_height(const pr_node *node);
 static unsigned node_mheight(const pr_node *node);
 static unsigned node_pathlen(const pr_node *node, unsigned level);
-static pr_node *node_new(void *key, void *dat);
+static pr_node *node_new(void *key, void *datum);
 static pr_node *node_min(pr_node *node);
 static pr_node *node_max(pr_node *node);
 static pr_node *node_next(pr_node *node);
 static pr_node *node_prev(pr_node *node);
 
 pr_tree *
-pr_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
-			dict_del_func dat_del)
+pr_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
 {
 	pr_tree *tree;
 
@@ -97,15 +95,13 @@ pr_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	tree->root = NULL;
 	tree->count = 0;
 	tree->key_cmp = key_cmp ? key_cmp : dict_ptr_cmp;
-	tree->key_del = key_del;
-	tree->dat_del = dat_del;
+	tree->del_func = del_func;
 
 	return tree;
 }
 
 dict *
-pr_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
-			dict_del_func dat_del)
+pr_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
 {
 	dict *dct;
 	pr_tree *tree;
@@ -113,7 +109,7 @@ pr_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((tree = pr_tree_new(key_cmp, key_del, dat_del)) == NULL) {
+	if ((tree = pr_tree_new(key_cmp, del_func)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}
@@ -124,15 +120,19 @@ pr_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	return dct;
 }
 
-void
-pr_tree_destroy(pr_tree *tree, int del)
+unsigned
+pr_tree_destroy(pr_tree *tree)
 {
+	unsigned count = 0;
+
 	ASSERT(tree != NULL);
 
 	if (tree->root)
-		pr_tree_empty(tree, del);
+		count = pr_tree_empty(tree);
 
 	FREE(tree);
+
+	return count;
 }
 
 void *
@@ -151,7 +151,7 @@ pr_tree_search(pr_tree *tree, const void *key)
 		else if (rv > 0)
 			node = node->rlink;
 		else
-			return node->dat;
+			return node->datum;
 	}
 
 	return NULL;
@@ -271,7 +271,7 @@ again:																		\
 }
 
 int
-pr_tree_insert(pr_tree *tree, void *key, void *dat, int overwrite)
+pr_tree_insert(pr_tree *tree, void *key, void *datum, int overwrite)
 {
 	int rv = 0;
 	pr_node *node, *parent = NULL;
@@ -289,17 +289,15 @@ pr_tree_insert(pr_tree *tree, void *key, void *dat, int overwrite)
 		else {
 			if (overwrite == 0)
 				return 1;
-			if (tree->key_del)
-				tree->key_del(node->key);
-			if (tree->dat_del)
-				tree->dat_del(node->dat);
+			if (tree->del_func)
+				tree->del_func(node->key, node->datum);
 			node->key = key;
-			node->dat = dat;
+			node->datum = datum;
 			return 0;
 		}
 	}
 
-	if ((node = node_new(key, dat)) == NULL)
+	if ((node = node_new(key, datum)) == NULL)
 		return -1;
 	if ((node->parent = parent) == NULL) {
 		ASSERT(tree->count == 0);
@@ -323,7 +321,7 @@ pr_tree_insert(pr_tree *tree, void *key, void *dat, int overwrite)
 }
 
 int
-pr_tree_probe(pr_tree *tree, void *key, void **dat)
+pr_tree_probe(pr_tree *tree, void *key, void **datum)
 {
 	int rv = 0;
 	pr_node *node, *parent = NULL;
@@ -338,12 +336,12 @@ pr_tree_probe(pr_tree *tree, void *key, void **dat)
 		else if (rv > 0)
 			parent = node, node = node->rlink;
 		else {
-			*dat = node->dat;
+			*datum = node->datum;
 			return 0;
 		}
 	}
 
-	if ((node = node_new(key, *dat)) == NULL)
+	if ((node = node_new(key, *datum)) == NULL)
 		return -1;
 	if ((node->parent = parent) == NULL) {
 		ASSERT(tree->count == 0);
@@ -367,14 +365,8 @@ pr_tree_probe(pr_tree *tree, void *key, void **dat)
 	return 1;
 }
 
-#define FREE_NODE(n) {														\
-		if (tree->key_del)													\
-			tree->key_del((n)->key);										\
-		if (tree->dat_del)													\
-			tree->dat_del((n)->dat);										}
-
 int
-pr_tree_remove(pr_tree *tree, const void *key, int del)
+pr_tree_remove(pr_tree *tree, const void *key)
 {
 	int rv;
 	pr_node *node, *temp, *out = NULL; /* ergh @ GCC unitializated warning */
@@ -393,8 +385,7 @@ pr_tree_remove(pr_tree *tree, const void *key, int del)
 			out = node->rlink;
 			if (out)
 				out->parent = node->parent;
-			if (del)
-				FREE_NODE(node);
+
 			if (node->parent) {
 				if (node->parent->llink == node)
 					node->parent->llink = out;
@@ -404,7 +395,11 @@ pr_tree_remove(pr_tree *tree, const void *key, int del)
 				tree->root = out;
 			}
 			temp = node->parent;
+
+			if (tree->del_func)
+				tree->del_func(node->key, node->datum);
 			FREE(node);
+
 			for (; temp; temp = temp->parent)
 				temp->weight--;
 			tree->count--;
@@ -413,8 +408,6 @@ pr_tree_remove(pr_tree *tree, const void *key, int del)
 			out = node->llink;
 			if (out)
 				out->parent = node->parent;
-			if (del)
-				FREE_NODE(node);
 			if (node->parent) {
 				if (node->parent->llink == node)
 					node->parent->llink = out;
@@ -424,7 +417,11 @@ pr_tree_remove(pr_tree *tree, const void *key, int del)
 				tree->root = out;
 			}
 			temp = node->parent;
+
+			if (tree->del_func)
+				tree->del_func(node->key, node->datum);
 			FREE(node);
+
 			for (; temp; temp = temp->parent)
 				temp->weight--;
 			tree->count--;
@@ -446,13 +443,15 @@ pr_tree_remove(pr_tree *tree, const void *key, int del)
 	return -1;
 }
 
-void
-pr_tree_empty(pr_tree *tree, int del)
+unsigned
+pr_tree_empty(pr_tree *tree)
 {
 	pr_node *node, *parent;
+	unsigned count;
 
 	ASSERT(tree != NULL);
 
+	count = tree->count;
 	node = tree->root;
 
 	while (node) {
@@ -461,12 +460,8 @@ pr_tree_empty(pr_tree *tree, int del)
 			continue;
 		}
 
-		if (del) {
-			if (tree->key_del)
-				tree->key_del(node->key);
-			if (tree->dat_del)
-				tree->dat_del(node->dat);
-		}
+		if (tree->del_func)
+			tree->del_func(node->key, node->datum);
 
 		parent = node->parent;
 		FREE(node);
@@ -482,6 +477,7 @@ pr_tree_empty(pr_tree *tree, int del)
 
 	tree->root = NULL;
 	tree->count = 0;
+	return count;
 }
 
 const void *
@@ -514,18 +510,23 @@ pr_tree_max(const pr_tree *tree)
 	return node->key;
 }
 
-void
-pr_tree_walk(pr_tree *tree, dict_vis_func visit)
+unsigned
+pr_tree_walk(pr_tree *tree, dict_visit_func visit)
 {
 	pr_node *node;
+	unsigned count = 0;
 
 	ASSERT(tree != NULL);
 
 	if (tree->root == NULL)
-		return;
-	for (node = node_min(tree->root); node; node = node_next(node))
-		if (visit(node->key, node->dat) == 0)
+		return 0;
+
+	for (node = node_min(tree->root); node; node = node_next(node)) {
+		++count;
+		if (!visit(node->key, node->datum))
 			break;
+	}
+	return count;
 }
 
 unsigned
@@ -561,7 +562,7 @@ pr_tree_pathlen(const pr_tree *tree)
 }
 
 static pr_node *
-node_new(void *key, void *dat)
+node_new(void *key, void *datum)
 {
 	pr_node *node;
 
@@ -569,7 +570,7 @@ node_new(void *key, void *dat)
 		return NULL;
 
 	node->key = key;
-	node->dat = dat;
+	node->datum = datum;
 	node->parent = NULL;
 	node->llink = NULL;
 	node->rlink = NULL;
@@ -912,7 +913,7 @@ pr_itor_search(pr_itor *itor, const void *key)
 {
 	int rv;
 	pr_node *node;
-	dict_cmp_func cmp;
+	dict_compare_func cmp;
 
 	ASSERT(itor != NULL);
 
@@ -945,7 +946,7 @@ pr_itor_data(itor)
 {
 	ASSERT(itor != NULL);
 
-	return itor->node ? itor->node->dat : NULL;
+	return itor->node ? itor->node->datum : NULL;
 }
 
 const void *
@@ -954,19 +955,19 @@ pr_itor_cdata(itor)
 {
 	ASSERT(itor != NULL);
 
-	return itor->node ? itor->node->dat : NULL;
+	return itor->node ? itor->node->datum : NULL;
 }
 
 int
-pr_itor_set_data(pr_itor *itor, void *dat, int del)
+pr_itor_set_data(pr_itor *itor, void *datum, void **old_datum)
 {
 	ASSERT(itor != NULL);
 
 	if (itor->node == NULL)
 		return -1;
 
-	if (del && itor->tree->dat_del)
-		itor->tree->dat_del(itor->node->dat);
-	itor->node->dat = dat;
+	if (old_datum)
+		*old_datum = itor->node->datum;
+	itor->node->datum = datum;
 	return 0;
 }
