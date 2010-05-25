@@ -43,7 +43,7 @@ typedef unsigned long priority_t;
 typedef struct tr_node tr_node;
 struct tr_node {
 	void		*key;
-	void		*dat;
+	void		*datum;
 	tr_node		*parent;
 	tr_node		*llink;
 	tr_node		*rlink;
@@ -51,12 +51,11 @@ struct tr_node {
 };
 
 struct tr_tree {
-	tr_node			*root;
-	unsigned		 count;
-	dict_cmp_func	 key_cmp;
-	dict_del_func	 key_del;
-	dict_del_func	 dat_del;
-	unsigned long	 randgen;
+	tr_node*			root;
+	unsigned			count;
+	dict_compare_func	key_cmp;
+	dict_delete_func	del_func;
+	unsigned long		randgen;
 };
 
 struct tr_itor {
@@ -64,7 +63,7 @@ struct tr_itor {
 	tr_node	*node;
 };
 
-struct dict_vtable tr_tree_vtable = {
+static dict_vtable tr_tree_vtable = {
 	(inew_func)tr_itor_new,
 	(destroy_func)tr_tree_destroy,
 	(insert_func)tr_tree_insert,
@@ -77,7 +76,7 @@ struct dict_vtable tr_tree_vtable = {
 	(count_func)tr_tree_count
 };
 
-struct itor_vtable tr_tree_itor_vtable = {
+static itor_vtable tr_tree_itor_vtable = {
 	(idestroy_func)tr_itor_destroy,
 	(valid_func)tr_itor_valid,
 	(invalidate_func)tr_itor_invalidate,
@@ -91,7 +90,7 @@ struct itor_vtable tr_tree_itor_vtable = {
 	(data_func)tr_itor_data,
 	(cdata_func)tr_itor_cdata,
 	(dataset_func)tr_itor_set_data,
-	(iremove_func)NULL, /* tr_itor_remove not implemented yet */
+	(iremove_func)NULL,/* tr_itor_remove not implemented yet */
 	(compare_func)NULL /* tr_itor_compare not implemented yet */
 };
 
@@ -100,15 +99,14 @@ static void rot_right(tr_tree *tree, tr_node *node);
 static unsigned node_height(const tr_node *node);
 static unsigned node_mheight(const tr_node *node);
 static unsigned node_pathlen(const tr_node *node, unsigned level);
-static tr_node *node_new(void *key, void *dat);
+static tr_node *node_new(void *key, void *datum);
 static tr_node *node_next(tr_node *node);
 static tr_node *node_prev(tr_node *node);
 static tr_node *node_max(tr_node *node);
 static tr_node *node_min(tr_node *node);
 
 tr_tree *
-tr_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
-			dict_del_func dat_del)
+tr_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
 {
 	tr_tree *tree;
 
@@ -118,16 +116,14 @@ tr_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	tree->root = NULL;
 	tree->count = 0;
 	tree->key_cmp = key_cmp ? key_cmp : dict_ptr_cmp;
-	tree->key_del = key_del;
-	tree->dat_del = dat_del;
+	tree->del_func = del_func;
 	tree->randgen = rand();
 
 	return tree;
 }
 
 dict *
-tr_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
-			dict_del_func dat_del)
+tr_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
 {
 	dict *dct;
 	tr_tree *tree;
@@ -135,7 +131,7 @@ tr_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((tree = tr_tree_new(key_cmp, key_del, dat_del)) == NULL) {
+	if ((tree = tr_tree_new(key_cmp, del_func)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}
@@ -146,23 +142,28 @@ tr_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	return dct;
 }
 
-void
-tr_tree_destroy(tr_tree *tree, int del)
+unsigned
+tr_tree_destroy(tr_tree *tree)
 {
+	unsigned count = 0;
+
 	ASSERT(tree != NULL);
 
 	if (tree->root)
-		tr_tree_empty(tree, del);
+		count = tr_tree_empty(tree);
 	FREE(tree);
+	return count;
 }
 
-void
-tr_tree_empty(tr_tree *tree, int del)
+unsigned
+tr_tree_empty(tr_tree *tree)
 {
 	tr_node *node, *parent;
+	unsigned count = 0;
 
 	ASSERT(tree != NULL);
 
+	count = tree->count;
 	node = tree->root;
 	while (node) {
 		parent = node->parent;
@@ -171,12 +172,8 @@ tr_tree_empty(tr_tree *tree, int del)
 			continue;
 		}
 
-		if (del) {
-			if (tree->key_del)
-				tree->key_del(node->key);
-			if (tree->dat_del)
-				tree->dat_del(node->dat);
-		}
+		if (tree->del_func)
+			tree->del_func(node->key, node->datum);
 		FREE(node);
 
 		if (parent) {
@@ -190,10 +187,11 @@ tr_tree_empty(tr_tree *tree, int del)
 
 	tree->root = NULL;
 	tree->count = 0;
+	return count;
 }
 
 int
-tr_tree_insert(tr_tree *tree, void *key, void *dat, int overwrite)
+tr_tree_insert(tr_tree *tree, void *key, void *datum, int overwrite)
 {
 	int rv = 0;
 	tr_node *node, *parent = NULL;
@@ -211,17 +209,15 @@ tr_tree_insert(tr_tree *tree, void *key, void *dat, int overwrite)
 		else {
 			if (overwrite == 0)
 				return 1;
-			if (tree->key_del)
-				tree->key_del(node->key);
-			if (tree->dat_del)
-				tree->dat_del(node->dat);
+			if (tree->del_func)
+				tree->del_func(node->key, node->datum);
 			node->key = key;
-			node->dat = dat;
+			node->datum = datum;
 			return 0;
 		}
 	}
 
-	if ((node = node_new(key, dat)) == NULL)
+	if ((node = node_new(key, datum)) == NULL)
 		return -1;
 	prio = (tree->randgen * RGEN_A + RGEN_M) & RGEN_MASK;
 	node->prio = tree->randgen = prio;
@@ -252,7 +248,7 @@ tr_tree_insert(tr_tree *tree, void *key, void *dat, int overwrite)
 }
 
 int
-tr_tree_probe(tr_tree *tree, void *key, void **dat)
+tr_tree_probe(tr_tree *tree, void *key, void **datum)
 {
 	int rv = 0;
 	tr_node *node, *parent = NULL;
@@ -268,12 +264,12 @@ tr_tree_probe(tr_tree *tree, void *key, void **dat)
 		else if (rv > 0)
 			parent = node, node = node->rlink;
 		else {
-			*dat = node->dat;
+			*datum = node->datum;
 			return 0;
 		}
 	}
 
-	if ((node = node_new(key, *dat)) == NULL)
+	if ((node = node_new(key, *datum)) == NULL)
 		return -1;
 	prio = (tree->randgen * RGEN_A + RGEN_M) & RGEN_MASK;
 	node->prio = tree->randgen = prio;
@@ -304,7 +300,7 @@ tr_tree_probe(tr_tree *tree, void *key, void **dat)
 }
 
 int
-tr_tree_remove(tr_tree *tree, const void *key, int del)
+tr_tree_remove(tr_tree *tree, const void *key)
 {
 	int rv;
 	tr_node *node, *out, *parent = NULL;
@@ -344,12 +340,8 @@ tr_tree_remove(tr_tree *tree, const void *key, int del)
 		tree->root = out;
 	}
 
-	if (del) {
-		if (tree->key_del)
-			tree->key_del(node->key);
-		if (tree->dat_del)
-			tree->dat_del(node->dat);
-	}
+	if (tree->del_func)
+		tree->del_func(node->key, node->datum);
 	FREE(node);
 
 	tree->count--;
@@ -361,7 +353,7 @@ tr_tree_search(tr_tree *tree, const void *key)
 {
 	int rv;
 	tr_node *node;
-	dict_cmp_func cmp;
+	dict_compare_func cmp;
 
 	ASSERT(tree != NULL);
 
@@ -374,7 +366,7 @@ tr_tree_search(tr_tree *tree, const void *key)
 		else if (rv > 0)
 			node = node->rlink;
 		else
-			return node->dat;
+			return node->datum;
 	}
 	return NULL;
 }
@@ -387,20 +379,24 @@ tr_tree_csearch(const tr_tree *tree, const void *key)
 	return tr_tree_search((tr_tree *)tree, key);
 }
 
-void
-tr_tree_walk(tr_tree *tree, dict_vis_func visit)
+unsigned
+tr_tree_walk(tr_tree *tree, dict_visit_func visit)
 {
 	tr_node *node;
+	unsigned count = 0;
 
 	ASSERT(tree != NULL);
 	ASSERT(visit != NULL);
 
 	if (tree->root == NULL)
-		return;
+		return 0;
 
-	for (node = node_min(tree->root); node; node = node_next(node))
-		if (visit(node->key, node->dat) == 0)
+	for (node = node_min(tree->root); node; node = node_next(node)) {
+		++count;
+		if (!visit(node->key, node->datum))
 			break;
+	}
+	return count;
 }
 
 unsigned
@@ -520,7 +516,7 @@ rot_right(tr_tree *tree, tr_node *node)
 }
 
 static tr_node *
-node_new(void *key, void *dat)
+node_new(void *key, void *datum)
 {
 	tr_node *node;
 
@@ -528,7 +524,7 @@ node_new(void *key, void *dat)
 		return NULL;
 
 	node->key = key;
-	node->dat = dat;
+	node->datum = datum;
 	node->parent = NULL;
 	node->llink = NULL;
 	node->rlink = NULL;
@@ -785,7 +781,7 @@ tr_itor_search(tr_itor *itor, const void *key)
 {
 	int rv;
 	tr_node *node;
-	dict_cmp_func cmp;
+	dict_compare_func cmp;
 
 	ASSERT(itor != NULL);
 
@@ -818,7 +814,7 @@ tr_itor_data(tr_itor *itor)
 {
 	ASSERT(itor != NULL);
 
-	return itor->node ? itor->node->dat : NULL;
+	return itor->node ? itor->node->datum : NULL;
 }
 
 const void *
@@ -826,19 +822,19 @@ tr_itor_cdata(const tr_itor *itor)
 {
 	ASSERT(itor != NULL);
 
-	return itor->node ? itor->node->dat : NULL;
+	return itor->node ? itor->node->datum : NULL;
 }
 
 int
-tr_itor_set_data(tr_itor *itor, void *dat, int del)
+tr_itor_set_data(tr_itor *itor, void *datum, void **old_datum)
 {
 	ASSERT(itor != NULL);
 
 	if (itor->node == NULL)
 		return -1;
 
-	if (del && itor->tree->dat_del)
-		itor->tree->dat_del(itor->node->dat);
-	itor->node->dat = dat;
+	if (old_datum)
+		*old_datum = itor->node->datum;
+	itor->node->datum = datum;
 	return 0;
 }
