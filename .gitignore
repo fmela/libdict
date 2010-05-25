@@ -1,12 +1,8 @@
-data-1
-data-2
-reverse.pl
+words-random
+words-sorted
+shuffle.pl
 mktgz.sh
-demo
-test
-build/*
+bin/*
 algorithms/*.log
 algorithms/*.pdf
 algorithms/*.aux
-*.a
-*.so
