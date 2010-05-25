@@ -42,12 +42,12 @@ typedef unsigned long priority_t;
 
 typedef struct tr_node tr_node;
 struct tr_node {
-	void		*key;
-	void		*datum;
-	tr_node		*parent;
-	tr_node		*llink;
-	tr_node		*rlink;
-	priority_t	 prio;
+	void*				key;
+	void*				datum;
+	tr_node*			parent;
+	tr_node*			llink;
+	tr_node*			rlink;
+	priority_t			prio;
 };
 
 struct tr_tree {
@@ -59,51 +59,51 @@ struct tr_tree {
 };
 
 struct tr_itor {
-	tr_tree	*tree;
-	tr_node	*node;
+	tr_tree*			tree;
+	tr_node*			node;
 };
 
 static dict_vtable tr_tree_vtable = {
-	(inew_func)tr_itor_new,
-	(destroy_func)tr_tree_destroy,
-	(insert_func)tr_tree_insert,
-	(probe_func)tr_tree_probe,
-	(search_func)tr_tree_search,
-	(csearch_func)tr_tree_csearch,
-	(remove_func)tr_tree_remove,
-	(empty_func)tr_tree_empty,
-	(walk_func)tr_tree_walk,
-	(count_func)tr_tree_count
+	(inew_func)			tr_itor_new,
+	(destroy_func)		tr_tree_destroy,
+	(insert_func)		tr_tree_insert,
+	(probe_func)		tr_tree_probe,
+	(search_func)		tr_tree_search,
+	(csearch_func)		tr_tree_csearch,
+	(remove_func)		tr_tree_remove,
+	(empty_func)		tr_tree_empty,
+	(walk_func)			tr_tree_walk,
+	(count_func)		tr_tree_count
 };
 
 static itor_vtable tr_tree_itor_vtable = {
-	(idestroy_func)tr_itor_destroy,
-	(valid_func)tr_itor_valid,
-	(invalidate_func)tr_itor_invalidate,
-	(next_func)tr_itor_next,
-	(prev_func)tr_itor_prev,
-	(nextn_func)tr_itor_nextn,
-	(prevn_func)tr_itor_prevn,
-	(first_func)tr_itor_first,
-	(last_func)tr_itor_last,
-	(key_func)tr_itor_key,
-	(data_func)tr_itor_data,
-	(cdata_func)tr_itor_cdata,
-	(dataset_func)tr_itor_set_data,
-	(iremove_func)NULL,/* tr_itor_remove not implemented yet */
-	(compare_func)NULL /* tr_itor_compare not implemented yet */
+	(idestroy_func)		tr_itor_destroy,
+	(valid_func)		tr_itor_valid,
+	(invalidate_func)	tr_itor_invalidate,
+	(next_func)			tr_itor_next,
+	(prev_func)			tr_itor_prev,
+	(nextn_func)		tr_itor_nextn,
+	(prevn_func)		tr_itor_prevn,
+	(first_func)		tr_itor_first,
+	(last_func)			tr_itor_last,
+	(key_func)			tr_itor_key,
+	(data_func)			tr_itor_data,
+	(cdata_func)		tr_itor_cdata,
+	(dataset_func)		tr_itor_set_data,
+	(iremove_func)		NULL,/* tr_itor_remove not implemented yet */
+	(compare_func)		NULL /* tr_itor_compare not implemented yet */
 };
 
-static void rot_left(tr_tree *tree, tr_node *node);
-static void rot_right(tr_tree *tree, tr_node *node);
-static unsigned node_height(const tr_node *node);
-static unsigned node_mheight(const tr_node *node);
-static unsigned node_pathlen(const tr_node *node, unsigned level);
-static tr_node *node_new(void *key, void *datum);
-static tr_node *node_next(tr_node *node);
-static tr_node *node_prev(tr_node *node);
-static tr_node *node_max(tr_node *node);
-static tr_node *node_min(tr_node *node);
+static void		rot_left(tr_tree *tree, tr_node *node);
+static void		rot_right(tr_tree *tree, tr_node *node);
+static unsigned	node_height(const tr_node *node);
+static unsigned	node_mheight(const tr_node *node);
+static unsigned	node_pathlen(const tr_node *node, unsigned level);
+static tr_node*	node_new(void *key, void *datum);
+static tr_node*	node_next(tr_node *node);
+static tr_node*	node_prev(tr_node *node);
+static tr_node*	node_max(tr_node *node);
+static tr_node*	node_min(tr_node *node);
 
 tr_tree *
 tr_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
