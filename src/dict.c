@@ -31,10 +31,8 @@ dict_set_free(dict_free_func func)
 	return old;
 }
 
-/*
- * In comparing, we cannot simply subtract because that might result in signed
- * overflow.
- */
+/* When comparing, we cannot just subtract because that might result in signed
+ * overflow. */
 int
 dict_int_cmp(const void *k1, const void *k2)
 {
