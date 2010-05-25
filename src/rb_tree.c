@@ -73,18 +73,18 @@ static itor_vtable rb_tree_itor_vtable = {
 static rb_node _null = { NULL, NULL, NULL, NULL, NULL, RB_BLK };
 #define RB_NULL	&_null
 
-static void rot_left(rb_tree *tree, rb_node *node);
-static void rot_right(rb_tree *tree, rb_node *node);
-static void insert_fixup(rb_tree *tree, rb_node *node);
-static void delete_fixup(rb_tree *tree, rb_node *node);
-static unsigned node_height(const rb_node *node);
-static unsigned node_mheight(const rb_node *node);
-static unsigned node_pathlen(const rb_node *node, unsigned level);
-static rb_node *node_new(void *key, void *datum);
-static rb_node *node_next(rb_node *node);
-static rb_node *node_prev(rb_node *node);
-static rb_node *node_max(rb_node *node);
-static rb_node *node_min(rb_node *node);
+static void		rot_left(rb_tree *tree, rb_node *node);
+static void		rot_right(rb_tree *tree, rb_node *node);
+static void		insert_fixup(rb_tree *tree, rb_node *node);
+static void		delete_fixup(rb_tree *tree, rb_node *node);
+static unsigned	node_height(const rb_node *node);
+static unsigned	node_mheight(const rb_node *node);
+static unsigned	node_pathlen(const rb_node *node, unsigned level);
+static rb_node*	node_new(void *key, void *datum);
+static rb_node*	node_next(rb_node *node);
+static rb_node*	node_prev(rb_node *node);
+static rb_node*	node_max(rb_node *node);
+static rb_node*	node_min(rb_node *node);
 
 rb_tree *
 rb_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
