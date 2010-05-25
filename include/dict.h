@@ -57,17 +57,17 @@ typedef struct dict			dict;
 typedef struct dict_itor	dict_itor;
 
 typedef dict_itor*	(*inew_func)	(void *obj);
-typedef void		(*destroy_func)	(void *obj);
+typedef unsigned	(*destroy_func)	(void *obj);
 typedef int			(*insert_func)	(void *obj, void *key, void *datum, int overwrite);
 typedef int			(*probe_func)	(void *obj, void *key, void **datum);
 typedef void*		(*search_func)	(void *obj, const void *key);
 typedef const void*	(*csearch_func)	(const void *obj, const void *key);
 typedef int			(*remove_func)	(void *obj, const void *key);
-typedef void		(*empty_func)	(void *obj);
+typedef unsigned	(*empty_func)	(void *obj);
 typedef unsigned	(*walk_func)	(void *obj, dict_visit_func visit_func);
 typedef unsigned	(*count_func)	(const void *obj);
 
-struct dict_vtable {
+typedef struct {
 	inew_func		 inew;
 	destroy_func	 destroy;
 	insert_func		 insert;
@@ -78,7 +78,7 @@ struct dict_vtable {
 	empty_func		 empty;
 	walk_func		 walk;
 	count_func		 count;
-};
+} dict_vtable;
 
 typedef void		(*idestroy_func)	(void *itor);
 typedef int			(*valid_func)		(const void *itor);
@@ -96,7 +96,7 @@ typedef int			(*dataset_func)		(void *itor, void *datum, void **old_datum);
 typedef int			(*iremove_func)		(void *itor);
 typedef int			(*compare_func)		(void *itor1, void *itor2);
 
-struct itor_vtable {
+typedef struct {
 	idestroy_func	 destroy;
 	valid_func		 valid;
 	invalidate_func	 invalid;
@@ -112,11 +112,11 @@ struct itor_vtable {
 	dataset_func	 dataset;
 	iremove_func	 remove;
 	compare_func	 compare;
-};
+} itor_vtable;
 
 struct dict {
-	void				*_object;
-	struct dict_vtable	*_vtable;
+	void*			_object;
+	dict_vtable*	_vtable;
 };
 
 #define dict_private(dct)		((dct)->_object)
@@ -132,8 +132,8 @@ void dict_destroy(dict *dct);
 #define dict_itor_new(dct)		(dct)->_vtable->inew((dct)->_object)
 
 struct dict_itor {
-	void				*_itor;
-	struct itor_vtable	*_vtable;
+	void*			_itor;
+	itor_vtable*	_vtable;
 };
 
 #define dict_itor_private(i)		((i)->_itor)
