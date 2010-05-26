@@ -49,7 +49,7 @@ struct sp_itor {
 };
 
 static dict_vtable sp_tree_vtable = {
-	(inew_func)			sp_itor_new,
+	(inew_func)			sp_dict_itor_new,
 	(destroy_func)		sp_tree_destroy,
 	(insert_func)		sp_tree_insert,
 	(probe_func)		sp_tree_probe,
@@ -249,17 +249,17 @@ sp_tree_empty(sp_tree *tree)
 int
 sp_tree_insert(sp_tree *tree, void *key, void *datum, int overwrite)
 {
-	int rv = 0; /* shut up GCC */
+	int cmp = 0; /* shut up GCC */
 	sp_node *node, *parent = NULL;
 
 	ASSERT(tree != NULL);
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv < 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp < 0)
 			parent = node, node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
 			if (overwrite == 0)
@@ -281,7 +281,7 @@ sp_tree_insert(sp_tree *tree, void *key, void *datum, int overwrite)
 		tree->count = 1;
 		return 0;
 	}
-	if (rv < 0)
+	if (cmp < 0)
 		parent->llink = node;
 	else
 		parent->rlink = node;
@@ -296,17 +296,17 @@ sp_tree_insert(sp_tree *tree, void *key, void *datum, int overwrite)
 int
 sp_tree_probe(sp_tree *tree, void *key, void **datum)
 {
-	int rv = 0;
+	int cmp = 0;
 	sp_node *node, *parent = NULL;
 
 	ASSERT(tree != NULL);
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv < 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp < 0)
 			parent = node, node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
 			while (node->parent)
@@ -325,7 +325,7 @@ sp_tree_probe(sp_tree *tree, void *key, void **datum)
 		tree->count = 1;
 		return 1;
 	}
-	if (rv < 0)
+	if (cmp < 0)
 		parent->llink = node;
 	else
 		parent->rlink = node;
@@ -340,17 +340,17 @@ sp_tree_probe(sp_tree *tree, void *key, void **datum)
 void *
 sp_tree_search(sp_tree *tree, const void *key)
 {
-	int rv;
+	int cmp;
 	sp_node *node, *parent = NULL;
 
 	ASSERT(tree != NULL);
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv < 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp < 0)
 			parent = node, node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
 			while (node->parent)
@@ -379,17 +379,17 @@ sp_tree_csearch(const sp_tree *tree, const void *key)
 int
 sp_tree_remove(sp_tree *tree, const void *key)
 {
-	int rv;
+	int cmp;
 	sp_node *node, *temp, *out, *parent;
 
 	ASSERT(tree != NULL);
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv < 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp < 0)
 			node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			node = node->rlink;
 		else
 			break;
@@ -837,7 +837,7 @@ sp_itor_last(sp_itor *itor)
 int
 sp_itor_search(sp_itor *itor, const void *key)
 {
-	int rv;
+	int cmp;
 	sp_node *node;
 	dict_compare_func cmp;
 
@@ -845,10 +845,10 @@ sp_itor_search(sp_itor *itor, const void *key)
 
 	cmp = itor->tree->key_cmp;
 	for (node = itor->tree->root; node;) {
-		rv = cmp(key, node->key);
-		if (rv < 0)
+		cmp = cmp(key, node->key);
+		if (cmp < 0)
 			node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			node = node->rlink;
 		else {
 			itor->node = node;
@@ -892,7 +892,7 @@ sp_itor_set_data(sp_itor *itor, void *datum, void **old_datum)
 		return -1;
 
 	if (old_datum)
-		old_datum = itor->node->datum;
+		*old_datum = itor->node->datum;
 	itor->node->datum = datum;
 	return 0;
 }
