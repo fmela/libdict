@@ -149,7 +149,7 @@ main(int argc, char **argv)
 			}
 			itor = dict_itor_new(dct);
 			for (; dict_itor_valid(itor); dict_itor_next(itor))
-				printf("`%p' ==> `%p'\n",
+				printf("`%s' ==> `%s'\n",
 					   (char *)dict_itor_key(itor),
 					   (char *)dict_itor_data(itor));
 			dict_itor_destroy(itor);
