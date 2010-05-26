@@ -40,7 +40,7 @@ struct rb_itor {
 };
 
 static dict_vtable rb_tree_vtable = {
-	(inew_func)			rb_itor_new,
+	(inew_func)			rb_dict_itor_new,
 	(destroy_func)		rb_tree_destroy,
 	(insert_func)		rb_tree_insert,
 	(probe_func)		rb_tree_probe,
