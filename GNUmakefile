@@ -8,7 +8,9 @@ HEADER := $(wildcard $(HEADER_DIR)/*.h $(SOURCE_DIR)/*.h)
 STATIC_OBJ = $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.o)
 PROFIL_OBJ = $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.po)
 SHARED_OBJ = $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.So)
+
 PROG_SRC = $(wildcard *.c)
+PROG_OBJ = $(PROG_SRC:%.c=$(OUTPUT_DIR)/%.o)
 PROG = $(PROG_SRC:%.c=$(OUTPUT_DIR)/%)
 
 LIB = dict
@@ -16,14 +18,16 @@ STATIC_LIB = $(OUTPUT_DIR)/lib$(LIB).a
 PROFIL_LIB = $(OUTPUT_DIR)/lib$(LIB)_p.a
 SHARED_LIB = $(OUTPUT_DIR)/lib$(LIB).so
 
+#CFLAGS = -Wall -Wextra -ansi -pedantic -g -O4 -I$(HEADER_DIR) -I$(SOURCE_DIR)
+CFLAGS = -Wall -Wextra -ansi -pedantic -g -I$(HEADER_DIR) -I$(SOURCE_DIR)
+
 OS=$(shell uname)
 ifeq ($(OS),Darwin)
 	CC=/Developer/usr/bin/clang
+#	CFLAGS := $(CFLAGS) --analyze
 else
 	CC=gcc
 endif
-CFLAGS = -Wall -W -ansi -pedantic -g -O2 -I$(HEADER_DIR) -I$(SOURCE_DIR)
-#CFLAGS = -Wall -W -ansi -pedantic -g -I$(HEADER_DIR) -I$(SOURCE_DIR)
 
 AR = ar
 ARFLAGS = cru
@@ -39,7 +43,7 @@ SHLIB = $(SHARED_LIB).$(LIBVER)
 USER ?= 0
 GROUP ?= 0
 
-all: $(STATIC_LIB) $(PROG)
+all: $(STATIC_LIB) $(PROG) $(PROG_OBJ)
 
 $(STATIC_LIB): $(STATIC_OBJ)
 	$(AR) $(ARFLAGS) $(STATIC_LIB) $(STATIC_OBJ)
@@ -51,13 +55,19 @@ $(SHARED_LIB): $(SHARED_OBJ)
 	$(CC) -shared -o $(SHARED_LIB) $(SHARED_OBJ)
 
 $(OUTPUT_DIR)/%.o: $(SOURCE_DIR)/%.c $(HEADER)
-	$(CC) $(CFLAGS) -c $(<) -o $(@)
+	$(CC) $(CFLAGS) -c -o $(@) $(<)
 
 $(OUTPUT_DIR)/%.po: $(SOURCE_DIR)/%.c $(HEADER)
-	$(CC) $(CFLAGS) -pg -c $(<) -o $(@)
+	$(CC) $(CFLAGS) -pg -c -o $(@) $(<)
 
 $(OUTPUT_DIR)/%.So: $(SOURCE_DIR)/%.c $(HEADER)
-	$(CC) $(CFLAGS) -fPIC -DPIC -c $(<) -o $(@)
+	$(CC) $(CFLAGS) -fPIC -DPIC -c -o $(@) $(<)
+
+$(OUTPUT_DIR)/%.o: %.c $(HEADER)
+	$(CC) $(CFLAGS) -c -o $(@) $(<)
+
+$(OUTPUT_DIR)/%: $(OUTPUT_DIR)/%.o $(STATIC_OBJ)
+	$(CC) -o $(@) $(<) $(STATIC_OBJ)
 
 .PHONY: clean
 clean :
@@ -65,6 +75,7 @@ clean :
 	rm -f $(PROFIL_LIB) $(PROFIL_OBJ)
 	rm -f $(SHARED_LIB) $(SHARED_OBJ)
 	rm -f $(PROG)
+	rm -rf $(OUTPUT_DIR)/*.dSYM
 
 install: $(STATIC_LIB) $(PROFIL_LIB) $(SHARED_LIB)
 	[ -d $(INCDIR) ] || mkdir -m 755 $(INCDIR)
@@ -78,6 +89,3 @@ uninstall :
 	-rm -rf $(INCDIR)
 	-rm -f $(LIBDIR)/$(STATIC_LIB)
 	-rm -f $(LIBDIR)/$(SHARED_LIB)
-
-$(OUTPUT_DIR)/%: %.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_LIB)
