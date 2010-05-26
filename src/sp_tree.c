@@ -839,13 +839,13 @@ sp_itor_search(sp_itor *itor, const void *key)
 {
 	int cmp;
 	sp_node *node;
-	dict_compare_func cmp;
+	dict_compare_func cmp_func;
 
 	ASSERT(itor != NULL);
 
-	cmp = itor->tree->key_cmp;
+	cmp_func = itor->tree->key_cmp;
 	for (node = itor->tree->root; node;) {
-		cmp = cmp(key, node->key);
+		cmp = cmp_func(key, node->key);
 		if (cmp < 0)
 			node = node->llink;
 		else if (cmp > 0)
