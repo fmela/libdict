@@ -48,7 +48,7 @@ struct hashtable_itor {
 };
 
 static dict_vtable hashtable_vtable = {
-	(inew_func)			hashtable_itor_new,
+	(inew_func)			hashtable_dict_itor_new,
 	(destroy_func)		hashtable_destroy,
 	(insert_func)		hashtable_insert,
 	(probe_func)		hashtable_probe,
@@ -143,14 +143,15 @@ hashtable_destroy(hashtable *table)
 int
 hashtable_insert(hashtable *table, void *key, void *datum, int overwrite)
 {
-	unsigned hash;
+	unsigned hash, mhash;
 	hash_node *node, *add;
 
 	ASSERT(table != NULL);
 
 	hash = table->key_hash(key);
 
-	for (node = table->table[hash % table->size]; node; node = node->next)
+	mhash = hash % table->size;
+	for (node = table->table[mhash]; node; node = node->next)
 		if (hash == node->hash && table->key_cmp(key, node->key) == 0) {
 			if (overwrite == 0)
 				return 1;
@@ -168,11 +169,10 @@ hashtable_insert(hashtable *table, void *key, void *datum, int overwrite)
 	add->hash = hash;
 	add->prev = NULL;
 
-	hash %= table->size;
-	add->next = table->table[hash];
-	if (table->table[hash])
-		table->table[hash]->prev = add;
-	table->table[hash] = add;
+	add->next = table->table[mhash];
+	if (table->table[mhash])
+		table->table[mhash]->prev = add;
+	table->table[mhash] = add;
 	table->count++;
 
 	return 0;
@@ -585,7 +585,7 @@ hashtable_itor_first(hashtable_itor *itor)
 			break;
 	if (slot == itor->table->size) {
 		itor->node = NULL;
-		slot = 0;
+		itor->slot = 0;
 	} else {
 		itor->node = itor->table->table[slot];
 		itor->slot = (int)slot;
