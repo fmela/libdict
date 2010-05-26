@@ -49,7 +49,7 @@ key_val_free(void *key, void *datum)
 	free(datum);
 }
 
-#define HSIZE		30011
+#define HSIZE		997
 
 int
 main(int argc, char **argv)
@@ -153,6 +153,19 @@ main(int argc, char **argv)
 					   (char *)dict_itor_key(itor),
 					   (char *)dict_itor_data(itor));
 			dict_itor_destroy(itor);
+		} else if (strcmp(buf, "reverse") == 0) {
+			dict_itor *itor;
+
+			if (ptr) {
+				printf("usage: reverse\n");
+				continue;
+			}
+			itor = dict_itor_new(dct);
+			for (dict_itor_last(itor); dict_itor_valid(itor); dict_itor_prev(itor))
+				printf("`%s' ==> `%s'\n",
+					   (char *)dict_itor_key(itor),
+					   (char *)dict_itor_data(itor));
+			dict_itor_destroy(itor);
 		} else if (strcmp(buf, "empty") == 0) {
 			if (ptr) {
 				printf("usage: empty\n");
@@ -175,6 +188,7 @@ main(int argc, char **argv)
 			printf("  empty\n");
 			printf("  count\n");
 			printf("  display\n");
+			printf("  reverse\n");
 			printf("  quit\n");
 		}
 	}
