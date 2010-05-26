@@ -131,7 +131,6 @@ main(int argc, char **argv)
 	if (fp == NULL)
 		quit("cant open file `%s': %s", argv[1], strerror(errno));
 
-	i = 0;
 	for (i = 0; i < NWORDS && fgets(buf, sizeof(buf), fp); i++) {
 		strtok(buf, "\n");
 		words[i] = xstrdup(buf);
@@ -160,7 +159,7 @@ main(int argc, char **argv)
 	if ((i = dict_count(dct)) != NWORDS)
 		quit("bad count (%u)!", i);
 
-	shuffle(words, NWORDS);
+	/* shuffle(words, NWORDS); */
 
 	getrusage(RUSAGE_SELF, &start);
 	for (i = 0; i < NWORDS; i++) {
@@ -181,7 +180,7 @@ main(int argc, char **argv)
 	printf("search = %02f s\n",
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0);
 
-	shuffle(words, NWORDS);
+	/* shuffle(words, NWORDS); */
 
 	getrusage(RUSAGE_SELF, &start);
 	for (i = 0; i < NWORDS; i++) {
