@@ -35,18 +35,6 @@ void *xdup(const void *ptr, size_t size);
 unsigned s_hash(const unsigned char *p);
 void shuffle(char **p, unsigned size);
 
-unsigned
-s_hash(const unsigned char *p)
-{
-	unsigned hash = 0;
-
-	while (*p) {
-		hash *= 31;
-		hash += *p++;
-	}
-	return hash;
-}
-
 void
 shuffle(char **p, unsigned size)
 {
@@ -59,6 +47,27 @@ shuffle(char **p, unsigned size)
 	}
 }
 
+static int hash_count = 0;
+unsigned
+s_hash(const unsigned char *p)
+{
+	unsigned hash = 0;
+
+	hash_count++;
+
+	while (*p)
+		hash = hash*33 + *p++;
+	return hash;
+}
+
+static int comp_count = 0;
+int
+my_str_cmp(const void *k1, const void *k2)
+{
+	comp_count++;
+	return strcmp(k1, k2);
+}
+
 void
 key_str_free(void *key, void *datum)
 {
@@ -67,25 +76,23 @@ key_str_free(void *key, void *datum)
 }
 
 /* #define HSIZE		599 */
-#define HSIZE		997
-
-/*#define NWORDS	235881*/
-
-#define NWORDS	98569
+/* #define HSIZE		997 */
+#define HSIZE 9973
 
 static size_t malloced = 0;
 
 int
 main(int argc, char **argv)
 {
-	unsigned i;
-	char buf[512], *ptr, *p;
-	char *words[NWORDS];
+	unsigned i, nwords;
+	char buf[512], *p;
+	char **words;
 	FILE *fp;
 	int rv;
 	dict *dct;
 	struct rusage start, end;
 	struct timeval total = { 0, 0 };
+	int total_comp, total_hash;
 
 	if (argc != 3) {
 		fprintf(stderr, "usage: %s [type] [input]\n", appname);
@@ -99,25 +106,25 @@ main(int argc, char **argv)
 	++argv;
 	switch (argv[0][0]) {
 	case 'h':
-		dct = hb_dict_new(dict_str_cmp, key_str_free);
+		dct = hb_dict_new(my_str_cmp, key_str_free);
 		break;
 	case 'p':
-		dct = pr_dict_new(dict_str_cmp, key_str_free);
+		dct = pr_dict_new(my_str_cmp, key_str_free);
 		break;
 	case 'r':
-		dct = rb_dict_new(dict_str_cmp, key_str_free);
+		dct = rb_dict_new(my_str_cmp, key_str_free);
 		break;
 	case 't':
-		dct = tr_dict_new(dict_str_cmp, key_str_free);
+		dct = tr_dict_new(my_str_cmp, key_str_free);
 		break;
 	case 's':
-		dct = sp_dict_new(dict_str_cmp, key_str_free);
+		dct = sp_dict_new(my_str_cmp, key_str_free);
 		break;
 	case 'w':
-		dct = wb_dict_new(dict_str_cmp, key_str_free);
+		dct = wb_dict_new(my_str_cmp, key_str_free);
 		break;
 	case 'H':
-		dct = hashtable_dict_new(dict_str_cmp,
+		dct = hashtable_dict_new(my_str_cmp,
 								 (dict_hash_func)s_hash, key_str_free, HSIZE);
 		break;
 	default:
@@ -131,18 +138,30 @@ main(int argc, char **argv)
 	if (fp == NULL)
 		quit("cant open file `%s': %s", argv[1], strerror(errno));
 
-	for (i = 0; i < NWORDS && fgets(buf, sizeof(buf), fp); i++) {
+	for (nwords = 0; fgets(buf, sizeof(buf), fp); nwords++)
+		;
+
+	if (nwords == 0)
+		quit("nothing read from file");
+
+	printf("Processing %u words\n", nwords);
+	words = xmalloc(sizeof(*words) * nwords);
+
+	rewind(fp);
+	for (i = 0; i < nwords && fgets(buf, sizeof(buf), fp); i++) {
 		strtok(buf, "\n");
 		words[i] = xstrdup(buf);
 	}
 	fclose(fp);
 
+	total_comp = total_hash = 0;
+
 	malloced = 0;
+	comp_count = hash_count = 0;
 	getrusage(RUSAGE_SELF, &start);
-	for (i = 0; i < NWORDS; i++) {
-		ptr = words[i];
-		if ((rv = dict_insert(dct, ptr, ptr, 0)) != 0)
-			quit("insert failed with %d for `%s'", rv, ptr);
+	for (i = 0; i < nwords; i++) {
+		if ((rv = dict_insert(dct, words[i], words[i], 0)) != 0)
+			quit("insert failed with %d for `%s'", rv, words[i]);
 	}
 	getrusage(RUSAGE_SELF, &end);
 	if (end.ru_utime.tv_usec < start.ru_utime.tv_usec)
@@ -152,22 +171,24 @@ main(int argc, char **argv)
 	total.tv_sec += end.ru_utime.tv_sec;
 	if ((total.tv_usec += end.ru_utime.tv_usec) > 1000000)
 		total.tv_usec -= 1000000, total.tv_sec++;
-	printf("insert = %02f s\n",
-		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0);
+	printf("      inserts %02f s (%8d cmp, %8d hash)\n",
+		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
+	total_comp += comp_count; comp_count = 0;
+	total_hash += hash_count; hash_count = 0;
 /*	printf("memory used = %u bytes\n", malloced); */
 
-	if ((i = dict_count(dct)) != NWORDS)
+	if ((i = dict_count(dct)) != nwords)
 		quit("bad count (%u)!", i);
 
-	/* shuffle(words, NWORDS); */
+	/* shuffle(words, nwords); */
 
+	comp_count = hash_count = 0;
 	getrusage(RUSAGE_SELF, &start);
-	for (i = 0; i < NWORDS; i++) {
-		ptr = words[i];
-		if ((p = dict_search(dct, ptr)) == NULL)
+	for (i = 0; i < nwords; i++) {
+		if ((p = dict_search(dct, words[i])) == NULL)
 			quit("lookup failed for `%s'", buf);
-		if (p != ptr)
-			quit("bad data for `%s', got `%s' instead", ptr, p);
+		if (p != words[i])
+			quit("bad data for `%s', got `%s' instead", words[i], p);
 	}
 	getrusage(RUSAGE_SELF, &end);
 	if (end.ru_utime.tv_usec < start.ru_utime.tv_usec)
@@ -177,16 +198,38 @@ main(int argc, char **argv)
 	total.tv_sec += end.ru_utime.tv_sec;
 	if ((total.tv_usec += end.ru_utime.tv_usec) > 1000000)
 		total.tv_usec -= 1000000, total.tv_sec++;
-	printf("search = %02f s\n",
-		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0);
+	printf("good searches %02f s (%8d cmp, %8d hash)\n",
+		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
+	total_comp += comp_count; comp_count = 0;
+	total_hash += hash_count; hash_count = 0;
 
-	/* shuffle(words, NWORDS); */
+	comp_count = hash_count = 0;
+	getrusage(RUSAGE_SELF, &start);
+	for (i = 0; i < nwords; i++) {
+		rv = rand() % strlen(words[i]);
+		words[i][rv]++;
+		dict_search(dct, words[i]);
+		words[i][rv]--;
+	}
+	getrusage(RUSAGE_SELF, &end);
+	if (end.ru_utime.tv_usec < start.ru_utime.tv_usec)
+		end.ru_utime.tv_usec += 1000000, end.ru_utime.tv_sec--;
+	end.ru_utime.tv_usec -= start.ru_utime.tv_usec;
+	end.ru_utime.tv_sec -= start.ru_utime.tv_sec;
+	total.tv_sec += end.ru_utime.tv_sec;
+	if ((total.tv_usec += end.ru_utime.tv_usec) > 1000000)
+		total.tv_usec -= 1000000, total.tv_sec++;
+	printf(" bad searches %02f s (%8d cmp, %8d hash)\n",
+		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
+	total_comp += comp_count; comp_count = 0;
+	total_hash += hash_count; hash_count = 0;
+
+	/* shuffle(words, nwords); */
 
 	getrusage(RUSAGE_SELF, &start);
-	for (i = 0; i < NWORDS; i++) {
-		ptr = words[i];
-		if ((rv = dict_remove(dct, ptr)) != 0)
-			quit("removing `%s' failed (%d)!\n", ptr, rv);
+	for (i = 0; i < nwords; i++) {
+		if ((rv = dict_remove(dct, words[i])) != 0)
+			quit("removing `%s' failed (%d)!\n", words[i], rv);
 	/*	wb_tree_verify(dct->_object); */
 	}
 	getrusage(RUSAGE_SELF, &end);
@@ -197,16 +240,18 @@ main(int argc, char **argv)
 	total.tv_sec += end.ru_utime.tv_sec;
 	if ((total.tv_usec += end.ru_utime.tv_usec) > 1000000)
 		total.tv_usec -= 1000000, total.tv_sec++;
-	printf("remove = %02f s\n",
-		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0);
+	printf(" removes took %02f s (%8d cmp, %8d hash)\n",
+		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
+	total_comp += comp_count; comp_count = 0;
+	total_hash += hash_count; hash_count = 0;
 
 	if ((i = dict_count(dct)) != 0)
 		quit("error - count not zero (%u)!", i);
 
 	dict_destroy(dct);
 
-	printf(" total = %02f s\n",
-		   (total.tv_sec * 1000000 + total.tv_usec) / 1000000.0);
+	printf("       totals %02f s (%8d cmp, %8d hash)\n",
+		   (total.tv_sec * 1000000 + total.tv_usec) / 1000000.0, total_comp, total_hash);
 
 	exit(EXIT_SUCCESS);
 }
