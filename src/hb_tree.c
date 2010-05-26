@@ -40,7 +40,7 @@ struct hb_itor {
 };
 
 static dict_vtable hb_tree_vtable = {
-	(inew_func)			hb_itor_new,
+	(inew_func)			hb_dict_itor_new,
 	(destroy_func)		hb_tree_destroy,
 	(insert_func)		hb_tree_insert,
 	(probe_func)		hb_tree_probe,
@@ -178,17 +178,17 @@ hb_tree_empty(hb_tree *tree)
 void *
 hb_tree_search(hb_tree *tree, const void *key)
 {
-	int rv;
+	int cmp;
 	hb_node *node;
 
 	ASSERT(tree != NULL);
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv < 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp < 0)
 			node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			node = node->rlink;
 		else
 			return node->datum;
@@ -206,17 +206,17 @@ hb_tree_csearch(const hb_tree *tree, const void *key)
 int
 hb_tree_insert(hb_tree *tree, void *key, void *datum, int overwrite)
 {
-	int rv = 0;
+	int cmp = 0;
 	hb_node *node, *parent = NULL, *q = NULL;
 
 	ASSERT(tree != NULL);
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv < 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp < 0)
 			parent = node, node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
 			if (overwrite == 0)
@@ -239,7 +239,7 @@ hb_tree_insert(hb_tree *tree, void *key, void *datum, int overwrite)
 		tree->count = 1;
 		return 0;
 	}
-	if (rv < 0)
+	if (cmp < 0)
 		parent->llink = node;
 	else
 		parent->rlink = node;
@@ -271,17 +271,17 @@ hb_tree_insert(hb_tree *tree, void *key, void *datum, int overwrite)
 int
 hb_tree_probe(hb_tree *tree, void *key, void **datum)
 {
-	int rv = 0;
+	int cmp = 0;
 	hb_node *node, *parent = NULL, *q = NULL;
 
 	ASSERT(tree != NULL);
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv < 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp < 0)
 			parent = node, node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
 			*datum = node->datum;
@@ -299,7 +299,7 @@ hb_tree_probe(hb_tree *tree, void *key, void **datum)
 		tree->count = 1;
 		return 1;
 	}
-	if (rv < 0)
+	if (cmp < 0)
 		parent->llink = node;
 	else
 		parent->rlink = node;
@@ -331,7 +331,7 @@ hb_tree_probe(hb_tree *tree, void *key, void **datum)
 int
 hb_tree_remove(hb_tree *tree, const void *key)
 {
-	int rv, left;
+	int cmp, left;
 	hb_node *node, *out, *parent = NULL;
 	void *tmp;
 
@@ -339,11 +339,11 @@ hb_tree_remove(hb_tree *tree, const void *key)
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv == 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp == 0)
 			break;
 		parent = node;
-		node = rv < 0 ? node->llink : node->rlink;
+		node = cmp < 0 ? node->llink : node->rlink;
 	}
 	if (node == NULL)
 		return -1;
@@ -743,7 +743,7 @@ hb_dict_itor_new(hb_tree *tree)
 	}
 
 	itor->_vtable = &hb_tree_itor_vtable;
-	return(itor);
+	return itor;
 }
 
 void
@@ -859,7 +859,7 @@ hb_itor_last(hb_itor *itor)
 int
 hb_itor_search(hb_itor *itor, const void *key)
 {
-	int rv;
+	int cmp;
 	hb_node *node;
 	dict_compare_func cmp;
 
@@ -867,10 +867,10 @@ hb_itor_search(hb_itor *itor, const void *key)
 
 	cmp = itor->tree->key_cmp;
 	for (node = itor->tree->root; node;) {
-		rv = cmp(key, node->key);
-		if (rv == 0)
+		cmp = cmp(key, node->key);
+		if (cmp == 0)
 			break;
-		node = rv < 0 ? node->llink : node->rlink;
+		node = cmp < 0 ? node->llink : node->rlink;
 	}
 	itor->node = node;
 	RETVALID(itor);
