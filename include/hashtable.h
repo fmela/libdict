@@ -32,7 +32,7 @@ unsigned	hashtable_walk(hashtable *table, dict_visit_func visit);
 unsigned	hashtable_count(const hashtable *table);
 unsigned	hashtable_size(const hashtable *table);
 unsigned	hashtable_slots_used(const hashtable *table);
-int			hashtable_resize(hashtable *table, unsigned size);
+int			hashtable_resize(hashtable *table, unsigned new_size);
 
 typedef struct hashtable_itor hashtable_itor;
 

@@ -182,8 +182,7 @@ int
 hashtable_probe(hashtable *table, void *key, void **datum)
 {
 	unsigned hash, mhash;
-	hash_node *node, *prev, *add;
-	void *tmp;
+	hash_node *node, *add;
 
 	ASSERT(table != NULL);
 	ASSERT(datum != NULL);
@@ -191,21 +190,11 @@ hashtable_probe(hashtable *table, void *key, void **datum)
 	hash = table->key_hash(key);
 	mhash = hash % table->size;
 
-	prev = NULL;
-	node = table->table[mhash];
-	for (; node; prev = node, node = node->next)
-		if (hash == node->hash && table->key_cmp(key, node->key) == 0)
-			break;
-	if (node) {
-		if (prev) { /* Tranpose. */
-			SWAP(prev->key, node->key, tmp);
-			SWAP(prev->datum, node->datum, tmp);
-			SWAP(prev->hash, node->hash, hash);
-			node = prev;
+	for (node = table->table[mhash]; node; node = node->next)
+		if (hash == node->hash && table->key_cmp(key, node->key) == 0) {
+			*datum = node->datum;
+			return 0;
 		}
-		*datum = node->datum;
-		return 0;
-	}
 
 	if ((add = MALLOC(sizeof(*add))) == NULL)
 		return -1;
@@ -226,34 +215,14 @@ void *
 hashtable_search(hashtable *table, const void *key)
 {
 	unsigned hash;
-	hash_node *node, *prev;
-	void *tmp;
+	hash_node *node;
 
 	ASSERT(table != NULL);
 
 	hash = table->key_hash(key);
-	prev = NULL;
-	node = table->table[hash % table->size];
-	for (; node; prev = node, node = node->next)
+	for (node = table->table[hash % table->size]; node; node = node->next)
 		if (hash == node->hash && table->key_cmp(key, node->key) == 0)
-			break;
-	if (node) {
-		if (prev) {
-			/*
-			 * Tranpose. This typically offers better performance than move-to-
-			 * front, but requires a fairly large number of accesses to
-			 * take a randomly ordered chain and re-arrange it to nearly
-			 * optimal. According to [Gonnet 1984] it may take Big-Omega(n^2)
-			 * to come within 1+epsilon of the final state.
-			 */
-			SWAP(prev->key, node->key, tmp);
-			SWAP(prev->datum, node->datum, tmp);
-			SWAP(prev->hash, node->hash, hash);
-			node = prev;
-		}
-		/* Node was already at front of list. */
-		return node->datum;
-	}
+			return node->datum;
 	return NULL;
 }
 
@@ -281,8 +250,7 @@ hashtable_remove(hashtable *table, const void *key)
 	mhash = hash % table->size;
 
 	prev = NULL;
-	node = table->table[mhash];
-	for (; node; prev = node, node = node->next)
+	for (node = table->table[mhash]; node; prev = node, node = node->next)
 		if (hash == node->hash && table->key_cmp(key, node->key) == 0)
 			break;
 	if (node == NULL)
@@ -379,22 +347,22 @@ hashtable_slots_used(const hashtable *table)
 }
 
 int
-hashtable_resize(hashtable *table, unsigned size)
+hashtable_resize(hashtable *table, unsigned new_size)
 {
 	hash_node **ntable;
 	hash_node *node, *next;
 	unsigned i, hash;
 
 	ASSERT(table != NULL);
-	ASSERT(size != 0);
+	ASSERT(new_size != 0);
 
-	if (table->size == size)
+	if (table->size == new_size)
 		return 0;
 
-	if ((ntable = MALLOC(size * sizeof(hash_node *))) == NULL)
+	if ((ntable = MALLOC(new_size * sizeof(hash_node *))) == NULL)
 		return -1;
 
-	for (i = 0; i < size; i++)
+	for (i = 0; i < new_size; i++)
 		ntable[i] = NULL;
 
 	/*
@@ -406,7 +374,7 @@ hashtable_resize(hashtable *table, unsigned size)
 	for (i = 0; i < table->size; i++) {
 		for (node = table->table[i]; node; node = next) {
 			next = node->next;
-			hash = node->hash % size;
+			hash = node->hash % new_size;
 			node->next = ntable[hash];
 			node->prev = NULL;
 			if (ntable[hash])
@@ -417,7 +385,7 @@ hashtable_resize(hashtable *table, unsigned size)
 
 	FREE(table->table);
 	table->table = ntable;
-	table->size = size;
+	table->size = new_size;
 
 	return 0;
 }
@@ -514,31 +482,29 @@ hashtable_itor_next(hashtable_itor *itor)
 int
 hashtable_itor_prev(hashtable_itor *itor)
 {
-	unsigned slot;
 	hash_node *node;
+	unsigned slot;
 
 	ASSERT(itor != NULL);
 
-	if ((node = itor->node) == NULL)
+	if (itor->node == NULL)
 		return hashtable_itor_last(itor);
 
-	slot = itor->slot;
-	node = node->prev;
-	if (node) {
-		itor->node = node;
-		return 1;
-	}
+	if ((itor->node = itor->node->prev) != NULL)
+		return TRUE;
 
+	slot = itor->slot;
 	while (slot > 0)
 		if ((node = itor->table->table[--slot]) != NULL) {
-			for (; node->next; node = node->next)
-				/* void */;
+			while (node->next)
+				node = node->next;
+			itor->node = node;
+			itor->slot = slot;
 			break;
 		}
-	itor->node = node;
-	itor->slot = slot;
-
-	RETVALID(itor);
+	itor->node = NULL;
+	itor->slot = 0;
+	return FALSE;
 }
 
 int
@@ -624,8 +590,7 @@ hashtable_itor_search(hashtable_itor *itor, const void *key)
 	unsigned hash;
 
 	hash = itor->table->key_hash(key);
-	node = itor->table->table[hash % itor->table->size];
-	for (; node; node = node->next)
+	for (node = itor->table->table[hash % itor->table->size]; node; node = node->next)
 		if (hash == node->hash && itor->table->key_cmp(key, node->key) == 0)
 			break;
 	itor->node = node;
