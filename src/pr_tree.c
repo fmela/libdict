@@ -42,7 +42,7 @@ struct pr_itor {
 };
 
 static dict_vtable pr_tree_vtable = {
-	(inew_func)			pr_itor_new,
+	(inew_func)			pr_dict_itor_new,
 	(destroy_func)		pr_tree_destroy,
 	(insert_func)		pr_tree_insert,
 	(probe_func)		pr_tree_probe,
@@ -138,17 +138,17 @@ pr_tree_destroy(pr_tree *tree)
 void *
 pr_tree_search(pr_tree *tree, const void *key)
 {
-	int rv;
+	int cmp;
 	pr_node *node;
 
 	ASSERT(tree != NULL);
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv < 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp < 0)
 			node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			node = node->rlink;
 		else
 			return node->datum;
@@ -273,18 +273,17 @@ again:																		\
 int
 pr_tree_insert(pr_tree *tree, void *key, void *datum, int overwrite)
 {
-	int rv = 0;
+	int cmp = 0;
 	pr_node *node, *parent = NULL;
 
 	ASSERT(tree != NULL);
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		parent = node;
-		if (rv < 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp < 0)
 			parent = node, node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
 			if (overwrite == 0)
@@ -305,7 +304,7 @@ pr_tree_insert(pr_tree *tree, void *key, void *datum, int overwrite)
 		tree->count = 1;
 		return 0;
 	}
-	if (rv < 0)
+	if (cmp < 0)
 		parent->llink = node;
 	else
 		parent->rlink = node;
@@ -323,17 +322,17 @@ pr_tree_insert(pr_tree *tree, void *key, void *datum, int overwrite)
 int
 pr_tree_probe(pr_tree *tree, void *key, void **datum)
 {
-	int rv = 0;
+	int cmp = 0;
 	pr_node *node, *parent = NULL;
 
 	ASSERT(tree != NULL);
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv < 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp < 0)
 			parent = node, node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
 			*datum = node->datum;
@@ -350,7 +349,7 @@ pr_tree_probe(pr_tree *tree, void *key, void **datum)
 		return 1;
 	}
 
-	if (rv < 0)
+	if (cmp < 0)
 		parent->llink = node;
 	else
 		parent->rlink = node;
@@ -368,7 +367,7 @@ pr_tree_probe(pr_tree *tree, void *key, void **datum)
 int
 pr_tree_remove(pr_tree *tree, const void *key)
 {
-	int rv;
+	int cmp;
 	pr_node *node, *temp, *out = NULL; /* ergh @ GCC unitializated warning */
 
 	ASSERT(tree != NULL);
@@ -376,9 +375,9 @@ pr_tree_remove(pr_tree *tree, const void *key)
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv) {
-			node = rv < 0 ? node->llink : node->rlink;
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp) {
+			node = cmp < 0 ? node->llink : node->rlink;
 			continue;
 		}
 		if (node->llink == NULL) {
@@ -911,7 +910,7 @@ pr_itor_last(pr_itor *itor)
 int
 pr_itor_search(pr_itor *itor, const void *key)
 {
-	int rv;
+	int cmp;
 	pr_node *node;
 	dict_compare_func cmp;
 
@@ -919,10 +918,10 @@ pr_itor_search(pr_itor *itor, const void *key)
 
 	cmp = itor->tree->key_cmp;
 	for (node = itor->tree->root; node;) {
-		rv = cmp(key, node->key);
-		if (rv < 0)
+		cmp = cmp(key, node->key);
+		if (cmp < 0)
 			node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			node = node->rlink;
 		else
 			break;
