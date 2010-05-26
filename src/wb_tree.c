@@ -66,7 +66,7 @@ struct wb_itor {
 };
 
 static dict_vtable wb_tree_vtable = {
-	(inew_func)			wb_itor_new,
+	(inew_func)			wb_dict_itor_new,
 	(destroy_func)		wb_tree_destroy,
 	(insert_func)		wb_tree_insert,
 	(probe_func)		wb_tree_probe,
@@ -159,17 +159,17 @@ wb_tree_destroy(wb_tree *tree)
 void *
 wb_tree_search(wb_tree *tree, const void *key)
 {
-	int rv;
+	int cmp;
 	wb_node *node;
 
 	ASSERT(tree != NULL);
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv < 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp < 0)
 			node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			node = node->rlink;
 		else
 			return node->datum;
@@ -187,7 +187,7 @@ wb_tree_csearch(const wb_tree *tree, const void *key)
 int
 wb_tree_insert(wb_tree *tree, void *key, void *datum, int overwrite)
 {
-	int rv = 0;
+	int cmp = 0;
 	wb_node *node, *parent = NULL;
 	float wbal;
 
@@ -195,10 +195,10 @@ wb_tree_insert(wb_tree *tree, void *key, void *datum, int overwrite)
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv < 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp < 0)
 			parent = node, node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
 			if (overwrite == 0)
@@ -219,7 +219,7 @@ wb_tree_insert(wb_tree *tree, void *key, void *datum, int overwrite)
 		tree->count = 1;
 		return 0;
 	}
-	if (rv < 0)
+	if (cmp < 0)
 		parent->llink = node;
 	else
 		parent->rlink = node;
@@ -253,7 +253,7 @@ wb_tree_insert(wb_tree *tree, void *key, void *datum, int overwrite)
 int
 wb_tree_probe(wb_tree *tree, void *key, void **datum)
 {
-	int rv = 0;
+	int cmp = 0;
 	wb_node *node, *parent = NULL;
 	float wbal;
 
@@ -261,10 +261,10 @@ wb_tree_probe(wb_tree *tree, void *key, void **datum)
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv < 0)
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp < 0)
 			parent = node, node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
 			*datum = node->datum;
@@ -280,7 +280,7 @@ wb_tree_probe(wb_tree *tree, void *key, void **datum)
 		tree->count = 1;
 		return 0;
 	}
-	if (rv < 0)
+	if (cmp < 0)
 		parent->llink = node;
 	else
 		parent->rlink = node;
@@ -314,7 +314,7 @@ wb_tree_probe(wb_tree *tree, void *key, void **datum)
 int
 wb_tree_remove(wb_tree *tree, const void *key)
 {
-	int rv;
+	int cmp;
 	wb_node *node, *temp, *out = NULL; /* ergh @ GCC unitializated warning */
 
 	ASSERT(tree != NULL);
@@ -322,9 +322,9 @@ wb_tree_remove(wb_tree *tree, const void *key)
 
 	node = tree->root;
 	while (node) {
-		rv = tree->key_cmp(key, node->key);
-		if (rv) {
-			node = rv < 0 ? node->llink : node->rlink;
+		cmp = tree->key_cmp(key, node->key);
+		if (cmp) {
+			node = cmp < 0 ? node->llink : node->rlink;
 			continue;
 		}
 		if (node->llink == NULL || node->rlink == NULL) {
@@ -842,7 +842,7 @@ wb_itor_last(itor)
 int
 wb_itor_search(wb_itor *itor, const void *key)
 {
-	int rv;
+	int cmp;
 	wb_node *node;
 	dict_compare_func cmp;
 
@@ -850,10 +850,10 @@ wb_itor_search(wb_itor *itor, const void *key)
 
 	cmp = itor->tree->key_cmp;
 	for (node = itor->tree->root; node;) {
-		rv = cmp(key, node->key);
-		if (rv < 0)
+		cmp = cmp(key, node->key);
+		if (cmp < 0)
 			node = node->llink;
-		else if (rv > 0)
+		else if (cmp > 0)
 			node = node->rlink;
 		else {
 			itor->node = node;
