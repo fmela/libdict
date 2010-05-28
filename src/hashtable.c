@@ -500,7 +500,7 @@ hashtable_itor_prev(hashtable_itor *itor)
 				node = node->next;
 			itor->node = node;
 			itor->slot = slot;
-			break;
+			return TRUE;
 		}
 	itor->node = NULL;
 	itor->slot = 0;
