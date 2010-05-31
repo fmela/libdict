@@ -32,54 +32,17 @@ void *xcalloc(size_t size);
 void *xrealloc(void *ptr, size_t size);
 void *xdup(const void *ptr, size_t size);
 
+static int hash_count = 0, comp_count = 0;
 unsigned s_hash(const unsigned char *p);
+int my_str_cmp(const void *k1, const void *k2);
 void shuffle(char **p, unsigned size);
-
-void
-shuffle(char **p, unsigned size)
-{
-	unsigned i, n;
-	char *t;
-
-	for (i = 0; i < size - 1; i++) {
-		n = rand() % (size - i);
-		t = p[i+n]; p[i+n] = p[i]; p[i] = t;
-	}
-}
-
-static int hash_count = 0;
-unsigned
-s_hash(const unsigned char *p)
-{
-	unsigned hash = 0;
-
-	hash_count++;
-
-	while (*p)
-		hash = hash*33 + *p++;
-	return hash;
-}
-
-static int comp_count = 0;
-int
-my_str_cmp(const void *k1, const void *k2)
-{
-	comp_count++;
-	return strcmp(k1, k2);
-}
-
-void
-key_str_free(void *key, void *datum)
-{
-	assert(key == datum);
-	free(key);
-}
+void key_str_free(void *key, void *datum);
 
 /* #define HSIZE		599 */
-/* #define HSIZE		997 */
-#define HSIZE 9973
+#define HSIZE		997
+/* #define HSIZE 9973 */
 
-static size_t malloced = 0;
+static unsigned long malloced = 0;
 
 int
 main(int argc, char **argv)
@@ -90,6 +53,7 @@ main(int argc, char **argv)
 	FILE *fp;
 	int rv;
 	dict *dct;
+	dict_itor *itor;
 	struct rusage start, end;
 	struct timeval total = { 0, 0 };
 	int total_comp, total_hash;
@@ -175,12 +139,54 @@ main(int argc, char **argv)
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
 	total_comp += comp_count; comp_count = 0;
 	total_hash += hash_count; hash_count = 0;
-/*	printf("memory used = %u bytes\n", malloced); */
+	printf("memory used = %lukB bytes\n", (malloced+1023)>>10);
 
 	if ((i = dict_count(dct)) != nwords)
-		quit("bad count (%u)!", i);
+		quit("bad count (%u - should be %u)!", i, nwords);
 
-	/* shuffle(words, nwords); */
+	itor = dict_itor_new(dct);
+
+	getrusage(RUSAGE_SELF, &start);
+	i = 0;
+	dict_itor_first(itor);
+	while (dict_itor_valid(itor)) {
+		dict_itor_key(itor);
+		dict_itor_data(itor);
+		i++;
+
+		dict_itor_next(itor);
+	}
+	getrusage(RUSAGE_SELF, &end);
+	if (end.ru_utime.tv_usec < start.ru_utime.tv_usec)
+		end.ru_utime.tv_usec += 1000000, end.ru_utime.tv_sec--;
+	end.ru_utime.tv_usec -= start.ru_utime.tv_usec;
+	end.ru_utime.tv_sec -= start.ru_utime.tv_sec;
+	printf("  fwd iterate %02f s\n",
+		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0);
+	if (i != nwords)
+		quit("Fwd iteration returned %u items - should be %u", i, nwords);
+
+	getrusage(RUSAGE_SELF, &start);
+	i = 0;
+	dict_itor_last(itor);
+	while (dict_itor_valid(itor)) {
+		dict_itor_key(itor);
+		dict_itor_data(itor);
+		i++;
+
+		dict_itor_prev(itor);
+	}
+	getrusage(RUSAGE_SELF, &end);
+	if (end.ru_utime.tv_usec < start.ru_utime.tv_usec)
+		end.ru_utime.tv_usec += 1000000, end.ru_utime.tv_sec--;
+	end.ru_utime.tv_usec -= start.ru_utime.tv_usec;
+	end.ru_utime.tv_sec -= start.ru_utime.tv_sec;
+	printf("  rev iterate %02f s\n",
+		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0);
+	if (i != nwords)
+		quit("Rev iteration returned %u items - should be %u", i, nwords);
+
+	shuffle(words, nwords);
 
 	comp_count = hash_count = 0;
 	getrusage(RUSAGE_SELF, &start);
@@ -224,7 +230,7 @@ main(int argc, char **argv)
 	total_comp += comp_count; comp_count = 0;
 	total_hash += hash_count; hash_count = 0;
 
-	/* shuffle(words, nwords); */
+	shuffle(words, nwords);
 
 	getrusage(RUSAGE_SELF, &start);
 	for (i = 0; i < nwords; i++) {
@@ -315,4 +321,42 @@ xdup(const void *ptr, size_t size)
 	p = xmalloc(size);
 	memcpy(p, ptr, size);
 	return p;
+}
+
+void
+shuffle(char **p, unsigned size)
+{
+	unsigned i, n;
+	char *t;
+
+	for (i = 0; i < size - 1; i++) {
+		n = rand() % (size - i);
+		t = p[i+n]; p[i+n] = p[i]; p[i] = t;
+	}
+}
+
+unsigned
+s_hash(const unsigned char *p)
+{
+	unsigned hash = 0;
+
+	hash_count++;
+
+	while (*p)
+		hash = hash*33 + *p++;
+	return hash;
+}
+
+int
+my_str_cmp(const void *k1, const void *k2)
+{
+	comp_count++;
+	return strcmp(k1, k2);
+}
+
+void
+key_str_free(void *key, void *datum)
+{
+	assert(key == datum);
+	free(key);
 }
