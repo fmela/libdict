@@ -18,8 +18,9 @@ STATIC_LIB = $(OUTPUT_DIR)/lib$(LIB).a
 PROFIL_LIB = $(OUTPUT_DIR)/lib$(LIB)_p.a
 SHARED_LIB = $(OUTPUT_DIR)/lib$(LIB).so
 
-#CFLAGS = -Wall -Wextra -ansi -pedantic -g -O4 -I$(HEADER_DIR) -I$(SOURCE_DIR)
-CFLAGS = -Wall -Wextra -ansi -pedantic -g -I$(HEADER_DIR) -I$(SOURCE_DIR)
+CFLAGS = -Wall -Wextra -ansi -pedantic -g -I$(HEADER_DIR) -I$(SOURCE_DIR)# -m32
+CFLAGS:= $(CFLAGS) -O4
+LDFLAGS =# -m32
 
 OS=$(shell uname)
 ifeq ($(OS),Darwin)
@@ -67,14 +68,14 @@ $(OUTPUT_DIR)/%.o: %.c $(HEADER)
 	$(CC) $(CFLAGS) -c -o $(@) $(<)
 
 $(OUTPUT_DIR)/%: $(OUTPUT_DIR)/%.o $(STATIC_OBJ)
-	$(CC) -o $(@) $(<) $(STATIC_OBJ)
+	$(CC) -o $(@) $(<) $(STATIC_OBJ) $(LDFLAGS)
 
 .PHONY: clean
 clean :
 	rm -f $(STATIC_LIB) $(STATIC_OBJ)
 	rm -f $(PROFIL_LIB) $(PROFIL_OBJ)
 	rm -f $(SHARED_LIB) $(SHARED_OBJ)
-	rm -f $(PROG)
+	rm -f $(PROG) $(PROG_OBJ)
 	rm -rf $(OUTPUT_DIR)/*.dSYM
 
 install: $(STATIC_LIB) $(PROFIL_LIB) $(SHARED_LIB)
