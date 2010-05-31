@@ -5,6 +5,7 @@ all : $(PDF)
 
 %.pdf : %.tex
 	pdftex $(<)
+	rm $(<:%.tex=%.log)
 
 clean :
 	rm -f $(PDF) *.log *.aux
