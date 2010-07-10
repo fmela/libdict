@@ -9,9 +9,10 @@
 void *xmalloc(size_t size);
 char *xstrdup(const char *s);
 
-struct words {
-	char *word;
-	struct words *next;
+typedef struct WordList WordList;
+struct WordList {
+	char		*word;
+	WordList	*next;
 };
 
 int
@@ -22,7 +23,7 @@ main(int argc, char *argv[])
 	FILE *fp;
 	hb_tree *tree;
 	hb_itor *itor;
-	struct words *word, *wordp;
+	WordList *word, *wordp;
 
 	if (argv[1] == NULL) {
 		printf("Expected filename argument.\n");
