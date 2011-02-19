@@ -1,12 +1,34 @@
 /*
- * pr_tree.c
- *
- * Implementation of path reduction tree.
- * Copyright (C) 2001-2010 Farooq Mela.
- *
- * $Id$
- *
+ * libdict -- internal path reduction tree implementation.
  * cf. [Gonnet 1983], [Gonnet 1984]
+ *
+ * Copyright (c) 2001-2011, Farooq Mela
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by Farooq Mela.
+ * 4. Neither the name of the Farooq Mela nor the
+ *    names of contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY FAROOQ MELA ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL FAROOQ MELA BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdlib.h>
@@ -32,7 +54,7 @@ struct pr_node {
 struct pr_tree {
 	pr_node*			root;
 	unsigned			count;
-	dict_compare_func	key_cmp;
+	dict_compare_func	cmp_func;
 	dict_delete_func	del_func;
 };
 
@@ -42,34 +64,34 @@ struct pr_itor {
 };
 
 static dict_vtable pr_tree_vtable = {
-	(inew_func)			pr_dict_itor_new,
-	(destroy_func)		pr_tree_destroy,
-	(insert_func)		pr_tree_insert,
-	(probe_func)		pr_tree_probe,
-	(search_func)		pr_tree_search,
-	(csearch_func)		pr_tree_csearch,
-	(remove_func)		pr_tree_remove,
-	(empty_func)		pr_tree_empty,
-	(walk_func)			pr_tree_walk,
-	(count_func)		pr_tree_count
+	(dict_inew_func)		pr_dict_itor_new,
+	(dict_dfree_func)		pr_tree_free,
+	(dict_insert_func)		pr_tree_insert,
+	(dict_probe_func)		pr_tree_probe,
+	(dict_search_func)		pr_tree_search,
+	(dict_csearch_func)		pr_tree_csearch,
+	(dict_remove_func)		pr_tree_remove,
+	(dict_clear_func)		pr_tree_clear,
+	(dict_traverse_func)	pr_tree_traverse,
+	(dict_count_func)		pr_tree_count
 };
 
 static itor_vtable pr_tree_itor_vtable = {
-	(idestroy_func)		pr_itor_destroy,
-	(valid_func)		pr_itor_valid,
-	(invalidate_func)	pr_itor_invalidate,
-	(next_func)			pr_itor_next,
-	(prev_func)			pr_itor_prev,
-	(nextn_func)		pr_itor_nextn,
-	(prevn_func)		pr_itor_prevn,
-	(first_func)		pr_itor_first,
-	(last_func)			pr_itor_last,
-	(key_func)			pr_itor_key,
-	(data_func)			pr_itor_data,
-	(cdata_func)		pr_itor_cdata,
-	(dataset_func)		pr_itor_set_data,
-	(iremove_func)		NULL,/* pr_itor_remove not implemented yet */
-	(compare_func)		NULL /* pr_itor_compare not implemented yet */
+	(dict_ifree_func)		pr_itor_free,
+	(dict_valid_func)		pr_itor_valid,
+	(dict_invalidate_func)	pr_itor_invalidate,
+	(dict_next_func)		pr_itor_next,
+	(dict_prev_func)		pr_itor_prev,
+	(dict_nextn_func)		pr_itor_nextn,
+	(dict_prevn_func)		pr_itor_prevn,
+	(dict_first_func)		pr_itor_first,
+	(dict_last_func)		pr_itor_last,
+	(dict_key_func)			pr_itor_key,
+	(dict_data_func)		pr_itor_data,
+	(dict_cdata_func)		pr_itor_cdata,
+	(dict_dataset_func)		pr_itor_set_data,
+	(dict_iremove_func)		NULL,/* pr_itor_remove not implemented yet */
+	(dict_icompare_func)	NULL /* pr_itor_compare not implemented yet */
 };
 
 static void		fixup(pr_tree *tree, pr_node *node);
@@ -85,7 +107,7 @@ static pr_node*	node_next(pr_node *node);
 static pr_node*	node_prev(pr_node *node);
 
 pr_tree *
-pr_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
+pr_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
 	pr_tree *tree;
 
@@ -94,14 +116,14 @@ pr_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
 
 	tree->root = NULL;
 	tree->count = 0;
-	tree->key_cmp = key_cmp ? key_cmp : dict_ptr_cmp;
+	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	tree->del_func = del_func;
 
 	return tree;
 }
 
 dict *
-pr_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
+pr_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
 	dict *dct;
 	pr_tree *tree;
@@ -109,7 +131,7 @@ pr_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((tree = pr_tree_new(key_cmp, del_func)) == NULL) {
+	if ((tree = pr_tree_new(cmp_func, del_func)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}
@@ -121,14 +143,14 @@ pr_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
 }
 
 unsigned
-pr_tree_destroy(pr_tree *tree)
+pr_tree_free(pr_tree *tree)
 {
 	unsigned count = 0;
 
 	ASSERT(tree != NULL);
 
 	if (tree->root)
-		count = pr_tree_empty(tree);
+		count = pr_tree_clear(tree);
 
 	FREE(tree);
 
@@ -145,7 +167,7 @@ pr_tree_search(pr_tree *tree, const void *key)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			node = node->llink;
 		else if (cmp > 0)
@@ -280,13 +302,13 @@ pr_tree_insert(pr_tree *tree, void *key, void *datum, int overwrite)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			parent = node, node = node->llink;
 		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
-			if (overwrite == 0)
+			if (!overwrite)
 				return 1;
 			if (tree->del_func)
 				tree->del_func(node->key, node->datum);
@@ -329,7 +351,7 @@ pr_tree_probe(pr_tree *tree, void *key, void **datum)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			parent = node, node = node->llink;
 		else if (cmp > 0)
@@ -375,7 +397,7 @@ pr_tree_remove(pr_tree *tree, const void *key)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp) {
 			node = cmp < 0 ? node->llink : node->rlink;
 			continue;
@@ -443,7 +465,7 @@ pr_tree_remove(pr_tree *tree, const void *key)
 }
 
 unsigned
-pr_tree_empty(pr_tree *tree)
+pr_tree_clear(pr_tree *tree)
 {
 	pr_node *node, *parent;
 	unsigned count;
@@ -510,7 +532,7 @@ pr_tree_max(const pr_tree *tree)
 }
 
 unsigned
-pr_tree_walk(pr_tree *tree, dict_visit_func visit)
+pr_tree_traverse(pr_tree *tree, dict_visit_func visit)
 {
 	pr_node *node;
 	unsigned count = 0;
@@ -798,7 +820,7 @@ pr_dict_itor_new(pr_tree *tree)
 }
 
 void
-pr_itor_destroy(pr_itor *itor)
+pr_itor_free(pr_itor *itor)
 {
 	ASSERT(itor != NULL);
 
@@ -916,7 +938,7 @@ pr_itor_search(pr_itor *itor, const void *key)
 
 	ASSERT(itor != NULL);
 
-	cmp_func = itor->tree->key_cmp;
+	cmp_func = itor->tree->cmp_func;
 	for (node = itor->tree->root; node;) {
 		cmp = cmp_func(key, node->key);
 		if (cmp < 0)
