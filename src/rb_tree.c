@@ -1,12 +1,34 @@
 /*
- * rb_tree.c
- *
- * Implementation of red-black binary search tree.
- * Copyright (C) 2001-2010 Farooq Mela.
- *
- * $Id$
- *
+ * libdict -- red-black tree implementation.
  * cf. [Cormen, Leiserson, and Rivest 1990], [Guibas and Sedgewick, 1978]
+ *
+ * Copyright (c) 2001-2011, Farooq Mela
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by Farooq Mela.
+ * 4. Neither the name of the Farooq Mela nor the
+ *    names of contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY FAROOQ MELA ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL FAROOQ MELA BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdlib.h>
@@ -30,7 +52,7 @@ struct rb_node {
 struct rb_tree {
 	rb_node*			root;
 	unsigned			count;
-	dict_compare_func	key_cmp;
+	dict_compare_func	cmp_func;
 	dict_delete_func	del_func;
 };
 
@@ -40,34 +62,34 @@ struct rb_itor {
 };
 
 static dict_vtable rb_tree_vtable = {
-	(inew_func)			rb_dict_itor_new,
-	(destroy_func)		rb_tree_destroy,
-	(insert_func)		rb_tree_insert,
-	(probe_func)		rb_tree_probe,
-	(search_func)		rb_tree_search,
-	(csearch_func)		rb_tree_csearch,
-	(remove_func)		rb_tree_remove,
-	(empty_func)		rb_tree_empty,
-	(walk_func)			rb_tree_walk,
-	(count_func)		rb_tree_count
+	(dict_inew_func)		rb_dict_itor_new,
+	(dict_dfree_func)		rb_tree_free,
+	(dict_insert_func)		rb_tree_insert,
+	(dict_probe_func)		rb_tree_probe,
+	(dict_search_func)		rb_tree_search,
+	(dict_csearch_func)		rb_tree_csearch,
+	(dict_remove_func)		rb_tree_remove,
+	(dict_clear_func)		rb_tree_clear,
+	(dict_traverse_func)	rb_tree_traverse,
+	(dict_count_func)		rb_tree_count
 };
 
 static itor_vtable rb_tree_itor_vtable = {
-	(idestroy_func)		rb_itor_destroy,
-	(valid_func)		rb_itor_valid,
-	(invalidate_func)	rb_itor_invalidate,
-	(next_func)			rb_itor_next,
-	(prev_func)			rb_itor_prev,
-	(nextn_func)		rb_itor_nextn,
-	(prevn_func)		rb_itor_prevn,
-	(first_func)		rb_itor_first,
-	(last_func)			rb_itor_last,
-	(key_func)			rb_itor_key,
-	(data_func)			rb_itor_data,
-	(cdata_func)		rb_itor_cdata,
-	(dataset_func)		rb_itor_set_data,
-	(iremove_func)		NULL,/* rb_itor_remove not implemented yet */
-	(compare_func)		NULL /* rb_itor_compare not implemented yet */
+	(dict_ifree_func)		rb_itor_free,
+	(dict_valid_func)		rb_itor_valid,
+	(dict_invalidate_func)	rb_itor_invalidate,
+	(dict_next_func)		rb_itor_next,
+	(dict_prev_func)		rb_itor_prev,
+	(dict_nextn_func)		rb_itor_nextn,
+	(dict_prevn_func)		rb_itor_prevn,
+	(dict_first_func)		rb_itor_first,
+	(dict_last_func)		rb_itor_last,
+	(dict_key_func)			rb_itor_key,
+	(dict_data_func)		rb_itor_data,
+	(dict_cdata_func)		rb_itor_cdata,
+	(dict_dataset_func)		rb_itor_set_data,
+	(dict_iremove_func)		NULL,/* rb_itor_remove not implemented yet */
+	(dict_icompare_func)	NULL /* rb_itor_compare not implemented yet */
 };
 
 static rb_node _null = { NULL, NULL, NULL, NULL, NULL, RB_BLK };
@@ -87,7 +109,7 @@ static rb_node*	node_max(rb_node *node);
 static rb_node*	node_min(rb_node *node);
 
 rb_tree *
-rb_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
+rb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
 	rb_tree *tree;
 
@@ -96,14 +118,14 @@ rb_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
 
 	tree->root = RB_NULL;
 	tree->count = 0;
-	tree->key_cmp = key_cmp ? key_cmp : dict_ptr_cmp;
+	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	tree->del_func = del_func;
 
 	return tree;
 }
 
 dict *
-rb_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
+rb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
 	dict *dct;
 	rb_tree *tree;
@@ -111,7 +133,7 @@ rb_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((tree = rb_tree_new(key_cmp, del_func)) == NULL) {
+	if ((tree = rb_tree_new(cmp_func, del_func)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}
@@ -123,14 +145,14 @@ rb_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
 }
 
 unsigned
-rb_tree_destroy(rb_tree *tree)
+rb_tree_free(rb_tree *tree)
 {
 	unsigned count = 0;
 
 	ASSERT(tree != NULL);
 
 	if (tree->root != RB_NULL)
-		count = rb_tree_empty(tree);
+		count = rb_tree_clear(tree);
 
 	FREE(tree);
 
@@ -146,7 +168,7 @@ rb_tree_search(rb_tree *tree, const void *key)
 
 	node = tree->root;
 	while (node != RB_NULL) {
-		int cmp = tree->key_cmp(key, node->key);
+		int cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			node = node->llink;
 		else if (cmp > 0)
@@ -177,13 +199,13 @@ rb_tree_insert(rb_tree *tree, void *key, void *datum, int overwrite)
 	node = tree->root;
 
 	while (node != RB_NULL) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			parent = node, node = node->llink;
 		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
-			if (overwrite == 0)
+			if (!overwrite)
 				return 1;
 			if (tree->del_func)
 				tree->del_func(node->key, node->datum);
@@ -224,7 +246,7 @@ rb_tree_probe(rb_tree *tree, void *key, void **datum)
 	node = tree->root;
 
 	while (node != RB_NULL) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			parent = node, node = node->llink;
 		else if (cmp > 0)
@@ -317,7 +339,7 @@ rb_tree_remove(rb_tree *tree, const void *key)
 
 	node = tree->root;
 	while (node != RB_NULL) {
-		int cmp = tree->key_cmp(key, node->key);
+		int cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			node = node->llink;
 		else if (cmp > 0)
@@ -425,7 +447,7 @@ delete_fixup(rb_tree *tree, rb_node *node)
 }
 
 unsigned
-rb_tree_empty(rb_tree *tree)
+rb_tree_clear(rb_tree *tree)
 {
 	rb_node *node, *parent;
 	unsigned count;
@@ -527,7 +549,7 @@ rb_tree_max(const rb_tree *tree)
 }
 
 unsigned
-rb_tree_walk(rb_tree *tree, dict_visit_func visit)
+rb_tree_traverse(rb_tree *tree, dict_visit_func visit)
 {
 	rb_node *node;
 	unsigned count = 0;
@@ -749,7 +771,7 @@ rb_dict_itor_new(rb_tree *tree)
 }
 
 void
-rb_itor_destroy(rb_itor *itor)
+rb_itor_free(rb_itor *itor)
 {
 	ASSERT(itor != NULL);
 
@@ -866,7 +888,7 @@ rb_itor_search(rb_itor *itor, const void *key)
 
 	ASSERT(itor != NULL);
 
-	cmp_func = itor->tree->key_cmp;
+	cmp_func = itor->tree->cmp_func;
 	for (node = itor->tree->root; node != RB_NULL;) {
 		int cmp = cmp_func(key, node->key);
 		if (cmp < 0)
