@@ -1,10 +1,33 @@
 /*
- * hb_tree.h
+ * libdict -- height-balanced (AVL) tree interface.
  *
- * Interface for height balanced tree.
- * Copyright (C) 2001-2010 Farooq Mela.
+ * Copyright (c) 2001-2011, Farooq Mela
+ * All rights reserved.
  *
- * $Id$
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by Farooq Mela.
+ * 4. Neither the name of the Farooq Mela nor the
+ *    names of contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY FAROOQ MELA ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL FAROOQ MELA BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _HB_TREE_H_
@@ -14,19 +37,20 @@
 
 BEGIN_DECL
 
-typedef struct hb_tree hb_tree;
+typedef struct hb_tree
+			hb_tree;
 
-hb_tree*	hb_tree_new(dict_compare_func key_cmp, dict_delete_func del_func);
-dict*		hb_dict_new(dict_compare_func key_cmp, dict_delete_func del_func);
-unsigned	hb_tree_destroy(hb_tree *tree);
+hb_tree*	hb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
+dict*		hb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
+unsigned	hb_tree_free(hb_tree *tree);
 
 int			hb_tree_insert(hb_tree *tree, void *key, void *datum, int overwrite);
 int			hb_tree_probe(hb_tree *tree, void *key, void **datum);
 void*		hb_tree_search(hb_tree *tree, const void *key);
 const void*	hb_tree_csearch(const hb_tree *tree, const void *key);
 int			hb_tree_remove(hb_tree *tree, const void *key);
-unsigned	hb_tree_empty(hb_tree *tree);
-unsigned	hb_tree_walk(hb_tree *tree, dict_visit_func visit);
+unsigned	hb_tree_clear(hb_tree *tree);
+unsigned	hb_tree_traverse(hb_tree *tree, dict_visit_func visit);
 unsigned	hb_tree_count(const hb_tree *tree);
 unsigned	hb_tree_height(const hb_tree *tree);
 unsigned	hb_tree_mheight(const hb_tree *tree);
@@ -34,11 +58,12 @@ unsigned	hb_tree_pathlen(const hb_tree *tree);
 const void*	hb_tree_min(const hb_tree *tree);
 const void*	hb_tree_max(const hb_tree *tree);
 
-typedef struct hb_itor hb_itor;
+typedef struct hb_itor
+			hb_itor;
 
 hb_itor*	hb_itor_new(hb_tree *tree);
 dict_itor*	hb_dict_itor_new(hb_tree *tree);
-void		hb_itor_destroy(hb_itor *tree);
+void		hb_itor_free(hb_itor *tree);
 
 int			hb_itor_valid(const hb_itor *itor);
 void		hb_itor_invalidate(hb_itor *itor);
