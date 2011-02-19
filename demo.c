@@ -1,6 +1,6 @@
 /* demo.c
  * Demo capabilities of libdict
- * Copyright (C) 2001-2010 Farooq Mela */
+ * Copyright (C) 2001-2011 Farooq Mela */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,7 +77,7 @@ main(int argc, char **argv)
 		dct = rb_dict_new((dict_compare_func)strcmp, key_val_free);
 		break;
 	case 't':
-		dct = tr_dict_new((dict_compare_func)strcmp, key_val_free);
+		dct = tr_dict_new((dict_compare_func)strcmp, NULL, key_val_free);
 		break;
 	case 's':
 		dct = sp_dict_new((dict_compare_func)strcmp, key_val_free);
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 				printf("`%s' ==> `%s'\n",
 					   (char *)dict_itor_key(itor),
 					   (char *)dict_itor_data(itor));
-			dict_itor_destroy(itor);
+			dict_itor_free(itor);
 		} else if (strcmp(buf, "reverse") == 0) {
 			dict_itor *itor;
 
@@ -165,13 +165,13 @@ main(int argc, char **argv)
 				printf("`%s' ==> `%s'\n",
 					   (char *)dict_itor_key(itor),
 					   (char *)dict_itor_data(itor));
-			dict_itor_destroy(itor);
-		} else if (strcmp(buf, "empty") == 0) {
+			dict_itor_free(itor);
+		} else if (strcmp(buf, "clear") == 0) {
 			if (ptr) {
-				printf("usage: empty\n");
+				printf("usage: clear\n");
 				continue;
 			}
-			dict_empty(dct);
+			dict_clear(dct);
 		} else if (strcmp(buf, "count") == 0) {
 			if (ptr) {
 				printf("usage: count\n");
@@ -185,7 +185,7 @@ main(int argc, char **argv)
 			printf("  insert <key> <data>\n");
 			printf("  search <key>\n");
 			printf("  remove <key>\n");
-			printf("  empty\n");
+			printf("  clear\n");
 			printf("  count\n");
 			printf("  display\n");
 			printf("  reverse\n");
@@ -193,7 +193,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	dict_destroy(dct);
+	dict_free(dct);
 
 	exit(0);
 }
