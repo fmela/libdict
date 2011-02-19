@@ -18,16 +18,16 @@ STATIC_LIB = $(OUTPUT_DIR)/lib$(LIB).a
 PROFIL_LIB = $(OUTPUT_DIR)/lib$(LIB)_p.a
 SHARED_LIB = $(OUTPUT_DIR)/lib$(LIB).so
 
-CFLAGS = -Wall -Wextra -ansi -pedantic -g -I$(HEADER_DIR) -I$(SOURCE_DIR)# -m32
-CFLAGS:= $(CFLAGS) -O4
-LDFLAGS =# -m32
+CFLAGS = -Wall -Wextra -ansi -pedantic -g -I$(HEADER_DIR) -I$(SOURCE_DIR)
+#CFLAGS:= $(CFLAGS) -O2
+LDFLAGS =
 
-OS=$(shell uname)
-ifeq ($(OS),Darwin)
-	CC=/Developer/usr/bin/clang
-#	CFLAGS := $(CFLAGS) --analyze
-else
+WHICH_CLANG=$(shell which clang)
+ifeq ($(WHICH_CLANG),'')
 	CC=gcc
+else
+	CC=clang
+#	CFLAGS := $(CFLAGS) --analyze
 endif
 
 AR = ar
@@ -44,7 +44,7 @@ SHLIB = $(SHARED_LIB).$(LIBVER)
 USER ?= 0
 GROUP ?= 0
 
-all: $(STATIC_LIB) $(PROG) $(PROG_OBJ)
+all: $(STATIC_LIB) $(SHARED_LIB) $(PROG) $(PROG_OBJ)
 
 $(STATIC_LIB): $(STATIC_OBJ)
 	$(AR) $(ARFLAGS) $(STATIC_LIB) $(STATIC_OBJ)
