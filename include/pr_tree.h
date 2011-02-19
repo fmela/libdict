@@ -1,10 +1,33 @@
 /*
- * pr_tree.h
+ * libdict -- internal path reduction tree interface.
  *
- * Interface for path reduction tree.
- * Copyright (C) 2001-2010 Farooq Mela.
+ * Copyright (c) 2001-2011, Farooq Mela
+ * All rights reserved.
  *
- * $Id$
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by Farooq Mela.
+ * 4. Neither the name of the Farooq Mela nor the
+ *    names of contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY FAROOQ MELA ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL FAROOQ MELA BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _PR_TREE_H_
@@ -14,19 +37,20 @@
 
 BEGIN_DECL
 
-typedef struct pr_tree pr_tree;
+typedef struct pr_tree
+			pr_tree;
 
-pr_tree*	pr_tree_new(dict_compare_func key_cmp, dict_delete_func del_func);
-dict*		pr_dict_new(dict_compare_func key_cmp, dict_delete_func del_func);
-unsigned	pr_tree_destroy(pr_tree *tree);
+pr_tree*	pr_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
+dict*		pr_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
+unsigned	pr_tree_free(pr_tree *tree);
 
 int			pr_tree_insert(pr_tree *tree, void *key, void *datum, int overwrite);
 int			pr_tree_probe(pr_tree *tree, void *key, void **datum);
 void*		pr_tree_search(pr_tree *tree, const void *key);
 const void*	pr_tree_csearch(const pr_tree *tree, const void *key);
 int			pr_tree_remove(pr_tree *tree, const void *key);
-unsigned	pr_tree_empty(pr_tree *tree);
-unsigned	pr_tree_walk(pr_tree *tree, dict_visit_func visit);
+unsigned	pr_tree_clear(pr_tree *tree);
+unsigned	pr_tree_traverse(pr_tree *tree, dict_visit_func visit);
 unsigned	pr_tree_count(const pr_tree *tree);
 unsigned	pr_tree_height(const pr_tree *tree);
 unsigned	pr_tree_mheight(const pr_tree *tree);
@@ -34,11 +58,12 @@ unsigned	pr_tree_pathlen(const pr_tree *tree);
 const void*	pr_tree_min(const pr_tree *tree);
 const void*	pr_tree_max(const pr_tree *tree);
 
-typedef struct pr_itor pr_itor;
+typedef struct pr_itor
+			pr_itor;
 
 pr_itor*	pr_itor_new(pr_tree *tree);
 dict_itor*	pr_dict_itor_new(pr_tree *tree);
-void		pr_itor_destroy(pr_itor *tree);
+void		pr_itor_free(pr_itor *tree);
 
 int			pr_itor_valid(const pr_itor *itor);
 void		pr_itor_invalidate(pr_itor *itor);
