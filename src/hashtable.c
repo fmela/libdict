@@ -1,12 +1,34 @@
 /*
- * hashtable.c
- *
- * Implementation for chained hash table.
- * Copyright (C) 2001-2010 Farooq Mela.
- *
- * $Id$
- *
+ * libdict -- chained hash-table implementation.
  * cf. [Gonnet 1984], [Knuth 1998]
+ *
+ * Copyright (c) 2001-2011, Farooq Mela
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by Farooq Mela.
+ * 4. Neither the name of the Farooq Mela nor the
+ *    names of contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY FAROOQ MELA ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL FAROOQ MELA BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdlib.h>
@@ -35,8 +57,8 @@ struct hash_node {
 struct hashtable {
 	hash_node**			table;
 	unsigned			size;
-	dict_compare_func	key_cmp;
-	dict_hash_func		key_hash;
+	dict_compare_func	cmp_func;
+	dict_hash_func		hash_func;
 	dict_delete_func	del_func;
 	unsigned			count;
 };
@@ -48,43 +70,43 @@ struct hashtable_itor {
 };
 
 static dict_vtable hashtable_vtable = {
-	(inew_func)			hashtable_dict_itor_new,
-	(destroy_func)		hashtable_destroy,
-	(insert_func)		hashtable_insert,
-	(probe_func)		hashtable_probe,
-	(search_func)		hashtable_search,
-	(csearch_func)		hashtable_csearch,
-	(remove_func)		hashtable_remove,
-	(empty_func)		hashtable_empty,
-	(walk_func)			hashtable_walk,
-	(count_func)		hashtable_count
+	(dict_inew_func)		hashtable_dict_itor_new,
+	(dict_dfree_func)		hashtable_free,
+	(dict_insert_func)		hashtable_insert,
+	(dict_probe_func)		hashtable_probe,
+	(dict_search_func)		hashtable_search,
+	(dict_csearch_func)		hashtable_csearch,
+	(dict_remove_func)		hashtable_remove,
+	(dict_clear_func)		hashtable_clear,
+	(dict_traverse_func)	hashtable_traverse,
+	(dict_count_func)		hashtable_count
 };
 
 static itor_vtable hashtable_itor_vtable = {
-	(idestroy_func)		hashtable_itor_destroy,
-	(valid_func)		hashtable_itor_valid,
-	(invalidate_func)	hashtable_itor_invalidate,
-	(next_func)			hashtable_itor_next,
-	(prev_func)			hashtable_itor_prev,
-	(nextn_func)		hashtable_itor_nextn,
-	(prevn_func)		hashtable_itor_prevn,
-	(first_func)		hashtable_itor_first,
-	(last_func)			hashtable_itor_last,
-	(key_func)			hashtable_itor_key,
-	(data_func)			hashtable_itor_data,
-	(cdata_func)		hashtable_itor_cdata,
-	(dataset_func)		hashtable_itor_set_data,
-	(iremove_func)		NULL, /* hashtable_itor_remove not implemented yet */
-	(compare_func)		NULL  /* hashtable_itor_compare not implemented yet  */
+	(dict_ifree_func)		hashtable_itor_free,
+	(dict_valid_func)		hashtable_itor_valid,
+	(dict_invalidate_func)	hashtable_itor_invalidate,
+	(dict_next_func)		hashtable_itor_next,
+	(dict_prev_func)		hashtable_itor_prev,
+	(dict_nextn_func)		hashtable_itor_nextn,
+	(dict_prevn_func)		hashtable_itor_prevn,
+	(dict_first_func)		hashtable_itor_first,
+	(dict_last_func)		hashtable_itor_last,
+	(dict_key_func)			hashtable_itor_key,
+	(dict_data_func)		hashtable_itor_data,
+	(dict_cdata_func)		hashtable_itor_cdata,
+	(dict_dataset_func)		hashtable_itor_set_data,
+	(dict_iremove_func)		NULL,	/* hashtable_itor_remove not implemented yet */
+	(dict_icompare_func)	NULL	/* hashtable_itor_compare not implemented yet */
 };
 
 hashtable *
-hashtable_new(dict_compare_func key_cmp, dict_hash_func key_hash, dict_delete_func del_func, unsigned size)
+hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func, dict_delete_func del_func, unsigned size)
 {
 	hashtable *table;
 	unsigned i;
 
-	ASSERT(key_hash != NULL);
+	ASSERT(hash_func != NULL);
 	ASSERT(size != 0);
 
 	if ((table = MALLOC(sizeof(*table))) == NULL)
@@ -97,8 +119,8 @@ hashtable_new(dict_compare_func key_cmp, dict_hash_func key_hash, dict_delete_fu
 		table->table[i] = NULL;
 
 	table->size = size;
-	table->key_cmp = key_cmp ? key_cmp : dict_ptr_cmp;
-	table->key_hash = key_hash;
+	table->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
+	table->hash_func = hash_func;
 	table->del_func = del_func;
 	table->count = 0;
 
@@ -106,17 +128,17 @@ hashtable_new(dict_compare_func key_cmp, dict_hash_func key_hash, dict_delete_fu
 }
 
 dict *
-hashtable_dict_new(dict_compare_func key_cmp, dict_hash_func key_hash, dict_delete_func del_func, unsigned size)
+hashtable_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func, dict_delete_func del_func, unsigned size)
 {
 	dict *dct;
 
-	ASSERT(key_hash != NULL);
+	ASSERT(hash_func != NULL);
 	ASSERT(size != 0);
 
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((dct->_object = hashtable_new(key_cmp, key_hash, del_func, size)) == NULL) {
+	if ((dct->_object = hashtable_new(cmp_func, hash_func, del_func, size)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}
@@ -126,13 +148,13 @@ hashtable_dict_new(dict_compare_func key_cmp, dict_hash_func key_hash, dict_dele
 }
 
 unsigned
-hashtable_destroy(hashtable *table)
+hashtable_free(hashtable *table)
 {
 	unsigned count;
 
 	ASSERT(table != NULL);
 
-	count = hashtable_empty(table);
+	count = hashtable_clear(table);
 
 	FREE(table->table);
 	FREE(table);
@@ -144,16 +166,16 @@ int
 hashtable_insert(hashtable *table, void *key, void *datum, int overwrite)
 {
 	unsigned hash, mhash;
-	hash_node *node, *add;
+	hash_node *node;
 
 	ASSERT(table != NULL);
 
-	hash = table->key_hash(key);
+	hash = table->hash_func(key);
 
 	mhash = hash % table->size;
 	for (node = table->table[mhash]; node; node = node->next)
-		if (hash == node->hash && table->key_cmp(key, node->key) == 0) {
-			if (overwrite == 0)
+		if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
+			if (!overwrite)
 				return 1;
 			if (table->del_func)
 				table->del_func(node->key, node->datum);
@@ -162,17 +184,17 @@ hashtable_insert(hashtable *table, void *key, void *datum, int overwrite)
 			return 0;
 		}
 
-	if ((add = MALLOC(sizeof(*add))) == NULL)
+	if ((node = MALLOC(sizeof(*node))) == NULL)
 		return -1;
-	add->key = key;
-	add->datum = datum;
-	add->hash = hash;
-	add->prev = NULL;
+	node->key = key;
+	node->datum = datum;
+	node->hash = hash;
+	node->prev = NULL;
 
-	add->next = table->table[mhash];
+	node->next = table->table[mhash];
 	if (table->table[mhash])
-		table->table[mhash]->prev = add;
-	table->table[mhash] = add;
+		table->table[mhash]->prev = node;
+	table->table[mhash] = node;
 	table->count++;
 
 	return 0;
@@ -187,11 +209,11 @@ hashtable_probe(hashtable *table, void *key, void **datum)
 	ASSERT(table != NULL);
 	ASSERT(datum != NULL);
 
-	hash = table->key_hash(key);
+	hash = table->hash_func(key);
 	mhash = hash % table->size;
 
 	for (node = table->table[mhash]; node; node = node->next)
-		if (hash == node->hash && table->key_cmp(key, node->key) == 0) {
+		if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
 			*datum = node->datum;
 			return 0;
 		}
@@ -219,9 +241,9 @@ hashtable_search(hashtable *table, const void *key)
 
 	ASSERT(table != NULL);
 
-	hash = table->key_hash(key);
+	hash = table->hash_func(key);
 	for (node = table->table[hash % table->size]; node; node = node->next)
-		if (hash == node->hash && table->key_cmp(key, node->key) == 0)
+		if (hash == node->hash && table->cmp_func(key, node->key) == 0)
 			return node->datum;
 	return NULL;
 }
@@ -246,34 +268,33 @@ hashtable_remove(hashtable *table, const void *key)
 
 	ASSERT(table != NULL);
 
-	hash = table->key_hash(key);
-	mhash = hash % table->size;
+	mhash = (hash = table->hash_func(key)) % table->size;
 
 	prev = NULL;
-	for (node = table->table[mhash]; node; prev = node, node = node->next)
-		if (hash == node->hash && table->key_cmp(key, node->key) == 0)
-			break;
-	if (node == NULL)
-		return -1;
+	for (node = table->table[mhash]; node; prev = node, node = node->next) {
+		if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
+			if (prev)
+				prev->next = node->next;
+			else
+				table->table[mhash] = node->next;
 
-	if (prev)
-		prev->next = node->next;
-	else
-		table->table[mhash] = node->next;
+			if (node->next)
+				node->next->prev = prev;
 
-	if (node->next)
-		node->next->prev = prev;
+			if (table->del_func)
+				table->del_func(node->key, node->datum);
 
-	if (table->del_func)
-		table->del_func(node->key, node->datum);
+			FREE(node);
+			table->count--;
+			return 0;
+		}
+	}
+	return -1;
 
-	FREE(node);
-	table->count--;
-	return 0;
 }
 
 unsigned
-hashtable_empty(hashtable *table)
+hashtable_clear(hashtable *table)
 {
 	unsigned slot, count;
 
@@ -298,7 +319,7 @@ hashtable_empty(hashtable *table)
 }
 
 unsigned
-hashtable_walk(hashtable *table, dict_visit_func visit)
+hashtable_traverse(hashtable *table, dict_visit_func visit)
 {
 	hash_node *node;
 	unsigned i, count = 0;
@@ -429,7 +450,7 @@ hashtable_dict_itor_new(hashtable *table)
 }
 
 void
-hashtable_itor_destroy(hashtable_itor *itor)
+hashtable_itor_free(hashtable_itor *itor)
 {
 	ASSERT(itor != NULL);
 
@@ -589,9 +610,9 @@ hashtable_itor_search(hashtable_itor *itor, const void *key)
 	hash_node *node;
 	unsigned hash;
 
-	hash = itor->table->key_hash(key);
+	hash = itor->table->hash_func(key);
 	for (node = itor->table->table[hash % itor->table->size]; node; node = node->next)
-		if (hash == node->hash && itor->table->key_cmp(key, node->key) == 0)
+		if (hash == node->hash && itor->table->cmp_func(key, node->key) == 0)
 			break;
 	itor->node = node;
 	itor->slot = node ? (hash % itor->table->size) : 0;
