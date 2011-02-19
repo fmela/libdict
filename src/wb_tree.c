@@ -1,12 +1,34 @@
 /*
- * wb_tree.c
- *
- * Implementation of weight balanced tree.
- * Copyright (C) 2001-2010 Farooq Mela.
- *
- * $Id$
- *
+ * libdict -- weight-balanced tree implementation.
  * cf. [Gonnet 1984], [Nievergelt and Reingold 1973]
+ *
+ * Copyright (c) 2001-2011, Farooq Mela
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by Farooq Mela.
+ * 4. Neither the name of the Farooq Mela nor the
+ *    names of contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY FAROOQ MELA ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL FAROOQ MELA BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdlib.h>
@@ -56,7 +78,7 @@ struct wb_node {
 struct wb_tree {
 	wb_node*			root;
 	unsigned			count;
-	dict_compare_func	key_cmp;
+	dict_compare_func	cmp_func;
 	dict_delete_func	del_func;
 };
 
@@ -66,34 +88,34 @@ struct wb_itor {
 };
 
 static dict_vtable wb_tree_vtable = {
-	(inew_func)			wb_dict_itor_new,
-	(destroy_func)		wb_tree_destroy,
-	(insert_func)		wb_tree_insert,
-	(probe_func)		wb_tree_probe,
-	(search_func)		wb_tree_search,
-	(csearch_func)		wb_tree_csearch,
-	(remove_func)		wb_tree_remove,
-	(empty_func)		wb_tree_empty,
-	(walk_func)			wb_tree_walk,
-	(count_func)		wb_tree_count
+	(dict_inew_func)		wb_dict_itor_new,
+	(dict_dfree_func)		wb_tree_free,
+	(dict_insert_func)		wb_tree_insert,
+	(dict_probe_func)		wb_tree_probe,
+	(dict_search_func)		wb_tree_search,
+	(dict_csearch_func)		wb_tree_csearch,
+	(dict_remove_func)		wb_tree_remove,
+	(dict_clear_func)		wb_tree_clear,
+	(dict_traverse_func)	wb_tree_traverse,
+	(dict_count_func)		wb_tree_count
 };
 
 static itor_vtable wb_tree_itor_vtable = {
-	(idestroy_func)		wb_itor_destroy,
-	(valid_func)		wb_itor_valid,
-	(invalidate_func)	wb_itor_invalidate,
-	(next_func)			wb_itor_next,
-	(prev_func)			wb_itor_prev,
-	(nextn_func)		wb_itor_nextn,
-	(prevn_func)		wb_itor_prevn,
-	(first_func)		wb_itor_first,
-	(last_func)			wb_itor_last,
-	(key_func)			wb_itor_key,
-	(data_func)			wb_itor_data,
-	(cdata_func)		wb_itor_cdata,
-	(dataset_func)		wb_itor_set_data,
-	(iremove_func)		NULL,/* wb_itor_remove not implemented yet */
-	(compare_func)		NULL /* wb_itor_compare not implemented yet */
+	(dict_ifree_func)		wb_itor_free,
+	(dict_valid_func)		wb_itor_valid,
+	(dict_invalidate_func)	wb_itor_invalidate,
+	(dict_next_func)		wb_itor_next,
+	(dict_prev_func)		wb_itor_prev,
+	(dict_nextn_func)		wb_itor_nextn,
+	(dict_prevn_func)		wb_itor_prevn,
+	(dict_first_func)		wb_itor_first,
+	(dict_last_func)		wb_itor_last,
+	(dict_key_func)			wb_itor_key,
+	(dict_data_func)		wb_itor_data,
+	(dict_cdata_func)		wb_itor_cdata,
+	(dict_dataset_func)		wb_itor_set_data,
+	(dict_iremove_func)		NULL,/* wb_itor_remove not implemented yet */
+	(dict_icompare_func)	NULL /* wb_itor_compare not implemented yet */
 };
 
 static void		rot_left(wb_tree *tree, wb_node *node);
@@ -108,7 +130,7 @@ static wb_node*	node_next(wb_node *node);
 static wb_node*	node_prev(wb_node *node);
 
 wb_tree *
-wb_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
+wb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
 	wb_tree *tree;
 
@@ -117,21 +139,21 @@ wb_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
 
 	tree->root = NULL;
 	tree->count = 0;
-	tree->key_cmp = key_cmp ? key_cmp : dict_ptr_cmp;
+	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	tree->del_func = del_func;
 
 	return tree;
 }
 
 dict *
-wb_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
+wb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
 	dict *dct;
 
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((dct->_object = wb_tree_new(key_cmp, del_func)) == NULL) {
+	if ((dct->_object = wb_tree_new(cmp_func, del_func)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}
@@ -142,14 +164,14 @@ wb_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
 }
 
 unsigned
-wb_tree_destroy(wb_tree *tree)
+wb_tree_free(wb_tree *tree)
 {
 	unsigned count = 0;
 
 	ASSERT(tree != NULL);
 
 	if (tree->root)
-		count = wb_tree_empty(tree);
+		count = wb_tree_clear(tree);
 
 	FREE(tree);
 
@@ -166,7 +188,7 @@ wb_tree_search(wb_tree *tree, const void *key)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			node = node->llink;
 		else if (cmp > 0)
@@ -195,13 +217,13 @@ wb_tree_insert(wb_tree *tree, void *key, void *datum, int overwrite)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			parent = node, node = node->llink;
 		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
-			if (overwrite == 0)
+			if (!overwrite)
 				return 1;
 			if (tree->del_func)
 				tree->del_func(node->key, node->datum);
@@ -261,7 +283,7 @@ wb_tree_probe(wb_tree *tree, void *key, void **datum)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			parent = node, node = node->llink;
 		else if (cmp > 0)
@@ -322,7 +344,7 @@ wb_tree_remove(wb_tree *tree, const void *key)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp) {
 			node = cmp < 0 ? node->llink : node->rlink;
 			continue;
@@ -374,7 +396,7 @@ wb_tree_remove(wb_tree *tree, const void *key)
 }
 
 unsigned
-wb_tree_empty(wb_tree *tree)
+wb_tree_clear(wb_tree *tree)
 {
 	wb_node *node, *parent;
 	unsigned count = 0;
@@ -441,7 +463,7 @@ wb_tree_max(const wb_tree *tree)
 }
 
 unsigned
-wb_tree_walk(wb_tree *tree, dict_visit_func visit)
+wb_tree_traverse(wb_tree *tree, dict_visit_func visit)
 {
 	wb_node *node;
 	unsigned count = 0;
@@ -729,7 +751,7 @@ wb_dict_itor_new(wb_tree *tree)
 }
 
 void
-wb_itor_destroy(wb_itor *itor)
+wb_itor_free(wb_itor *itor)
 {
 	ASSERT(itor != NULL);
 
@@ -848,7 +870,7 @@ wb_itor_search(wb_itor *itor, const void *key)
 
 	ASSERT(itor != NULL);
 
-	cmp_func = itor->tree->key_cmp;
+	cmp_func = itor->tree->cmp_func;
 	for (node = itor->tree->root; node;) {
 		cmp = cmp_func(key, node->key);
 		if (cmp < 0)
