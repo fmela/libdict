@@ -25,7 +25,7 @@ main(int argc, char *argv[])
 	hb_itor *itor;
 	WordList *word, *wordp;
 
-	if (argv[1] == NULL) {
+	if (argc != 2) {
 		printf("Expected filename argument.\n");
 		exit(1);
 	}
