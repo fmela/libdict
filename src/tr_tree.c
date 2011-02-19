@@ -1,11 +1,36 @@
 /*
- * tr_tree.c
+ * libdict -- treap implementation.
  *
- * Implementation of treap.
- * Copyright (C) 2001-2010 Farooq Mela.
+ * Copyright (c) 2001-2011, Farooq Mela
+ * All rights reserved.
  *
- * $Id$
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by Farooq Mela.
+ * 4. Neither the name of the Farooq Mela nor the
+ *    names of contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
+ * THIS SOFTWARE IS PROVIDED BY FAROOQ MELA ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL FAROOQ MELA BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
  * cf. [Aragon and Seidel, 1996], [Knuth 1998]
  *
  * A treap is a randomized data structure in which each node of tree has an
@@ -28,16 +53,14 @@
 
 /* We want a priority_t to be a 32-bit value.
  * I_{j+1} = I_j * A + M; A suggested by Knuth, M by H.W. Lewis. */
-#if UINT_MAX == 0xffffffff
+#if UINT_MAX == 0xffffffffU
 typedef unsigned int priority_t;
 #define RGEN_A		1664525U
 #define RGEN_M		1013904223U
-#define RGEN_MASK	0xffffffffU
 #else
 typedef unsigned long priority_t;
 #define RGEN_A		1664525UL
 #define RGEN_M		1013904223UL
-#define RGEN_MASK	0xffffffffUL
 #endif
 
 typedef struct tr_node tr_node;
@@ -53,7 +76,8 @@ struct tr_node {
 struct tr_tree {
 	tr_node*			root;
 	unsigned			count;
-	dict_compare_func	key_cmp;
+	dict_compare_func	cmp_func;
+	dict_prio_func		prio_func;
 	dict_delete_func	del_func;
 	unsigned long		randgen;
 };
@@ -64,34 +88,34 @@ struct tr_itor {
 };
 
 static dict_vtable tr_tree_vtable = {
-	(inew_func)			tr_dict_itor_new,
-	(destroy_func)		tr_tree_destroy,
-	(insert_func)		tr_tree_insert,
-	(probe_func)		tr_tree_probe,
-	(search_func)		tr_tree_search,
-	(csearch_func)		tr_tree_csearch,
-	(remove_func)		tr_tree_remove,
-	(empty_func)		tr_tree_empty,
-	(walk_func)			tr_tree_walk,
-	(count_func)		tr_tree_count
+	(dict_inew_func)		tr_dict_itor_new,
+	(dict_dfree_func)		tr_tree_free,
+	(dict_insert_func)		tr_tree_insert,
+	(dict_probe_func)		tr_tree_probe,
+	(dict_search_func)		tr_tree_search,
+	(dict_csearch_func)		tr_tree_csearch,
+	(dict_remove_func)		tr_tree_remove,
+	(dict_clear_func)		tr_tree_clear,
+	(dict_traverse_func)	tr_tree_traverse,
+	(dict_count_func)		tr_tree_count
 };
 
 static itor_vtable tr_tree_itor_vtable = {
-	(idestroy_func)		tr_itor_destroy,
-	(valid_func)		tr_itor_valid,
-	(invalidate_func)	tr_itor_invalidate,
-	(next_func)			tr_itor_next,
-	(prev_func)			tr_itor_prev,
-	(nextn_func)		tr_itor_nextn,
-	(prevn_func)		tr_itor_prevn,
-	(first_func)		tr_itor_first,
-	(last_func)			tr_itor_last,
-	(key_func)			tr_itor_key,
-	(data_func)			tr_itor_data,
-	(cdata_func)		tr_itor_cdata,
-	(dataset_func)		tr_itor_set_data,
-	(iremove_func)		NULL,/* tr_itor_remove not implemented yet */
-	(compare_func)		NULL /* tr_itor_compare not implemented yet */
+	(dict_ifree_func)		tr_itor_free,
+	(dict_valid_func)		tr_itor_valid,
+	(dict_invalidate_func)	tr_itor_invalidate,
+	(dict_next_func)		tr_itor_next,
+	(dict_prev_func)		tr_itor_prev,
+	(dict_nextn_func)		tr_itor_nextn,
+	(dict_prevn_func)		tr_itor_prevn,
+	(dict_first_func)		tr_itor_first,
+	(dict_last_func)		tr_itor_last,
+	(dict_key_func)			tr_itor_key,
+	(dict_data_func)		tr_itor_data,
+	(dict_cdata_func)		tr_itor_cdata,
+	(dict_dataset_func)		tr_itor_set_data,
+	(dict_iremove_func)		NULL,/* tr_itor_remove not implemented yet */
+	(dict_icompare_func)	NULL /* tr_itor_compare not implemented yet */
 };
 
 static void		rot_left(tr_tree *tree, tr_node *node);
@@ -106,7 +130,7 @@ static tr_node*	node_max(tr_node *node);
 static tr_node*	node_min(tr_node *node);
 
 tr_tree *
-tr_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
+tr_tree_new(dict_compare_func cmp_func, dict_prio_func prio_func, dict_delete_func del_func)
 {
 	tr_tree *tree;
 
@@ -115,7 +139,8 @@ tr_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
 
 	tree->root = NULL;
 	tree->count = 0;
-	tree->key_cmp = key_cmp ? key_cmp : dict_ptr_cmp;
+	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
+	tree->prio_func = prio_func;
 	tree->del_func = del_func;
 	tree->randgen = rand();
 
@@ -123,7 +148,7 @@ tr_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
 }
 
 dict *
-tr_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
+tr_dict_new(dict_compare_func cmp_func, dict_prio_func prio_func, dict_delete_func del_func)
 {
 	dict *dct;
 	tr_tree *tree;
@@ -131,7 +156,7 @@ tr_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((tree = tr_tree_new(key_cmp, del_func)) == NULL) {
+	if ((tree = tr_tree_new(cmp_func, prio_func, del_func)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}
@@ -143,20 +168,20 @@ tr_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
 }
 
 unsigned
-tr_tree_destroy(tr_tree *tree)
+tr_tree_free(tr_tree *tree)
 {
 	unsigned count = 0;
 
 	ASSERT(tree != NULL);
 
 	if (tree->root)
-		count = tr_tree_empty(tree);
+		count = tr_tree_clear(tree);
 	FREE(tree);
 	return count;
 }
 
 unsigned
-tr_tree_empty(tr_tree *tree)
+tr_tree_clear(tr_tree *tree)
 {
 	tr_node *node, *parent;
 	unsigned count = 0;
@@ -195,19 +220,18 @@ tr_tree_insert(tr_tree *tree, void *key, void *datum, int overwrite)
 {
 	int cmp = 0;
 	tr_node *node, *parent = NULL;
-	priority_t prio;
 
 	ASSERT(tree != NULL);
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			parent = node, node = node->llink;
 		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
-			if (overwrite == 0)
+			if (!overwrite)
 				return 1;
 			if (tree->del_func)
 				tree->del_func(node->key, node->datum);
@@ -219,8 +243,10 @@ tr_tree_insert(tr_tree *tree, void *key, void *datum, int overwrite)
 
 	if ((node = node_new(key, datum)) == NULL)
 		return -1;
-	prio = (tree->randgen * RGEN_A + RGEN_M) & RGEN_MASK;
-	node->prio = tree->randgen = prio;
+	if (tree->prio_func)
+		node->prio = tree->prio_func(key, datum);
+	else
+		node->prio = tree->randgen = tree->randgen * RGEN_A + RGEN_M;
 
 	if ((node->parent = parent) == NULL) {
 		tree->root = node;
@@ -252,13 +278,12 @@ tr_tree_probe(tr_tree *tree, void *key, void **datum)
 {
 	int cmp = 0;
 	tr_node *node, *parent = NULL;
-	priority_t prio;
 
 	ASSERT(tree != NULL);
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			parent = node, node = node->llink;
 		else if (cmp > 0)
@@ -271,8 +296,10 @@ tr_tree_probe(tr_tree *tree, void *key, void **datum)
 
 	if ((node = node_new(key, *datum)) == NULL)
 		return -1;
-	prio = (tree->randgen * RGEN_A + RGEN_M) & RGEN_MASK;
-	node->prio = tree->randgen = prio;
+	if (tree->prio_func)
+		node->prio = tree->prio_func(key, *datum);
+	else
+		node->prio = tree->randgen = tree->randgen * RGEN_A + RGEN_M;
 
 	if ((node->parent = parent) == NULL) {
 		ASSERT(tree->count == 0);
@@ -309,7 +336,7 @@ tr_tree_remove(tr_tree *tree, const void *key)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			node = node->llink;
 		else if (cmp > 0)
@@ -357,7 +384,7 @@ tr_tree_search(tr_tree *tree, const void *key)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			node = node->llink;
 		else if (cmp > 0)
@@ -377,7 +404,7 @@ tr_tree_csearch(const tr_tree *tree, const void *key)
 }
 
 unsigned
-tr_tree_walk(tr_tree *tree, dict_visit_func visit)
+tr_tree_traverse(tr_tree *tree, dict_visit_func visit)
 {
 	tr_node *node;
 	unsigned count = 0;
@@ -664,7 +691,7 @@ tr_dict_itor_new(tr_tree *tree)
 }
 
 void
-tr_itor_destroy(tr_itor *itor)
+tr_itor_free(tr_itor *itor)
 {
 	ASSERT(itor != NULL);
 
@@ -782,7 +809,7 @@ tr_itor_search(tr_itor *itor, const void *key)
 
 	ASSERT(itor != NULL);
 
-	cmp_func = itor->tree->key_cmp;
+	cmp_func = itor->tree->cmp_func;
 	for (node = itor->tree->root; node;) {
 		cmp = cmp_func(key, node->key);
 		if (cmp < 0)
