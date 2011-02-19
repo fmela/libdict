@@ -1,8 +1,33 @@
 /*
- * tr_tree.h
+ * libdict -- treap interface.
  *
- * Interface for treap.
- * Copyright (C) 2001-2010 Farooq Mela.
+ * Copyright (c) 2001-2011, Farooq Mela
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by Farooq Mela.
+ * 4. Neither the name of the Farooq Mela nor the
+ *    names of contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY FAROOQ MELA ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL FAROOQ MELA BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _TR_TREE_H_
@@ -12,19 +37,22 @@
 
 BEGIN_DECL
 
-typedef struct tr_tree tr_tree;
+typedef struct tr_tree
+			tr_tree;
 
-tr_tree*	tr_tree_new(dict_compare_func key_cmp, dict_delete_func del_func);
-dict*		tr_dict_new(dict_compare_func key_cmp, dict_delete_func del_func);
-unsigned	tr_tree_destroy(tr_tree *tree);
+tr_tree*	tr_tree_new(dict_compare_func compare_func, dict_prio_func prio_func,
+						dict_delete_func del_func);
+dict*		tr_dict_new(dict_compare_func compare_func, dict_prio_func prio_func,
+						dict_delete_func del_func);
+unsigned	tr_tree_free(tr_tree *tree);
 
 int			tr_tree_insert(tr_tree *tree, void *key, void *datum, int overwrite);
 int			tr_tree_probe(tr_tree *tree, void *key, void **datum);
 void*		tr_tree_search(tr_tree *tree, const void *key);
 const void*	tr_tree_csearch(const tr_tree *tree, const void *key);
 int			tr_tree_remove(tr_tree *tree, const void *key);
-unsigned	tr_tree_empty(tr_tree *tree);
-unsigned	tr_tree_walk(tr_tree *tree, dict_visit_func visit);
+unsigned	tr_tree_clear(tr_tree *tree);
+unsigned	tr_tree_traverse(tr_tree *tree, dict_visit_func visit);
 unsigned	tr_tree_count(const tr_tree *tree);
 unsigned	tr_tree_height(const tr_tree *tree);
 unsigned	tr_tree_mheight(const tr_tree *tree);
@@ -32,11 +60,12 @@ unsigned	tr_tree_pathlen(const tr_tree *tree);
 const void*	tr_tree_min(const tr_tree *tree);
 const void*	tr_tree_max(const tr_tree *tree);
 
-typedef struct tr_itor tr_itor;
+typedef struct tr_itor
+			tr_itor;
 
 tr_itor*	tr_itor_new(tr_tree *tree);
 dict_itor*	tr_dict_itor_new(tr_tree *tree);
-void		tr_itor_destroy(tr_itor *tree);
+void		tr_itor_free(tr_itor *tree);
 
 int			tr_itor_valid(const tr_itor *itor);
 void		tr_itor_invalidate(tr_itor *itor);
