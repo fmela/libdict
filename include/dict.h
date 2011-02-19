@@ -1,10 +1,33 @@
 /*
- * dict.h
+ * libdict -- generic interface definitions.
  *
- * Interface for generic access to dictionary library.
- * Copyright (C) 2001-2010 Farooq Mela.
+ * Copyright (c) 2001-2011, Farooq Mela
+ * All rights reserved.
  *
- * $Id$
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by Farooq Mela.
+ * 4. Neither the name of the Farooq Mela nor the
+ *    names of contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY FAROOQ MELA ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL FAROOQ MELA BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _DICT_H_
@@ -34,12 +57,6 @@
 
 BEGIN_DECL
 
-typedef void *(*dict_malloc_func)(size_t);
-typedef void  (*dict_free_func)(void *);
-
-dict_malloc_func	dict_set_malloc(dict_malloc_func func);
-dict_free_func		dict_set_free(dict_free_func func);
-
 /* A pointer to a function that compares two keys. It needs to return a
  * negative value if k1<k2, a positive value if k1>k2, and zero if the keys are
  * equal. The comparison should be reflexive (k1>k2 implies k1<k2, etc.),
@@ -51,67 +68,79 @@ typedef void		(*dict_delete_func)	(void *, void *);
 typedef int			(*dict_visit_func)	(const void *, void *);
 /* A pointer to a function that returns the hash value of a key. */
 typedef unsigned	(*dict_hash_func)	(const void *);
+/* A pointer to a function that returns the priority of a key/value pair. */
+typedef unsigned	(*dict_prio_func)	(const void *, const void *);
+
+/* A pointer to a function that allocates the given number of bytes. */
+typedef void*		(*dict_malloc_func)	(size_t);
+/* A pointer to a function that releases allocated memory. */
+typedef void		(*dict_free_func)	(void *);
+
+dict_malloc_func	dict_set_malloc(dict_malloc_func func);
+dict_free_func		dict_set_free(dict_free_func func);
 
 /* Forward declarations for transparents types dict and dict_itor. */
-typedef struct dict			dict;
-typedef struct dict_itor	dict_itor;
+typedef struct dict
+					dict;
+typedef struct dict_itor
+					dict_itor;
 
-typedef dict_itor*	(*inew_func)	(void *obj);
-typedef unsigned	(*destroy_func)	(void *obj);
-typedef int			(*insert_func)	(void *obj, void *key, void *datum, int overwrite);
-typedef int			(*probe_func)	(void *obj, void *key, void **datum);
-typedef void*		(*search_func)	(void *obj, const void *key);
-typedef const void*	(*csearch_func)	(const void *obj, const void *key);
-typedef int			(*remove_func)	(void *obj, const void *key);
-typedef unsigned	(*empty_func)	(void *obj);
-typedef unsigned	(*walk_func)	(void *obj, dict_visit_func visit_func);
-typedef unsigned	(*count_func)	(const void *obj);
+typedef dict_itor*	(*dict_inew_func)		(void *obj);
+typedef unsigned	(*dict_dfree_func)		(void *obj);
+typedef int			(*dict_insert_func)		(void *obj, void *key, void *datum, int overwrite);
+typedef int			(*dict_probe_func)		(void *obj, void *key, void **datum);
+typedef void*		(*dict_search_func)		(void *obj, const void *key);
+typedef const void*	(*dict_csearch_func)	(const void *obj, const void *key);
+typedef int			(*dict_remove_func)		(void *obj, const void *key);
+typedef unsigned	(*dict_clear_func)		(void *obj);
+typedef unsigned	(*dict_traverse_func)	(void *obj, dict_visit_func visit_func);
+typedef unsigned	(*dict_count_func)		(const void *obj);
 
 typedef struct {
-	inew_func		 inew;
-	destroy_func	 destroy;
-	insert_func		 insert;
-	probe_func		 probe;
-	search_func		 search;
-	csearch_func	 csearch;
-	remove_func		 remove;
-	empty_func		 empty;
-	walk_func		 walk;
-	count_func		 count;
+	dict_inew_func			inew;
+	dict_dfree_func			dfree;
+	dict_insert_func		insert;
+	dict_probe_func			probe;
+	dict_search_func		search;
+	dict_csearch_func		csearch;
+	dict_remove_func		remove;
+	dict_clear_func			clear;
+	dict_traverse_func		traverse;
+	dict_count_func			count;
 } dict_vtable;
 
-typedef void		(*idestroy_func)	(void *itor);
-typedef int			(*valid_func)		(const void *itor);
-typedef void		(*invalidate_func)	(void *itor);
-typedef int			(*next_func)		(void *itor);
-typedef int			(*prev_func)		(void *itor);
-typedef int			(*nextn_func)		(void *itor, unsigned count);
-typedef int			(*prevn_func)		(void *itor, unsigned count);
-typedef int			(*first_func)		(void *itor);
-typedef int			(*last_func)		(void *itor);
-typedef void*		(*key_func)			(void *itor);
-typedef void*		(*data_func)		(void *itor);
-typedef const void*	(*cdata_func)		(const void *itor);
-typedef int			(*dataset_func)		(void *itor, void *datum, void **old_datum);
-typedef int			(*iremove_func)		(void *itor);
-typedef int			(*compare_func)		(void *itor1, void *itor2);
+typedef void		(*dict_ifree_func)		(void *itor);
+typedef int			(*dict_valid_func)		(const void *itor);
+typedef void		(*dict_invalidate_func)	(void *itor);
+typedef int			(*dict_next_func)		(void *itor);
+typedef int			(*dict_prev_func)		(void *itor);
+typedef int			(*dict_nextn_func)		(void *itor, unsigned count);
+typedef int			(*dict_prevn_func)		(void *itor, unsigned count);
+typedef int			(*dict_first_func)		(void *itor);
+typedef int			(*dict_last_func)		(void *itor);
+typedef void*		(*dict_key_func)		(void *itor);
+typedef void*		(*dict_data_func)		(void *itor);
+typedef const void*	(*dict_cdata_func)		(const void *itor);
+typedef int			(*dict_dataset_func)	(void *itor, void *datum, void **old_datum);
+typedef int			(*dict_iremove_func)	(void *itor);
+typedef int			(*dict_icompare_func)	(void *itor1, void *itor2);
 
 typedef struct {
-	idestroy_func	 destroy;
-	valid_func		 valid;
-	invalidate_func	 invalid;
-	next_func		 next;
-	prev_func		 prev;
-	nextn_func		 nextn;
-	prevn_func		 prevn;
-	first_func		 first;
-	last_func		 last;
-	key_func		 key;
-	data_func		 data;
-	cdata_func		 cdata;
-	dataset_func	 dataset;
-	iremove_func	 remove;
-	compare_func	 compare;
+	dict_ifree_func			ifree;
+	dict_valid_func			valid;
+	dict_invalidate_func	invalid;
+	dict_next_func			next;
+	dict_prev_func			prev;
+	dict_nextn_func			nextn;
+	dict_prevn_func			prevn;
+	dict_first_func			first;
+	dict_last_func			last;
+	dict_key_func			key;
+	dict_data_func			data;
+	dict_cdata_func			cdata;
+	dict_dataset_func		dataset;
+	dict_iremove_func		remove;
+	dict_icompare_func		compare;
 } itor_vtable;
 
 struct dict {
@@ -125,10 +154,10 @@ struct dict {
 #define dict_search(dct,k)		((dct)->_vtable->search((dct)->_object, (k)))
 #define dict_csearch(dct,k)		((dct)->_vtable->csearch((dct)->_object, (k)))
 #define dict_remove(dct,k)		((dct)->_vtable->remove((dct)->_object, (k)))
-#define dict_walk(dct,f)		((dct)->_vtable->walk((dct)->_object, (f)))
+#define dict_traverse(dct,f)	((dct)->_vtable->traverse((dct)->_object, (f)))
 #define dict_count(dct)			((dct)->_vtable->count((dct)->_object))
-#define dict_empty(dct)			((dct)->_vtable->empty((dct)->_object))
-void dict_destroy(dict *dct);
+#define dict_clear(dct)			((dct)->_vtable->clear((dct)->_object))
+void dict_free(dict *dct);
 #define dict_itor_new(dct)		(dct)->_vtable->inew((dct)->_object)
 
 struct dict_itor {
@@ -151,7 +180,7 @@ struct dict_itor {
 #define dict_itor_cdata(i)			((i)->_vtable->cdata((i)->_itor))
 #define dict_itor_set_data(i,d,old)	((i)->_vtable->setdata((i)->_itor, (d), (old)))
 #define dict_itor_remove(i)			((i)->_vtable->remove((i)->_itor))
-void dict_itor_destroy(dict_itor *itor);
+void dict_itor_free(dict_itor *itor);
 
 int		dict_int_cmp(const void *k1, const void *k2);
 int		dict_uint_cmp(const void *k1, const void *k2);
