@@ -2,7 +2,7 @@
  * dict_private.h
  *
  * Private definitions for libdict.
- * Copyright (C) 2001-2010 Farooq Mela.
+ * Copyright (C) 2001-2011 Farooq Mela.
  *
  * $Id$
  */
