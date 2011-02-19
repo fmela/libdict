@@ -1,12 +1,33 @@
 /*
- * hb_tree.c
+ * libdict -- height-balanced (AVL) tree implementation.
  *
- * Implementation of height balanced tree.
- * Copyright (C) 2001-2010 Farooq Mela.
+ * Copyright (c) 2001-2011, Farooq Mela
+ * All rights reserved.
  *
- * $Id$
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by Farooq Mela.
+ * 4. Neither the name of the Farooq Mela nor the
+ *    names of contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * cf. [Gonnet 1984], [Knuth 1998]
+ * THIS SOFTWARE IS PROVIDED BY FAROOQ MELA ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL FAROOQ MELA BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdlib.h>
@@ -14,23 +35,21 @@
 #include "hb_tree.h"
 #include "dict_private.h"
 
-typedef signed char bal_t;
-
 typedef struct hb_node hb_node;
 
 struct hb_node {
 	void*				key;
 	void*				datum;
-	hb_node*			parent;
 	hb_node*			llink;
 	hb_node*			rlink;
-	bal_t				bal;
+	hb_node*			parent;
+	signed char			bal;
 };
 
 struct hb_tree {
 	hb_node*			root;
 	unsigned			count;
-	dict_compare_func	key_cmp;
+	dict_compare_func	cmp_func;
 	dict_delete_func	del_func;
 };
 
@@ -40,38 +59,40 @@ struct hb_itor {
 };
 
 static dict_vtable hb_tree_vtable = {
-	(inew_func)			hb_dict_itor_new,
-	(destroy_func)		hb_tree_destroy,
-	(insert_func)		hb_tree_insert,
-	(probe_func)		hb_tree_probe,
-	(search_func)		hb_tree_search,
-	(csearch_func)		hb_tree_csearch,
-	(remove_func)		hb_tree_remove,
-	(empty_func)		hb_tree_empty,
-	(walk_func)			hb_tree_walk,
-	(count_func)		hb_tree_count
+	(dict_inew_func)		hb_dict_itor_new,
+	(dict_dfree_func)		hb_tree_free,
+	(dict_insert_func)		hb_tree_insert,
+	(dict_probe_func)		hb_tree_probe,
+	(dict_search_func)		hb_tree_search,
+	(dict_csearch_func)		hb_tree_csearch,
+	(dict_remove_func)		hb_tree_remove,
+	(dict_clear_func)		hb_tree_clear,
+	(dict_traverse_func)	hb_tree_traverse,
+	(dict_count_func)		hb_tree_count
 };
 
 static itor_vtable hb_tree_itor_vtable = {
-	(idestroy_func)		hb_itor_destroy,
-	(valid_func)		hb_itor_valid,
-	(invalidate_func)	hb_itor_invalidate,
-	(next_func)			hb_itor_next,
-	(prev_func)			hb_itor_prev,
-	(nextn_func)		hb_itor_nextn,
-	(prevn_func)		hb_itor_prevn,
-	(first_func)		hb_itor_first,
-	(last_func)			hb_itor_last,
-	(key_func)			hb_itor_key,
-	(data_func)			hb_itor_data,
-	(cdata_func)		hb_itor_cdata,
-	(dataset_func)		hb_itor_set_data,
-	(iremove_func)		NULL,/* hb_itor_remove not implemented yet */
-	(compare_func)		NULL /* hb_itor_compare not implemented yet */
+	(dict_ifree_func)		hb_itor_free,
+	(dict_valid_func)		hb_itor_valid,
+	(dict_invalidate_func)	hb_itor_invalidate,
+	(dict_next_func)		hb_itor_next,
+	(dict_prev_func)		hb_itor_prev,
+	(dict_nextn_func)		hb_itor_nextn,
+	(dict_prevn_func)		hb_itor_prevn,
+	(dict_first_func)		hb_itor_first,
+	(dict_last_func)		hb_itor_last,
+	(dict_key_func)			hb_itor_key,
+	(dict_data_func)		hb_itor_data,
+	(dict_cdata_func)		hb_itor_cdata,
+	(dict_dataset_func)		hb_itor_set_data,
+	(dict_iremove_func)		NULL,/* hb_itor_remove not implemented yet */
+	(dict_icompare_func)	NULL /* hb_itor_compare not implemented yet */
 };
 
-static int		rot_left(hb_tree *tree, hb_node *node);
-static int		rot_right(hb_tree *tree, hb_node *node);
+#define RESTRICT	__restrict
+
+static int		rot_left(hb_tree * RESTRICT tree, hb_node * RESTRICT node);
+static int		rot_right(hb_tree * RESTRICT tree, hb_node * RESTRICT node);
 static unsigned	node_height(const hb_node *node);
 static unsigned	node_mheight(const hb_node *node);
 static unsigned	node_pathlen(const hb_node *node, unsigned level);
@@ -82,7 +103,7 @@ static hb_node*	node_next(hb_node *node);
 static hb_node*	node_prev(hb_node *node);
 
 hb_tree *
-hb_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
+hb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
 	hb_tree *tree;
 
@@ -91,14 +112,14 @@ hb_tree_new(dict_compare_func key_cmp, dict_delete_func del_func)
 
 	tree->root = NULL;
 	tree->count = 0;
-	tree->key_cmp = key_cmp ? key_cmp : dict_ptr_cmp;
+	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	tree->del_func = del_func;
 
 	return tree;
 }
 
 dict *
-hb_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
+hb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
 	dict *dct;
 	hb_tree *tree;
@@ -106,7 +127,7 @@ hb_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((tree = hb_tree_new(key_cmp, del_func)) == NULL) {
+	if ((tree = hb_tree_new(cmp_func, del_func)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}
@@ -118,14 +139,14 @@ hb_dict_new(dict_compare_func key_cmp, dict_delete_func del_func)
 }
 
 unsigned
-hb_tree_destroy(hb_tree *tree)
+hb_tree_free(hb_tree *tree)
 {
 	unsigned count = 0;
 
 	ASSERT(tree != NULL);
 
 	if (tree->root)
-		count = hb_tree_empty(tree);
+		count = hb_tree_clear(tree);
 
 	FREE(tree);
 
@@ -133,7 +154,7 @@ hb_tree_destroy(hb_tree *tree)
 }
 
 unsigned
-hb_tree_empty(hb_tree *tree)
+hb_tree_clear(hb_tree *tree)
 {
 	hb_node *node, *parent;
 	unsigned count;
@@ -185,7 +206,7 @@ hb_tree_search(hb_tree *tree, const void *key)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			node = node->llink;
 		else if (cmp > 0)
@@ -213,13 +234,13 @@ hb_tree_insert(hb_tree *tree, void *key, void *datum, int overwrite)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			parent = node, node = node->llink;
 		else if (cmp > 0)
 			parent = node, node = node->rlink;
 		else {
-			if (overwrite == 0)
+			if (!overwrite)
 				return 1;
 			if (tree->del_func)
 				tree->del_func(node->key, node->datum);
@@ -278,7 +299,7 @@ hb_tree_probe(hb_tree *tree, void *key, void **datum)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp < 0)
 			parent = node, node = node->llink;
 		else if (cmp > 0)
@@ -339,7 +360,7 @@ hb_tree_remove(hb_tree *tree, const void *key)
 
 	node = tree->root;
 	while (node) {
-		cmp = tree->key_cmp(key, node->key);
+		cmp = tree->cmp_func(key, node->key);
 		if (cmp == 0)
 			break;
 		parent = node;
@@ -458,7 +479,7 @@ hb_tree_max(const hb_tree *tree)
 }
 
 unsigned
-hb_tree_walk(hb_tree *tree, dict_visit_func visit)
+hb_tree_traverse(hb_tree *tree, dict_visit_func visit)
 {
 	hb_node *node;
 	unsigned count = 0;
@@ -636,7 +657,7 @@ node_pathlen(const hb_node *node, unsigned level)
  *
  */
 static int
-rot_left(hb_tree *tree, hb_node *node)
+rot_left(hb_tree * RESTRICT tree, hb_node * RESTRICT node)
 {
 	int hc;
 	hb_node *rlink, *parent;
@@ -680,7 +701,7 @@ rot_left(hb_tree *tree, hb_node *node)
  *
  */
 static int
-rot_right(hb_tree *tree, hb_node *node)
+rot_right(hb_tree * RESTRICT tree, hb_node * RESTRICT node)
 {
 	int hc;
 	hb_node *llink, *parent;
@@ -747,7 +768,7 @@ hb_dict_itor_new(hb_tree *tree)
 }
 
 void
-hb_itor_destroy(hb_itor *itor)
+hb_itor_free(hb_itor *itor)
 {
 	ASSERT(itor != NULL);
 
@@ -865,7 +886,7 @@ hb_itor_search(hb_itor *itor, const void *key)
 
 	ASSERT(itor != NULL);
 
-	cmp_func = itor->tree->key_cmp;
+	cmp_func = itor->tree->cmp_func;
 	for (node = itor->tree->root; node;) {
 		cmp = cmp_func(key, node->key);
 		if (cmp == 0)
