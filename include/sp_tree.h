@@ -1,10 +1,33 @@
 /*
- * sp_tree.h
+ * libdict -- splay tree interface.
  *
- * Definitions for splay binary search tree.
- * Copyright (C) 2001-2010 Farooq Mela.
+ * Copyright (c) 2001-2011, Farooq Mela
+ * All rights reserved.
  *
- * $Id$
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by Farooq Mela.
+ * 4. Neither the name of the Farooq Mela nor the
+ *    names of contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY FAROOQ MELA ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL FAROOQ MELA BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _SP_TREE_H_
@@ -14,19 +37,20 @@
 
 BEGIN_DECL
 
-typedef struct sp_tree sp_tree;
+typedef struct sp_tree
+			sp_tree;
 
-sp_tree*	sp_tree_new(dict_compare_func key_cmp, dict_delete_func del_func);
-dict*		sp_dict_new(dict_compare_func key_cmp, dict_delete_func del_func);
-unsigned	sp_tree_destroy(sp_tree *tree);
+sp_tree*	sp_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
+dict*		sp_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
+unsigned	sp_tree_free(sp_tree *tree);
 
 int			sp_tree_insert(sp_tree *tree, void *key, void *datum, int overwrite);
 int			sp_tree_probe(sp_tree *tree, void *key, void **datum);
 void*		sp_tree_search(sp_tree *tree, const void *key);
 const void*	sp_tree_csearch(const sp_tree *tree, const void *key);
 int			sp_tree_remove(sp_tree *tree, const void *key);
-unsigned	sp_tree_empty(sp_tree *tree);
-unsigned	sp_tree_walk(sp_tree *tree, dict_visit_func visit);
+unsigned	sp_tree_clear(sp_tree *tree);
+unsigned	sp_tree_traverse(sp_tree *tree, dict_visit_func visit);
 unsigned	sp_tree_count(const sp_tree *tree);
 unsigned	sp_tree_height(const sp_tree *tree);
 unsigned	sp_tree_mheight(const sp_tree *tree);
@@ -34,11 +58,12 @@ unsigned	sp_tree_pathlen(const sp_tree *tree);
 const void*	sp_tree_min(const sp_tree *tree);
 const void*	sp_tree_max(const sp_tree *tree);
 
-typedef struct sp_itor sp_itor;
+typedef struct sp_itor
+			sp_itor;
 
 sp_itor*	sp_itor_new(sp_tree *tree);
 dict_itor*	sp_dict_itor_new(sp_tree *tree);
-void		sp_itor_destroy(sp_itor *tree);
+void		sp_itor_free(sp_itor *tree);
 
 int			sp_itor_valid(const sp_itor *itor);
 void		sp_itor_invalidate(sp_itor *itor);
