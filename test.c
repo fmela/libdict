@@ -140,7 +140,7 @@ main(int argc, char **argv)
 	total.tv_sec += end.ru_utime.tv_sec;
 	if ((total.tv_usec += end.ru_utime.tv_usec) > 1000000)
 		total.tv_usec -= 1000000, total.tv_sec++;
-	printf("      inserts %02f s (%8d cmp, %8d hash)\n",
+	printf("      inserts %02f s (%9d cmp, %9d hash)\n",
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
 	total_comp += comp_count; comp_count = 0;
 	total_hash += hash_count; hash_count = 0;
@@ -211,7 +211,7 @@ main(int argc, char **argv)
 	total.tv_sec += end.ru_utime.tv_sec;
 	if ((total.tv_usec += end.ru_utime.tv_usec) > 1000000)
 		total.tv_usec -= 1000000, total.tv_sec++;
-	printf("good searches %02f s (%8d cmp, %8d hash)\n",
+	printf("good searches %02f s (%9d cmp, %9d hash)\n",
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
 	total_comp += comp_count; comp_count = 0;
 	total_hash += hash_count; hash_count = 0;
@@ -232,7 +232,7 @@ main(int argc, char **argv)
 	total.tv_sec += end.ru_utime.tv_sec;
 	if ((total.tv_usec += end.ru_utime.tv_usec) > 1000000)
 		total.tv_usec -= 1000000, total.tv_sec++;
-	printf(" bad searches %02f s (%8d cmp, %8d hash)\n",
+	printf(" bad searches %02f s (%9d cmp, %9d hash)\n",
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
 	total_comp += comp_count; comp_count = 0;
 	total_hash += hash_count; hash_count = 0;
@@ -252,7 +252,7 @@ main(int argc, char **argv)
 	total.tv_sec += end.ru_utime.tv_sec;
 	if ((total.tv_usec += end.ru_utime.tv_usec) > 1000000)
 		total.tv_usec -= 1000000, total.tv_sec++;
-	printf(" removes took %02f s (%8d cmp, %8d hash)\n",
+	printf(" removes took %02f s (%9d cmp, %9d hash)\n",
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
 	total_comp += comp_count; comp_count = 0;
 	total_hash += hash_count; hash_count = 0;
@@ -262,7 +262,7 @@ main(int argc, char **argv)
 
 	dict_free(dct);
 
-	printf("       totals %02f s (%8d cmp, %8d hash)\n",
+	printf("       totals %02f s (%9d cmp, %9d hash)\n",
 		   (total.tv_sec * 1000000 + total.tv_usec) / 1000000.0, total_comp, total_hash);
 
 	exit(EXIT_SUCCESS);
