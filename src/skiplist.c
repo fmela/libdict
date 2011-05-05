@@ -99,6 +99,8 @@ static itor_vtable skiplist_itor_vtable = {
 };
 
 static skip_node*		node_new(void *key, void *datum, unsigned link_count);
+static int				node_insert(skiplist *list, void *key, void *datum,
+									skip_node **update);
 static unsigned			rand_link_count(skiplist *list);
 
 skiplist *
@@ -162,10 +164,39 @@ skiplist_free(skiplist *list)
 }
 
 int
+node_insert(skiplist *list, void *key, void *datum, skip_node **update)
+{
+	skip_node *x;
+	unsigned k, nlinks = rand_link_count(list);
+
+	ASSERT(nlinks < list->max_link);
+
+	x = node_new(key, datum, nlinks);
+	if (x == NULL)
+		return -1;
+
+	while (list->top_link < nlinks) {
+		for (k = list->top_link+1; k<=nlinks; k++) {
+			ASSERT(update[k] == NULL);
+			update[k] = list->head;
+		}
+		list->top_link = nlinks;
+	}
+
+	for (k = 0; k < nlinks; k++) {
+		ASSERT(update[k]->link_count > k);
+		x->link[k] = update[k]->link[k];
+		update[k]->link[k] = x;
+	}
+	list->count++;
+	return 0;
+}
+
+int
 skiplist_insert(skiplist *list, void *key, void *datum, int overwrite)
 {
 	skip_node *x, *update[MAX_LINK] = { 0 };
-	unsigned k, nlinks;
+	unsigned k;
 
 	ASSERT(list != NULL);
 
@@ -191,35 +222,14 @@ skiplist_insert(skiplist *list, void *key, void *datum, int overwrite)
 		update[k] = x;
 	}
 
-	nlinks = rand_link_count(list);
-	ASSERT(nlinks < list->max_link);
-
-	x = node_new(key, datum, nlinks);
-	if (x == NULL)
-		return -1;
-
-	while (list->top_link < nlinks) {
-		for (k = list->top_link+1; k<=nlinks; k++) {
-			ASSERT(update[k] == NULL);
-			update[k] = list->head;
-		}
-		list->top_link = nlinks;
-	}
-
-	for (k = 0; k < nlinks; k++) {
-		ASSERT(update[k]->link_count > k);
-		x->link[k] = update[k]->link[k];
-		update[k]->link[k] = x;
-	}
-	list->count++;
-	return 0;
+	return node_insert(list, key, datum, update);
 }
 
 int
 skiplist_probe(skiplist *list, void *key, void **datum)
 {
 	skip_node *x, *update[MAX_LINK] = { 0 };
-	unsigned k, nlinks;
+	unsigned k;
 
 	ASSERT(list != NULL);
 
@@ -239,29 +249,7 @@ skiplist_probe(skiplist *list, void *key, void **datum)
 		}
 		update[k] = x;
 	}
-
-	nlinks = rand_link_count(list);
-	ASSERT(nlinks < list->max_link);
-
-	x = node_new(key, *datum, nlinks);
-	if (x == NULL)
-		return -1;
-
-	while (list->top_link < nlinks) {
-		for (k = list->top_link+1; k<=nlinks; k++) {
-			ASSERT(update[k] == NULL);
-			update[k] = list->head;
-		}
-		list->top_link = nlinks;
-	}
-
-	for (k = 0; k < nlinks; k++) {
-		ASSERT(update[k]->link_count > k);
-		x->link[k] = update[k]->link[k];
-		update[k]->link[k] = x;
-	}
-	list->count++;
-	return 1;
+	return node_insert(list, key, *datum, update);
 }
 
 void *
@@ -598,7 +586,7 @@ node_new(void *key, void *datum, unsigned link_count)
 
 	ASSERT(link_count >= 1);
 
-	node = MALLOC(sizeof(*node) + sizeof(node->link[0]) * (link_count));
+	node = MALLOC(sizeof(*node) + sizeof(node->link[0]) * (link_count - 1));
 	if (node == NULL)
 		return NULL;
 
