@@ -64,7 +64,8 @@ main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	srand((unsigned)time(NULL));
+	/* srand((unsigned)time(NULL)); */
+	srand(0xdeadbeef);
 
 	dict_set_malloc(xmalloc);
 
@@ -84,6 +85,9 @@ main(int argc, char **argv)
 		break;
 	case 's':
 		dct = sp_dict_new(my_str_cmp, key_str_free);
+		break;
+	case 'S':
+		dct = skiplist_dict_new(my_str_cmp, key_str_free, 12);
 		break;
 	case 'w':
 		dct = wb_dict_new(my_str_cmp, key_str_free);
@@ -145,7 +149,6 @@ main(int argc, char **argv)
 	if ((i = dict_count(dct)) != nwords)
 		quit("bad count (%u - should be %u)!", i, nwords);
 
-#if 0
 	itor = dict_itor_new(dct);
 
 	getrusage(RUSAGE_SELF, &start);
@@ -189,7 +192,6 @@ main(int argc, char **argv)
 		warn("Rev iteration returned %u items - should be %u", i, nwords);
 
 	dict_itor_free(itor);
-#endif
 
 	/* shuffle(words, nwords); */
 

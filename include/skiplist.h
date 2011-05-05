@@ -1,10 +1,33 @@
 /*
- * skiplist.h
+ * libdict -- skiplist interface.
  *
- * Interface for skiplist.
- * Copyright (C) 2001-2010 Farooq Mela.
+ * Copyright (c) 2001-2011, Farooq Mela
+ * All rights reserved.
  *
- * $Id$
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by Farooq Mela.
+ * 4. Neither the name of the Farooq Mela nor the
+ *    names of contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY FAROOQ MELA ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL FAROOQ MELA BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _SKIPLIST_H_
@@ -14,27 +37,29 @@
 
 BEGIN_DECL
 
-typedef struct skiplist skiplist;
+typedef struct skiplist
+			skiplist;
 
-skiplist*	skiplist_new(dict_compare_func key_cmp, dict_delete_func del_func);
-dict*		skiplist_dict_new(dict_compare_func key_cmp, dict_delete_func del_func);
-unsigned	skiplist_destroy(skiplist *table);
+skiplist*	skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func, unsigned max_link);
+dict*		skiplist_dict_new(dict_compare_func cmp_func, dict_delete_func del_func, unsigned max_link);
+unsigned	skiplist_free(skiplist *list);
 
-int			skiplist_insert(skiplist *table, void *key, void *datum, int overwrite);
-int			skiplist_probe(skiplist *table, void *key, void **datum);
-void*		skiplist_search(skiplist *table, const void *key);
-const void*	skiplist_csearch(const skiplist *table, const void *key);
-int			skiplist_remove(skiplist *table, const void *key);
-unsigned	skiplist_empty(skiplist *table);
-unsigned	skiplist_walk(skiplist *table, dict_visit_func visit);
-unsigned	skiplist_count(const skiplist *table);
+int			skiplist_insert(skiplist *list, void *key, void *datum, int overwrite);
+int			skiplist_probe(skiplist *list, void *key, void **datum);
+void*		skiplist_search(skiplist *list, const void *key);
+const void*	skiplist_csearch(const skiplist *list, const void *key);
+int			skiplist_remove(skiplist *list, const void *key);
+unsigned	skiplist_clear(skiplist *list);
+unsigned	skiplist_traverse(skiplist *list, dict_visit_func visit);
+unsigned	skiplist_count(const skiplist *list);
 
-typedef struct skiplist_itor skiplist_itor;
+typedef struct skiplist_itor
+			skiplist_itor;
 
 skiplist_itor*
-			skiplist_itor_new(skiplist *table);
-dict_itor*	skiplist_dict_itor_new(skiplist *table);
-void		skiplist_itor_destroy(skiplist_itor *);
+			skiplist_itor_new(skiplist *list);
+dict_itor*	skiplist_dict_itor_new(skiplist *list);
+void		skiplist_itor_free(skiplist_itor *);
 
 int			skiplist_itor_valid(const skiplist_itor *itor);
 void		skiplist_itor_invalidate(skiplist_itor *itor);

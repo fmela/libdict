@@ -195,6 +195,7 @@ END_DECL
 #include "hb_tree.h"
 #include "pr_tree.h"
 #include "rb_tree.h"
+#include "skiplist.h"
 #include "sp_tree.h"
 #include "tr_tree.h"
 #include "wb_tree.h"
