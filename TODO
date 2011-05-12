@@ -1,0 +1,4 @@
+Use restrict keyword wherever appropriate.
+Fix skiplist prev pointers.
+Implement incomplete functionality, e.g. iterator remove & compare.
+Reformat to 80 columns.
