@@ -37,19 +37,21 @@ extern dict_free_func _dict_free;
 #define MALLOC(n)	(*_dict_malloc)(n)
 #define FREE(p)		(*_dict_free)(p)
 
-#define ABS(a)		((a) < 0 ? -(a) : +(a))
-#define MIN(a,b)	((a) < (b) ? (a) : (b))
-#define MAX(a,b)	((a) > (b) ? (a) : (b))
-#define SWAP(a,b,v)	v = (a), (a) = (b), (b) = v
-#define UNUSED(p)	(void)&p
+#define ABS(a)			((a) < 0 ? -(a) : (a))
+#define MIN(a,b)		((a) < (b) ? (a) : (b))
+#define MAX(a,b)		((a) > (b) ? (a) : (b))
+#define SWAP(a,b,v)		\
+	do {				\
+		v = (a);		\
+		(a) = (b);		\
+		(b) = v;		\
+	} while (0)
 
 #if defined(__GNUC__)
 # define GCC_INLINE		__inline__
-# define GCC_UNUSED		__attribute__((__unused__))
 # define GCC_CONST		__attribute__((__const__))
 #else
 # define GCC_INLINE
-# define GCC_UNUSED
 # define GCC_CONST
 #endif
 
