@@ -39,6 +39,10 @@ int my_str_cmp(const void *k1, const void *k2);
 void shuffle(char **p, unsigned size);
 void key_str_free(void *key, void *datum);
 
+void timer_start(struct rusage* start);
+void timer_end(const struct rusage* start, struct rusage *end,
+			   struct timeval *total);
+
 /* #define HSIZE		599 */
 /* #define HSIZE		997 */
 #define HSIZE 9973
@@ -125,21 +129,14 @@ main(int argc, char **argv)
 
 	total_comp = total_hash = 0;
 
-	malloced = 0;
+	malloced = 0; /* Reset memory usage counter. */
 	comp_count = hash_count = 0;
-	getrusage(RUSAGE_SELF, &start);
+	timer_start(&start);
 	for (i = 0; i < nwords; i++) {
 		if ((rv = dict_insert(dct, words[i], words[i], 0)) != 0)
 			quit("insert #%d failed with %d for `%s'", i, rv, words[i]);
 	}
-	getrusage(RUSAGE_SELF, &end);
-	if (end.ru_utime.tv_usec < start.ru_utime.tv_usec)
-		end.ru_utime.tv_usec += 1000000, end.ru_utime.tv_sec--;
-	end.ru_utime.tv_usec -= start.ru_utime.tv_usec;
-	end.ru_utime.tv_sec -= start.ru_utime.tv_sec;
-	total.tv_sec += end.ru_utime.tv_sec;
-	if ((total.tv_usec += end.ru_utime.tv_usec) > 1000000)
-		total.tv_usec -= 1000000, total.tv_sec++;
+	timer_end(&start, &end, &total);
 	printf("      inserts %02f s (%9d cmp, %9d hash)\n",
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
 	total_comp += comp_count; comp_count = 0;
@@ -151,7 +148,7 @@ main(int argc, char **argv)
 
 	itor = dict_itor_new(dct);
 
-	getrusage(RUSAGE_SELF, &start);
+	timer_start(&start);
 	i = 0;
 	dict_itor_first(itor);
 	while (dict_itor_valid(itor)) {
@@ -161,17 +158,13 @@ main(int argc, char **argv)
 
 		dict_itor_next(itor);
 	}
-	getrusage(RUSAGE_SELF, &end);
-	if (end.ru_utime.tv_usec < start.ru_utime.tv_usec)
-		end.ru_utime.tv_usec += 1000000, end.ru_utime.tv_sec--;
-	end.ru_utime.tv_usec -= start.ru_utime.tv_usec;
-	end.ru_utime.tv_sec -= start.ru_utime.tv_sec;
+	timer_end(&start, &end, &total);
 	printf("  fwd iterate %02f s\n",
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0);
 	if (i != nwords)
 		warn("Fwd iteration returned %u items - should be %u", i, nwords);
 
-	getrusage(RUSAGE_SELF, &start);
+	timer_start(&start);
 	i = 0;
 	dict_itor_last(itor);
 	while (dict_itor_valid(itor)) {
@@ -181,11 +174,7 @@ main(int argc, char **argv)
 
 		dict_itor_prev(itor);
 	}
-	getrusage(RUSAGE_SELF, &end);
-	if (end.ru_utime.tv_usec < start.ru_utime.tv_usec)
-		end.ru_utime.tv_usec += 1000000, end.ru_utime.tv_sec--;
-	end.ru_utime.tv_usec -= start.ru_utime.tv_usec;
-	end.ru_utime.tv_sec -= start.ru_utime.tv_sec;
+	timer_end(&start, &end, &total);
 	printf("  rev iterate %02f s\n",
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0);
 	if (i != nwords)
@@ -196,42 +185,28 @@ main(int argc, char **argv)
 	/* shuffle(words, nwords); */
 
 	comp_count = hash_count = 0;
-	getrusage(RUSAGE_SELF, &start);
+	timer_start(&start);
 	for (i = 0; i < nwords; i++) {
 		if ((p = dict_search(dct, words[i])) == NULL)
 			quit("lookup failed for `%s'", buf);
 		if (p != words[i])
 			quit("bad data for `%s', got `%s' instead", words[i], p);
 	}
-	getrusage(RUSAGE_SELF, &end);
-	if (end.ru_utime.tv_usec < start.ru_utime.tv_usec)
-		end.ru_utime.tv_usec += 1000000, end.ru_utime.tv_sec--;
-	end.ru_utime.tv_usec -= start.ru_utime.tv_usec;
-	end.ru_utime.tv_sec -= start.ru_utime.tv_sec;
-	total.tv_sec += end.ru_utime.tv_sec;
-	if ((total.tv_usec += end.ru_utime.tv_usec) > 1000000)
-		total.tv_usec -= 1000000, total.tv_sec++;
+	timer_end(&start, &end, &total);
 	printf("good searches %02f s (%9d cmp, %9d hash)\n",
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
 	total_comp += comp_count; comp_count = 0;
 	total_hash += hash_count; hash_count = 0;
 
 	comp_count = hash_count = 0;
-	getrusage(RUSAGE_SELF, &start);
+	timer_start(&start);
 	for (i = 0; i < nwords; i++) {
 		rv = rand() % strlen(words[i]);
 		words[i][rv]++;
 		dict_search(dct, words[i]);
 		words[i][rv]--;
 	}
-	getrusage(RUSAGE_SELF, &end);
-	if (end.ru_utime.tv_usec < start.ru_utime.tv_usec)
-		end.ru_utime.tv_usec += 1000000, end.ru_utime.tv_sec--;
-	end.ru_utime.tv_usec -= start.ru_utime.tv_usec;
-	end.ru_utime.tv_sec -= start.ru_utime.tv_sec;
-	total.tv_sec += end.ru_utime.tv_sec;
-	if ((total.tv_usec += end.ru_utime.tv_usec) > 1000000)
-		total.tv_usec -= 1000000, total.tv_sec++;
+	timer_end(&start, &end, &total);
 	printf(" bad searches %02f s (%9d cmp, %9d hash)\n",
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
 	total_comp += comp_count; comp_count = 0;
@@ -239,19 +214,12 @@ main(int argc, char **argv)
 
 	shuffle(words, nwords);
 
-	getrusage(RUSAGE_SELF, &start);
+	timer_start(&start);
 	for (i = 0; i < nwords; i++) {
 		if ((rv = dict_remove(dct, words[i])) != 0)
 			quit("removing #%d `%s' failed (%d)!\n", i, words[i], rv);
 	}
-	getrusage(RUSAGE_SELF, &end);
-	if (end.ru_utime.tv_usec < start.ru_utime.tv_usec)
-		end.ru_utime.tv_usec += 1000000, end.ru_utime.tv_sec--;
-	end.ru_utime.tv_usec -= start.ru_utime.tv_usec;
-	end.ru_utime.tv_sec -= start.ru_utime.tv_sec;
-	total.tv_sec += end.ru_utime.tv_sec;
-	if ((total.tv_usec += end.ru_utime.tv_usec) > 1000000)
-		total.tv_usec -= 1000000, total.tv_sec++;
+	timer_end(&start, &end, &total);
 	printf(" removes took %02f s (%9d cmp, %9d hash)\n",
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
 	total_comp += comp_count; comp_count = 0;
@@ -377,4 +345,23 @@ key_str_free(void *key, void *datum)
 {
 	assert(key == datum);
 	free(key);
+}
+
+void
+timer_start(struct rusage *start)
+{
+	getrusage(RUSAGE_SELF, start);
+}
+
+void
+timer_end(const struct rusage *start, struct rusage *end,
+		  struct timeval *total) {
+	getrusage(RUSAGE_SELF, end);
+	if (end->ru_utime.tv_usec < start->ru_utime.tv_usec)
+		end->ru_utime.tv_usec += 1000000, end->ru_utime.tv_sec--;
+	end->ru_utime.tv_usec -= start->ru_utime.tv_usec;
+	end->ru_utime.tv_sec -= start->ru_utime.tv_sec;
+	total->tv_sec += end->ru_utime.tv_sec;
+	if ((total->tv_usec += end->ru_utime.tv_usec) > 1000000)
+		total->tv_usec -= 1000000, total->tv_sec++;
 }
