@@ -69,7 +69,7 @@ static dict_vtable pr_tree_vtable = {
 	(dict_insert_func)		pr_tree_insert,
 	(dict_probe_func)		pr_tree_probe,
 	(dict_search_func)		pr_tree_search,
-	(dict_csearch_func)		pr_tree_csearch,
+	(dict_csearch_func)		pr_tree_search,
 	(dict_remove_func)		pr_tree_remove,
 	(dict_clear_func)		pr_tree_clear,
 	(dict_traverse_func)	pr_tree_traverse,
@@ -177,12 +177,6 @@ pr_tree_search(pr_tree *tree, const void *key)
 	}
 
 	return NULL;
-}
-
-const void *
-pr_tree_csearch(const pr_tree *tree, const void *key)
-{
-	return pr_tree_search((pr_tree *)tree, key);
 }
 
 static void

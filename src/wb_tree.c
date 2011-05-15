@@ -93,7 +93,7 @@ static dict_vtable wb_tree_vtable = {
 	(dict_insert_func)		wb_tree_insert,
 	(dict_probe_func)		wb_tree_probe,
 	(dict_search_func)		wb_tree_search,
-	(dict_csearch_func)		wb_tree_csearch,
+	(dict_csearch_func)		wb_tree_search,
 	(dict_remove_func)		wb_tree_remove,
 	(dict_clear_func)		wb_tree_clear,
 	(dict_traverse_func)	wb_tree_traverse,
@@ -198,12 +198,6 @@ wb_tree_search(wb_tree *tree, const void *key)
 	}
 
 	return NULL;
-}
-
-const void *
-wb_tree_csearch(const wb_tree *tree, const void *key)
-{
-	return wb_tree_search((wb_tree *)tree, key);
 }
 
 int

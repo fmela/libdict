@@ -73,7 +73,7 @@ static dict_vtable skiplist_vtable = {
 	(dict_insert_func)		skiplist_insert,
 	(dict_probe_func)		skiplist_probe,
 	(dict_search_func)		skiplist_search,
-	(dict_csearch_func)		skiplist_csearch,
+	(dict_csearch_func)		skiplist_search,
 	(dict_remove_func)		skiplist_remove,
 	(dict_clear_func)		skiplist_clear,
 	(dict_traverse_func)	skiplist_traverse,
@@ -272,14 +272,6 @@ skiplist_search(skiplist *list, const void *key)
 		}
 	}
 	return NULL;
-}
-
-const void *
-skiplist_csearch(const skiplist *list, const void *key)
-{
-	ASSERT(list != NULL);
-
-	return skiplist_search((skiplist *)list, key); /* Cast OK. */
 }
 
 int

@@ -68,7 +68,7 @@ static dict_vtable hashtable_vtable = {
 	(dict_insert_func)		hashtable_insert,
 	(dict_probe_func)		hashtable_probe,
 	(dict_search_func)		hashtable_search,
-	(dict_csearch_func)		hashtable_csearch,
+	(dict_csearch_func)		hashtable_search,
 	(dict_remove_func)		hashtable_remove,
 	(dict_clear_func)		hashtable_clear,
 	(dict_traverse_func)	hashtable_traverse,
@@ -264,15 +264,6 @@ hashtable_search(hashtable *table, const void *key)
 			return node->datum;
 	}
 	return NULL;
-}
-
-const void *
-hashtable_csearch(const hashtable *table, const void *key)
-{
-	ASSERT(table != NULL);
-
-	/* Cast OK. */
-	return hashtable_search((hashtable *)table, key);
 }
 
 int

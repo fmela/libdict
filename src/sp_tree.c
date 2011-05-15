@@ -80,7 +80,7 @@ static dict_vtable sp_tree_vtable = {
 	(dict_insert_func)		sp_tree_insert,
 	(dict_probe_func)		sp_tree_probe,
 	(dict_search_func)		sp_tree_search,
-	(dict_csearch_func)		sp_tree_csearch,
+	(dict_csearch_func)		sp_tree_search,
 	(dict_remove_func)		sp_tree_remove,
 	(dict_clear_func)		sp_tree_clear,
 	(dict_traverse_func)	sp_tree_traverse,
@@ -390,16 +390,6 @@ sp_tree_search(sp_tree *tree, const void *key)
 		while (parent->parent)
 			SPLAY(tree, parent);
 	return NULL;
-}
-
-const void *
-sp_tree_csearch(const sp_tree *tree, const void *key)
-{
-	/*
-	 * This cast is OK, because contents of tree remain same, it is only the
-	 * relative "ordering" that changes with splaying.
-	 */
-	return sp_tree_search((sp_tree *)tree, key);
 }
 
 int

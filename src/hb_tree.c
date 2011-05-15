@@ -64,7 +64,7 @@ static dict_vtable hb_tree_vtable = {
 	(dict_insert_func)		hb_tree_insert,
 	(dict_probe_func)		hb_tree_probe,
 	(dict_search_func)		hb_tree_search,
-	(dict_csearch_func)		hb_tree_csearch,
+	(dict_csearch_func)		hb_tree_search,
 	(dict_remove_func)		hb_tree_remove,
 	(dict_clear_func)		hb_tree_clear,
 	(dict_traverse_func)	hb_tree_traverse,
@@ -216,12 +216,6 @@ hb_tree_search(hb_tree *tree, const void *key)
 	}
 
 	return NULL;
-}
-
-const void *
-hb_tree_csearch(const hb_tree *tree, const void *key)
-{
-	return hb_tree_search((hb_tree *)tree, key);
 }
 
 int

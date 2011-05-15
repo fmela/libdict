@@ -93,7 +93,7 @@ static dict_vtable tr_tree_vtable = {
 	(dict_insert_func)		tr_tree_insert,
 	(dict_probe_func)		tr_tree_probe,
 	(dict_search_func)		tr_tree_search,
-	(dict_csearch_func)		tr_tree_csearch,
+	(dict_csearch_func)		tr_tree_search,
 	(dict_remove_func)		tr_tree_remove,
 	(dict_clear_func)		tr_tree_clear,
 	(dict_traverse_func)	tr_tree_traverse,
@@ -393,14 +393,6 @@ tr_tree_search(tr_tree *tree, const void *key)
 			return node->datum;
 	}
 	return NULL;
-}
-
-const void *
-tr_tree_csearch(const tr_tree *tree, const void *key)
-{
-	ASSERT(tree != NULL);
-
-	return tr_tree_search((tr_tree *)tree, key);
 }
 
 unsigned
