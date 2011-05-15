@@ -5,46 +5,41 @@ OUTPUT_DIR = bin
 SOURCE := $(wildcard $(SOURCE_DIR)/*.c)
 HEADER := $(wildcard $(HEADER_DIR)/*.h $(SOURCE_DIR)/*.h)
 
-STATIC_OBJ = $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.o)
-PROFIL_OBJ = $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.po)
-SHARED_OBJ = $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.So)
+STATIC_OBJ := $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.o)
+PROFIL_OBJ := $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.po)
+SHARED_OBJ := $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.So)
 
-PROG_SRC = $(wildcard *.c)
-PROG_OBJ = $(PROG_SRC:%.c=$(OUTPUT_DIR)/%.o)
-PROG = $(PROG_SRC:%.c=$(OUTPUT_DIR)/%)
+PROG_SRC := $(wildcard *.c)
+PROGRAMS := $(PROG_SRC:%.c=$(OUTPUT_DIR)/%)
 
 LIB = dict
 STATIC_LIB = $(OUTPUT_DIR)/lib$(LIB).a
 PROFIL_LIB = $(OUTPUT_DIR)/lib$(LIB)_p.a
 SHARED_LIB = $(OUTPUT_DIR)/lib$(LIB).so
 
-CFLAGS = -Wall -Wextra -ansi -pedantic -g -I$(HEADER_DIR) -I$(SOURCE_DIR)
-#CFLAGS:= $(CFLAGS) -O2
+# Plug in your favorite compiler here:
+CC := $(shell which gcc-4.5 || which clang || which gcc)
+CFLAGS = -Wall -Wextra -W -ansi -pedantic -O2 -I$(HEADER_DIR) -I$(SOURCE_DIR)
 LDFLAGS =
-
-WHICH_CLANG=$(shell which clang)
-ifeq ($(WHICH_CLANG),'')
-	CC=gcc
-else
-	CC=clang
-#	CFLAGS := $(CFLAGS) --analyze
-endif
 
 AR = ar
 ARFLAGS = cru
 
-PREFIX ?= /usr/local
-BINDIR = $(PREFIX)/bin
-LIBDIR = $(PREFIX)/lib
-INCDIR = $(PREFIX)/include/dict
-MANDIR = $(PREFIX)/man
+INSTALL_PREFIX ?= /usr/local
+INSTALL_BINDIR = $(INSTALL_PREFIX)/bin
+INSTALL_LIBDIR = $(INSTALL_PREFIX)/lib
+INSTALL_INCDIR = $(INSTALL_PREFIX)/include/dict
+INSTALL_MANDIR = $(INSTALL_PREFIX)/man
 INSTALL ?= install
-LIBVER = 2
-SHLIB = $(SHARED_LIB).$(LIBVER)
-USER ?= 0
-GROUP ?= 0
+INSTALL_LIBVER = 2
+INSTALL_SHLIB = $(SHARED_LIB).$(INSTALL_LIBVER)
+INSTALL_USER ?= 0
+INSTALL_GROUP ?= 0
 
-all: $(STATIC_LIB) $(SHARED_LIB) $(PROG) $(PROG_OBJ)
+all: $(OUTPUT_DIR) $(STATIC_LIB) $(SHARED_LIB) $(PROGRAMS)
+
+$(OUTPUT_DIR):
+	[ -d $(OUTPUT_DIR) ] || mkdir -m 755 $(OUTPUT_DIR)
 
 $(STATIC_LIB): $(STATIC_OBJ)
 	$(AR) $(ARFLAGS) $(STATIC_LIB) $(STATIC_OBJ)
@@ -64,27 +59,24 @@ $(OUTPUT_DIR)/%.po: $(SOURCE_DIR)/%.c $(HEADER)
 $(OUTPUT_DIR)/%.So: $(SOURCE_DIR)/%.c $(HEADER)
 	$(CC) $(CFLAGS) -fPIC -DPIC -c -o $(@) $(<)
 
-$(OUTPUT_DIR)/%.o: %.c $(HEADER)
-	$(CC) $(CFLAGS) -c -o $(@) $(<)
-
-$(OUTPUT_DIR)/%: $(OUTPUT_DIR)/%.o $(STATIC_OBJ)
-	$(CC) -o $(@) $(<) $(STATIC_OBJ) $(LDFLAGS)
+$(OUTPUT_DIR)/%: %.c $(STATIC_OBJ)
+	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_OBJ) $(LDFLAGS)
 
 .PHONY: clean
-clean :
-	rm -f $(STATIC_LIB) $(STATIC_OBJ)
-	rm -f $(PROFIL_LIB) $(PROFIL_OBJ)
-	rm -f $(SHARED_LIB) $(SHARED_OBJ)
-	rm -f $(PROG) $(PROG_OBJ)
-	rm -rf $(OUTPUT_DIR)/*.dSYM
+clean:
+	rm -f $(OUTPUT_DIR)/*
+
+.PHONY: analyze
+analyze:
+	clang --analyze $(SOURCE)
 
 install: $(STATIC_LIB) $(PROFIL_LIB) $(SHARED_LIB)
-	[ -d $(INCDIR) ] || mkdir -m 755 $(INCDIR)
-	$(INSTALL) -o $(USER) -g $(GROUP) -m 644 $(HEADER) $(INCDIR)
-	$(INSTALL) -s -o $(USER) -g $(GROUP) -m 644 $(STATIC_LIB) $(LIBDIR)
-	$(INSTALL) -s -o $(USER) -g $(GROUP) -m 644 $(PROFIL_LIB) $(LIBDIR)
-	$(INSTALL) -s -o $(USER) -g $(GROUP) -m 755 $(SHARED_LIB) $(LIBDIR)/$(SHLIB)
-	$(SHELL) -ec 'cd $(LIBDIR) && ln -sf $(SHLIB) $(SHARED_LIB)'
+	[ -d $(INSTALL_INCDIR) ] || mkdir -m 755 $(INSTALL_INCDIR)
+	$(INSTALL) -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m 644 $(HEADER) $(INSTALL_INCDIR)
+	$(INSTALL) -s -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m 644 $(STATIC_LIB) $(LIBDIR)
+	$(INSTALL) -s -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m 644 $(PROFIL_LIB) $(LIBDIR)
+	$(INSTALL) -s -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m 755 $(SHARED_LIB) $(LIBDIR)/$(INSTALL_SHLIB)
+	$(SHELL) -ec 'cd $(INSTALL_LIBDIR) && ln -sf $(INSTALL_SHLIB) $(SHARED_LIB)'
 
 uninstall :
 	-rm -rf $(INCDIR)
