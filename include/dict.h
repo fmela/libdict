@@ -62,9 +62,10 @@ BEGIN_DECL
  * equal. The comparison should be reflexive (k1>k2 implies k1<k2, etc.),
  * symmetric (k1=k1) and transitive (k1>k2 and k2>k3 -> k1>k3). */
 typedef int			(*dict_compare_func)(const void *, const void *);
-/* A pointer to a function that is called when a key-value pair gets removed from a dictionary. */
+/* A pointer to a function that is called when a key-value pair gets removed
+ * from a dictionary. */
 typedef void		(*dict_delete_func)	(void *, void *);
-/* A pointer to a function that performs some operations given a key-value pair. */
+/* A pointer to a function used for iterating over dictionary contents. */
 typedef int			(*dict_visit_func)	(const void *, void *);
 /* A pointer to a function that returns the hash value of a key. */
 typedef unsigned	(*dict_hash_func)	(const void *);
@@ -87,13 +88,16 @@ typedef struct dict_itor
 
 typedef dict_itor*	(*dict_inew_func)		(void *obj);
 typedef unsigned	(*dict_dfree_func)		(void *obj);
-typedef int			(*dict_insert_func)		(void *obj, void *key, void *datum, int overwrite);
-typedef int			(*dict_probe_func)		(void *obj, void *key, void **datum);
+typedef int			(*dict_insert_func)		(void *obj, void *key, void *datum,
+											 int overwrite);
+typedef int			(*dict_probe_func)		(void *obj, void *key,
+											 void **datum);
 typedef void*		(*dict_search_func)		(void *obj, const void *key);
 typedef const void*	(*dict_csearch_func)	(const void *obj, const void *key);
 typedef int			(*dict_remove_func)		(void *obj, const void *key);
 typedef unsigned	(*dict_clear_func)		(void *obj);
-typedef unsigned	(*dict_traverse_func)	(void *obj, dict_visit_func visit_func);
+typedef unsigned	(*dict_traverse_func)	(void *obj,
+											 dict_visit_func visit_func);
 typedef unsigned	(*dict_count_func)		(const void *obj);
 
 typedef struct {
@@ -121,7 +125,8 @@ typedef int			(*dict_last_func)		(void *itor);
 typedef void*		(*dict_key_func)		(void *itor);
 typedef void*		(*dict_data_func)		(void *itor);
 typedef const void*	(*dict_cdata_func)		(const void *itor);
-typedef int			(*dict_dataset_func)	(void *itor, void *datum, void **old_datum);
+typedef int			(*dict_dataset_func)	(void *itor, void *datum,
+											 void **old_datum);
 typedef int			(*dict_iremove_func)	(void *itor);
 typedef int			(*dict_icompare_func)	(void *itor1, void *itor2);
 

@@ -44,10 +44,10 @@ hb_tree*	hb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
 dict*		hb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
 unsigned	hb_tree_free(hb_tree *tree);
 
-int			hb_tree_insert(hb_tree *tree, void *key, void *datum, int overwrite);
+int			hb_tree_insert(hb_tree *tree, void *key, void *datum,
+						   int overwrite);
 int			hb_tree_probe(hb_tree *tree, void *key, void **datum);
 void*		hb_tree_search(hb_tree *tree, const void *key);
-const void*	hb_tree_csearch(const hb_tree *tree, const void *key);
 int			hb_tree_remove(hb_tree *tree, const void *key);
 unsigned	hb_tree_clear(hb_tree *tree);
 unsigned	hb_tree_traverse(hb_tree *tree, dict_visit_func visit);

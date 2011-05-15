@@ -51,7 +51,6 @@ int			hashtable_insert(hashtable *table, void *key, void *datum,
 							 int overwrite);
 int			hashtable_probe(hashtable *table, void *key, void **datum);
 void*		hashtable_search(hashtable *table, const void *key);
-const void*	hashtable_csearch(const hashtable *table, const void *key);
 int			hashtable_remove(hashtable *table, const void *key);
 unsigned	hashtable_clear(hashtable *table);
 unsigned	hashtable_traverse(hashtable *table, dict_visit_func visit);

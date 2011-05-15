@@ -44,10 +44,10 @@ pr_tree*	pr_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
 dict*		pr_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
 unsigned	pr_tree_free(pr_tree *tree);
 
-int			pr_tree_insert(pr_tree *tree, void *key, void *datum, int overwrite);
+int			pr_tree_insert(pr_tree *tree, void *key, void *datum,
+						   int overwrite);
 int			pr_tree_probe(pr_tree *tree, void *key, void **datum);
 void*		pr_tree_search(pr_tree *tree, const void *key);
-const void*	pr_tree_csearch(const pr_tree *tree, const void *key);
 int			pr_tree_remove(pr_tree *tree, const void *key);
 unsigned	pr_tree_clear(pr_tree *tree);
 unsigned	pr_tree_traverse(pr_tree *tree, dict_visit_func visit);

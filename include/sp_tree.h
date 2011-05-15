@@ -44,10 +44,10 @@ sp_tree*	sp_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
 dict*		sp_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
 unsigned	sp_tree_free(sp_tree *tree);
 
-int			sp_tree_insert(sp_tree *tree, void *key, void *datum, int overwrite);
+int			sp_tree_insert(sp_tree *tree, void *key, void *datum,
+						   int overwrite);
 int			sp_tree_probe(sp_tree *tree, void *key, void **datum);
 void*		sp_tree_search(sp_tree *tree, const void *key);
-const void*	sp_tree_csearch(const sp_tree *tree, const void *key);
 int			sp_tree_remove(sp_tree *tree, const void *key);
 unsigned	sp_tree_clear(sp_tree *tree);
 unsigned	sp_tree_traverse(sp_tree *tree, dict_visit_func visit);

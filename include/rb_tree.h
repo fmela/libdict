@@ -44,10 +44,10 @@ rb_tree*	rb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
 dict*		rb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
 unsigned	rb_tree_free(rb_tree *tree);
 
-int			rb_tree_insert(rb_tree *tree, void *key, void *datum, int overwrite);
+int			rb_tree_insert(rb_tree *tree, void *key, void *datum,
+						   int overwrite);
 int			rb_tree_probe(rb_tree *tree, void *key, void **datum);
 void*		rb_tree_search(rb_tree *tree, const void *key);
-const void*	rb_tree_csearch(const rb_tree *tree, const void *key);
 int			rb_tree_remove(rb_tree *tree, const void *key);
 unsigned	rb_tree_clear(rb_tree *tree);
 unsigned	rb_tree_traverse(rb_tree *tree, dict_visit_func visit);

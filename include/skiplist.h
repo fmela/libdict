@@ -41,16 +41,15 @@ typedef struct skiplist
 			skiplist;
 
 skiplist*	skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func,
-				unsigned max_link);
+						 unsigned max_link);
 dict*		skiplist_dict_new(dict_compare_func cmp_func,
-				dict_delete_func del_func, unsigned max_link);
+							  dict_delete_func del_func, unsigned max_link);
 unsigned	skiplist_free(skiplist *list);
 
 int			skiplist_insert(skiplist *list, void *key, void *datum,
-				int overwrite);
+							int overwrite);
 int			skiplist_probe(skiplist *list, void *key, void **datum);
 void*		skiplist_search(skiplist *list, const void *key);
-const void*	skiplist_csearch(const skiplist *list, const void *key);
 int			skiplist_remove(skiplist *list, const void *key);
 unsigned	skiplist_clear(skiplist *list);
 unsigned	skiplist_traverse(skiplist *list, dict_visit_func visit);

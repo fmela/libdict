@@ -44,10 +44,10 @@ wb_tree*	wb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
 dict*		wb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
 unsigned	wb_tree_free(wb_tree *tree);
 
-int			wb_tree_insert(wb_tree *tree, void *key, void *datum, int overwrite);
+int			wb_tree_insert(wb_tree *tree, void *key, void *datum,
+						   int overwrite);
 int			wb_tree_probe(wb_tree *tree, void *key, void **datum);
 void*		wb_tree_search(wb_tree *tree, const void *key);
-const void*	wb_tree_csearch(const wb_tree *tree, const void *key);
 int			wb_tree_remove(wb_tree *tree, const void *key);
 unsigned	wb_tree_clear(wb_tree *tree);
 unsigned	wb_tree_traverse(wb_tree *tree, dict_visit_func visit);

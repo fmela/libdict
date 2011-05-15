@@ -40,16 +40,16 @@ BEGIN_DECL
 typedef struct tr_tree
 			tr_tree;
 
-tr_tree*	tr_tree_new(dict_compare_func compare_func, dict_prio_func prio_func,
-						dict_delete_func del_func);
-dict*		tr_dict_new(dict_compare_func compare_func, dict_prio_func prio_func,
-						dict_delete_func del_func);
+tr_tree*	tr_tree_new(dict_compare_func compare_func,
+						dict_prio_func prio_func, dict_delete_func del_func);
+dict*		tr_dict_new(dict_compare_func compare_func,
+						dict_prio_func prio_func, dict_delete_func del_func);
 unsigned	tr_tree_free(tr_tree *tree);
 
-int			tr_tree_insert(tr_tree *tree, void *key, void *datum, int overwrite);
+int			tr_tree_insert(tr_tree *tree, void *key, void *datum,
+						   int overwrite);
 int			tr_tree_probe(tr_tree *tree, void *key, void **datum);
 void*		tr_tree_search(tr_tree *tree, const void *key);
-const void*	tr_tree_csearch(const tr_tree *tree, const void *key);
 int			tr_tree_remove(tr_tree *tree, const void *key);
 unsigned	tr_tree_clear(tr_tree *tree);
 unsigned	tr_tree_traverse(tr_tree *tree, dict_visit_func visit);
