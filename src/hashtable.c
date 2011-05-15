@@ -1,5 +1,5 @@
 /*
- * libdict -- chained hash-table implementation.
+ * libdict -- chained hash-table, with chains sorted by hash, implementation.
  * cf. [Gonnet 1984], [Knuth 1998]
  *
  * Copyright (c) 2001-2011, Farooq Mela
@@ -36,22 +36,14 @@
 #include "hashtable.h"
 #include "dict_private.h"
 
-/*
- * We store the untruncated hash value in the "hash" field. This speeds up
- * searching and allows us to resize without recomputing the original hash
- * value.
- *
- * If it weren't for iterators, there would be no reason have a "prev" field.
- */
-
 typedef struct hash_node hash_node;
 
 struct hash_node {
 	void*				key;
 	void*				datum;
-	unsigned			hash;
+	unsigned			hash;	/* Untruncated hash value. */
 	hash_node*			next;
-	hash_node*			prev;
+	hash_node*			prev;	/* Only because iterators are bidirectional. */
 };
 
 struct hashtable {
@@ -96,12 +88,13 @@ static itor_vtable hashtable_itor_vtable = {
 	(dict_data_func)		hashtable_itor_data,
 	(dict_cdata_func)		hashtable_itor_cdata,
 	(dict_dataset_func)		hashtable_itor_set_data,
-	(dict_iremove_func)		NULL,	/* hashtable_itor_remove not implemented yet */
-	(dict_icompare_func)	NULL	/* hashtable_itor_compare not implemented yet */
+	(dict_iremove_func)		NULL,/* hashtable_itor_remove not implemented yet */
+	(dict_icompare_func)	NULL/* hashtable_itor_compare not implemented yet */
 };
 
 hashtable *
-hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func, dict_delete_func del_func, unsigned size)
+hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func,
+			  dict_delete_func del_func, unsigned size)
 {
 	hashtable *table;
 	unsigned i;
@@ -128,7 +121,8 @@ hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func, dict_delete_
 }
 
 dict *
-hashtable_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func, dict_delete_func del_func, unsigned size)
+hashtable_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func,
+				   dict_delete_func del_func, unsigned size)
 {
 	dict *dct;
 
@@ -138,7 +132,8 @@ hashtable_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func, dict_de
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((dct->_object = hashtable_new(cmp_func, hash_func, del_func, size)) == NULL) {
+	dct->_object = hashtable_new(cmp_func, hash_func, del_func, size);
+	if (dct->_object == NULL) {
 		FREE(dct);
 		return NULL;
 	}
@@ -166,14 +161,17 @@ int
 hashtable_insert(hashtable *table, void *key, void *datum, int overwrite)
 {
 	unsigned hash, mhash;
-	hash_node *node;
+	hash_node *node, *prev, *add;
 
 	ASSERT(table != NULL);
 
 	hash = table->hash_func(key);
-
 	mhash = hash % table->size;
-	for (node = table->table[mhash]; node; node = node->next)
+	prev = NULL;
+	for (node = table->table[mhash]; node; prev = node, node = node->next) {
+		if (hash < node->hash)
+			break;
+
 		if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
 			if (!overwrite)
 				return 1;
@@ -183,20 +181,26 @@ hashtable_insert(hashtable *table, void *key, void *datum, int overwrite)
 			node->datum = datum;
 			return 0;
 		}
+	}
 
-	if ((node = MALLOC(sizeof(*node))) == NULL)
+	if ((add = MALLOC(sizeof(*add))) == NULL)
 		return -1;
-	node->key = key;
-	node->datum = datum;
-	node->hash = hash;
-	node->prev = NULL;
 
-	node->next = table->table[mhash];
-	if (table->table[mhash])
-		table->table[mhash]->prev = node;
-	table->table[mhash] = node;
+	add->key = key;
+	add->datum = datum;
+	add->hash = hash;
+
+	add->prev = prev;
+	if (prev)
+		prev->next = add;
+	else
+		table->table[mhash] = add;
+
+	add->next = node;
+	if (node)
+		node->prev = add;
+
 	table->count++;
-
 	return 0;
 }
 
@@ -204,31 +208,41 @@ int
 hashtable_probe(hashtable *table, void *key, void **datum)
 {
 	unsigned hash, mhash;
-	hash_node *node, *add;
+	hash_node *node, *prev, *add;
 
 	ASSERT(table != NULL);
 	ASSERT(datum != NULL);
 
-	hash = table->hash_func(key);
-	mhash = hash % table->size;
+	mhash = (hash = table->hash_func(key)) % table->size;
 
-	for (node = table->table[mhash]; node; node = node->next)
+	prev = NULL;
+	for (node = table->table[mhash]; node; prev = node, node = node->next) {
+		if (hash < node->hash)
+			break;
+
 		if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
 			*datum = node->datum;
 			return 0;
 		}
+	}
 
 	if ((add = MALLOC(sizeof(*add))) == NULL)
 		return -1;
+
 	add->key = key;
 	add->datum = *datum;
 	add->hash = hash;
-	add->prev = NULL;
 
-	add->next = table->table[mhash];
-	if (table->table[mhash])
-		table->table[mhash]->prev = add;
-	table->table[mhash] = add;
+	add->prev = prev;
+	if (prev)
+		prev->next = add;
+	else
+		table->table[mhash] = add;
+
+	add->next = node;
+	if (node)
+		node->prev = add;
+
 	table->count++;
 	return 1;
 }
@@ -242,9 +256,12 @@ hashtable_search(hashtable *table, const void *key)
 	ASSERT(table != NULL);
 
 	hash = table->hash_func(key);
-	for (node = table->table[hash % table->size]; node; node = node->next)
+	for (node = table->table[hash % table->size]; node; node = node->next) {
+		if (hash < node->hash)
+			break;
 		if (hash == node->hash && table->cmp_func(key, node->key) == 0)
 			return node->datum;
+	}
 	return NULL;
 }
 
@@ -253,10 +270,7 @@ hashtable_csearch(const hashtable *table, const void *key)
 {
 	ASSERT(table != NULL);
 
-	/*
-	 * Cast OK, we want to be able to tranpose, which doesnt modify the
-	 * contents of table, only the ordering of items on the chain.
-	 */
+	/* Cast OK. */
 	return hashtable_search((hashtable *)table, key);
 }
 
@@ -272,6 +286,9 @@ hashtable_remove(hashtable *table, const void *key)
 
 	prev = NULL;
 	for (node = table->table[mhash]; node; prev = node, node = node->next) {
+		if (hash < node->hash)
+			break;
+
 		if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
 			if (prev)
 				prev->next = node->next;
@@ -290,7 +307,6 @@ hashtable_remove(hashtable *table, const void *key)
 		}
 	}
 	return -1;
-
 }
 
 unsigned
@@ -368,34 +384,30 @@ hashtable_slots_used(const hashtable *table)
 }
 
 int
-hashtable_resize(hashtable *table, unsigned new_size)
+hashtable_resize(hashtable *table, unsigned size)
 {
 	hash_node **ntable;
 	hash_node *node, *next;
 	unsigned i, hash;
+	size_t table_memory;
 
 	ASSERT(table != NULL);
-	ASSERT(new_size != 0);
+	ASSERT(size != 0);
 
-	if (table->size == new_size)
+	if (table->size == size)
 		return 0;
 
-	if ((ntable = MALLOC(new_size * sizeof(hash_node *))) == NULL)
+	/* TODO: use REALLOC instead of MALLOC. */
+	table_memory = size * sizeof(hash_node *);
+	if ((ntable = MALLOC(table_memory)) == NULL)
 		return -1;
+	memset(ntable, 0, table_memory);
 
-	for (i = 0; i < new_size; i++)
-		ntable[i] = NULL;
-
-	/*
-	 * This way of resizing completely reverses(!) the effects of the trans-
-	 * positions that we have been doing in probes and lookups. Hopefully
-	 * resizing the hashtable is something that is done rarely or not at all,
-	 * so this won't make too much difference.
-	 */
+	/* FIXME: insert data in sorted order in the new list. */
 	for (i = 0; i < table->size; i++) {
 		for (node = table->table[i]; node; node = next) {
 			next = node->next;
-			hash = node->hash % new_size;
+			hash = table->hash_func(node->key) % size;
 			node->next = ntable[hash];
 			node->prev = NULL;
 			if (ntable[hash])
@@ -406,7 +418,7 @@ hashtable_resize(hashtable *table, unsigned new_size)
 
 	FREE(table->table);
 	table->table = ntable;
-	table->size = new_size;
+	table->size = size;
 
 	return 0;
 }
@@ -503,29 +515,31 @@ hashtable_itor_next(hashtable_itor *itor)
 int
 hashtable_itor_prev(hashtable_itor *itor)
 {
-	hash_node *node;
 	unsigned slot;
+	hash_node *node;
 
 	ASSERT(itor != NULL);
 
-	if (itor->node == NULL)
+	if ((node = itor->node) == NULL)
 		return hashtable_itor_last(itor);
 
-	if ((itor->node = itor->node->prev) != NULL)
-		return TRUE;
-
 	slot = itor->slot;
+	node = node->prev;
+	if (node) {
+		itor->node = node;
+		return 1;
+	}
+
 	while (slot > 0)
 		if ((node = itor->table->table[--slot]) != NULL) {
-			while (node->next)
-				node = node->next;
-			itor->node = node;
-			itor->slot = slot;
-			return TRUE;
+			for (; node->next; node = node->next)
+				/* void */;
+			break;
 		}
-	itor->node = NULL;
-	itor->slot = 0;
-	return FALSE;
+	itor->node = node;
+	itor->slot = slot;
+
+	RETVALID(itor);
 }
 
 int
@@ -608,15 +622,22 @@ int
 hashtable_itor_search(hashtable_itor *itor, const void *key)
 {
 	hash_node *node;
-	unsigned hash;
+	unsigned hash, mhash;
 
-	hash = itor->table->hash_func(key);
-	for (node = itor->table->table[hash % itor->table->size]; node; node = node->next)
-		if (hash == node->hash && itor->table->cmp_func(key, node->key) == 0)
+	mhash = (hash = itor->table->hash_func(key)) % itor->table->size;
+	for (node = itor->table->table[mhash]; node; node = node->next) {
+		if (hash < node->hash)
 			break;
-	itor->node = node;
-	itor->slot = node ? (hash % itor->table->size) : 0;
-	return node != NULL;
+
+		if (hash == node->hash && itor->table->cmp_func(key, node->key) == 0) {
+			itor->node = node;
+			itor->slot = mhash;
+			return TRUE;
+		}
+	}
+	itor->node = NULL;
+	itor->slot = 0;
+	return FALSE;
 }
 
 const void *
