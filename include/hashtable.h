@@ -1,5 +1,5 @@
 /*
- * libdict -- chained hash-table interface.
+ * hashtable.h -- hash-value sorted, chained hash-table interface.
  *
  * Copyright (c) 2001-2011, Farooq Mela
  * All rights reserved.
@@ -41,12 +41,14 @@ typedef struct hashtable
 			hashtable;
 
 hashtable*	hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func,
-				dict_delete_func del_func, unsigned size);
-dict*		hashtable_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func,
-				dict_delete_func del_func, unsigned size);
+						  dict_delete_func del_func, unsigned size);
+dict*		hashtable_dict_new(dict_compare_func cmp_func,
+							   dict_hash_func hash_func,
+							   dict_delete_func del_func, unsigned size);
 unsigned	hashtable_free(hashtable *table);
 
-int			hashtable_insert(hashtable *table, void *key, void *datum, int overwrite);
+int			hashtable_insert(hashtable *table, void *key, void *datum,
+							 int overwrite);
 int			hashtable_probe(hashtable *table, void *key, void **datum);
 void*		hashtable_search(hashtable *table, const void *key);
 const void*	hashtable_csearch(const hashtable *table, const void *key);
@@ -55,9 +57,8 @@ unsigned	hashtable_clear(hashtable *table);
 unsigned	hashtable_traverse(hashtable *table, dict_visit_func visit);
 unsigned	hashtable_count(const hashtable *table);
 unsigned	hashtable_size(const hashtable *table);
-
 unsigned	hashtable_slots_used(const hashtable *table);
-int			hashtable_resize(hashtable *table, unsigned new_size);
+int			hashtable_resize(hashtable *table, unsigned size);
 
 typedef struct hashtable_itor
 			hashtable_itor;
@@ -79,7 +80,8 @@ int			hashtable_itor_search(hashtable_itor *itor, const void *key);
 const void*	hashtable_itor_key(const hashtable_itor *itor);
 void*		hashtable_itor_data(hashtable_itor *itor);
 const void*	hashtable_itor_cdata(const hashtable_itor *itor);
-int			hashtable_itor_set_data(hashtable_itor *itor, void *datum, void **prev_datum);
+int			hashtable_itor_set_data(hashtable_itor *itor,
+									void *datum, void **prev_datum);
 int			hashtable_itor_remove(hashtable_itor *itor, int del);
 
 END_DECL
