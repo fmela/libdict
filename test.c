@@ -47,7 +47,7 @@ void timer_end(const struct rusage* start, struct rusage *end,
 /* #define HSIZE		997 */
 #define HSIZE 9973
 
-static unsigned long malloced = 0;
+static size_t malloced = 0;
 
 int
 main(int argc, char **argv)
@@ -184,7 +184,6 @@ main(int argc, char **argv)
 
 	/* shuffle(words, nwords); */
 
-	comp_count = hash_count = 0;
 	timer_start(&start);
 	for (i = 0; i < nwords; i++) {
 		if ((p = dict_search(dct, words[i])) == NULL)
@@ -198,7 +197,6 @@ main(int argc, char **argv)
 	total_comp += comp_count; comp_count = 0;
 	total_hash += hash_count; hash_count = 0;
 
-	comp_count = hash_count = 0;
 	timer_start(&start);
 	for (i = 0; i < nwords; i++) {
 		rv = rand() % strlen(words[i]);
@@ -212,7 +210,7 @@ main(int argc, char **argv)
 	total_comp += comp_count; comp_count = 0;
 	total_hash += hash_count; hash_count = 0;
 
-	shuffle(words, nwords);
+	/* shuffle(words, nwords); */
 
 	timer_start(&start);
 	for (i = 0; i < nwords; i++) {
@@ -324,12 +322,13 @@ shuffle(char **p, unsigned size)
 unsigned
 s_hash(const unsigned char *p)
 {
-	unsigned hash = 0;
+	unsigned hash = 2166136261U;
 
 	hash_count++;
 
-	while (*p)
-		hash = hash*33 + *p++;
+	while (*p) {
+		hash = (hash ^ *p++) * 16777619U;
+	}
 	return hash;
 }
 
