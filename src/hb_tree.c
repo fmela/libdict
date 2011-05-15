@@ -43,7 +43,7 @@ struct hb_node {
 	hb_node*			llink;
 	hb_node*			rlink;
 	hb_node*			parent;
-	signed char			bal;
+	signed char			bal;		/* TODO: store in unused low bits. */
 };
 
 struct hb_tree {

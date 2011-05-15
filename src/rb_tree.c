@@ -43,7 +43,7 @@ struct rb_node {
 	rb_node*			parent;
 	rb_node*			llink;
 	rb_node*			rlink;
-	unsigned			color:1;
+	unsigned			color:1;		/* TODO: store in unused low bits. */
 };
 
 #define RB_RED			0
