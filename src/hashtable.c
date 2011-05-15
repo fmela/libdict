@@ -574,16 +574,14 @@ hashtable_itor_first(hashtable_itor *itor)
 	ASSERT(itor != NULL);
 
 	for (slot = 0; slot < itor->table->size; slot++)
-		if (itor->table->table[slot])
-			break;
-	if (slot == itor->table->size) {
-		itor->node = NULL;
-		itor->slot = 0;
-	} else {
-		itor->node = itor->table->table[slot];
-		itor->slot = (int)slot;
-	}
-	RETVALID(itor);
+		if (itor->table->table[slot]) {
+			itor->node = itor->table->table[slot];
+			itor->slot = slot;
+			return TRUE;
+		}
+	itor->node = NULL;
+	itor->slot = 0;
+	return FALSE;
 }
 
 int
@@ -593,21 +591,18 @@ hashtable_itor_last(hashtable_itor *itor)
 
 	ASSERT(itor != NULL);
 
-	for (slot = itor->table->size; slot;)
-		if (itor->table->table[--slot])
-			break;
-	if ((int)slot < 0) {
-		itor->node = NULL;
-		itor->slot = 0;
-	} else {
-		hash_node *node;
-
-		for (node = itor->table->table[slot]; node->next; node = node->next)
-			/* void */;
-		itor->node = node;
-		itor->slot = slot;
-	}
-	RETVALID(itor);
+	for (slot = itor->table->size; slot > 0;)
+		if (itor->table->table[--slot]) {
+			hash_node *node;
+			for (node = itor->table->table[slot]; node->next; node = node->next)
+				/* void */;
+			itor->node = node;
+			itor->slot = slot;
+			return TRUE;
+		}
+	itor->node = NULL;
+	itor->slot = 0;
+	return FALSE;
 }
 
 int
