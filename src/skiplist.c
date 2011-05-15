@@ -42,7 +42,7 @@ typedef struct skip_node skip_node;
 struct skip_node {
 	void*				key;
 	void*				datum;
-/*	skip_node*			prev; */
+	skip_node*			prev;
 	unsigned			link_count;
 	skip_node*			link[1];
 };
@@ -99,7 +99,7 @@ static itor_vtable skiplist_itor_vtable = {
 };
 
 static skip_node*		node_new(void *key, void *datum, unsigned link_count);
-static int				node_insert(skiplist *list, void *key, void *datum,
+static skip_node*		node_insert(skiplist *list, void *key, void *datum,
 									skip_node **update);
 static unsigned			rand_link_count(skiplist *list);
 
@@ -163,7 +163,7 @@ skiplist_free(skiplist *list)
 	return count;
 }
 
-int
+skip_node *
 node_insert(skiplist *list, void *key, void *datum, skip_node **update)
 {
 	skip_node *x;
@@ -173,7 +173,7 @@ node_insert(skiplist *list, void *key, void *datum, skip_node **update)
 
 	x = node_new(key, datum, nlinks);
 	if (x == NULL)
-		return -1;
+		return NULL;
 
 	while (list->top_link < nlinks) {
 		for (k = list->top_link+1; k<=nlinks; k++) {
@@ -183,13 +183,16 @@ node_insert(skiplist *list, void *key, void *datum, skip_node **update)
 		list->top_link = nlinks;
 	}
 
+	x->prev = update[0];
+	if (update[0]->link[0])
+		update[0]->link[0]->prev = x;
 	for (k = 0; k < nlinks; k++) {
 		ASSERT(update[k]->link_count > k);
 		x->link[k] = update[k]->link[k];
 		update[k]->link[k] = x;
 	}
 	list->count++;
-	return 0;
+	return x;
 }
 
 int
@@ -203,26 +206,21 @@ skiplist_insert(skiplist *list, void *key, void *datum, int overwrite)
 	x = list->head;
 	for (k = list->top_link+1; k-->0; ) {
 		ASSERT(x->link_count > k);
-		while (x->link[k]) {
-			int cmp = list->cmp_func(key, x->link[k]->key);
-			if (cmp < 0)
-				break;
+		while (x->link[k] && list->cmp_func(key, x->link[k]->key) > 0)
 			x = x->link[k];
-			ASSERT(x->link_count > k);
-			if (cmp == 0) {
-				if (!overwrite)
-					return 1;
-				if (list->del_func)
-					list->del_func(x->key, x->datum);
-				x->key = key;
-				x->datum = datum;
-				return 0;
-			}
-		}
 		update[k] = x;
 	}
-
-	return node_insert(list, key, datum, update);
+	x = x->link[0];
+	if (x && list->cmp_func(key, x->key) == 0) {
+		if (!overwrite)
+			return 1;
+		if (list->del_func)
+			list->del_func(x->key, x->datum);
+		x->key = key;
+		x->datum = datum;
+		return 0;
+	}
+	return node_insert(list, key, datum, update) ? 0 : -1;
 }
 
 int
@@ -249,7 +247,7 @@ skiplist_probe(skiplist *list, void *key, void **datum)
 		}
 		update[k] = x;
 	}
-	return node_insert(list, key, *datum, update);
+	return node_insert(list, key, *datum, update) ? 0 : -1;
 }
 
 void *
@@ -359,7 +357,7 @@ skiplist_count(const skiplist *list)
 	return list->count;
 }
 
-#define RETVALID(itor)	return itor->node != NULL
+#define VALID(itor)		((itor)->node && (itor)->node != (itor)->list->head)
 
 skiplist_itor *
 skiplist_itor_new(skiplist *list)
@@ -409,7 +407,7 @@ skiplist_itor_valid(const skiplist_itor *itor)
 {
 	ASSERT(itor != NULL);
 
-	RETVALID(itor);
+	return VALID(itor);
 }
 
 void
@@ -429,7 +427,7 @@ skiplist_itor_next(skiplist_itor *itor)
 		return skiplist_itor_first(itor);
 
 	itor->node = itor->node->link[0];
-	RETVALID(itor);
+	return VALID(itor);
 }
 
 int
@@ -440,9 +438,8 @@ skiplist_itor_prev(skiplist_itor *itor)
 	if (itor->node == NULL)
 		return skiplist_itor_last(itor);
 
-/*	itor->node = itor->node->prev; */
-	itor->node = NULL;
-	RETVALID(itor);
+	itor->node = itor->node->prev;
+	return VALID(itor);
 }
 
 int
@@ -451,7 +448,7 @@ skiplist_itor_nextn(skiplist_itor *itor, unsigned count)
 	ASSERT(itor != NULL);
 
 	if (!count)
-		RETVALID(itor);
+		return VALID(itor);
 
 	while (count--) {
 		if (!skiplist_itor_next(itor))
@@ -466,7 +463,7 @@ skiplist_itor_prevn(skiplist_itor *itor, unsigned count)
 	ASSERT(itor != NULL);
 
 	if (!count)
-		RETVALID(itor);
+		return VALID(itor);
 
 	while (count--) {
 		if (!skiplist_itor_prev(itor))
@@ -481,7 +478,7 @@ skiplist_itor_first(skiplist_itor *itor)
 	ASSERT(itor != NULL);
 
 	itor->node = itor->list->head->link[0];
-	RETVALID(itor);
+	return VALID(itor);
 }
 
 int
@@ -584,7 +581,7 @@ node_new(void *key, void *datum, unsigned link_count)
 
 	node->key = key;
 	node->datum = datum;
-/*	node->prev = NULL; */
+	node->prev = NULL;
 	node->link_count = link_count;
 	memset(node->link, 0, sizeof(node->link[0]) * link_count);
 	return node;
