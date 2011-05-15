@@ -19,7 +19,7 @@
 
 const char appname[] = "test";
 
-char *xstrdup(const char *str);
+char *my_strdup(const char *str);
 
 #ifdef __GNUC__
 # define NORETURN	__attribute__((__noreturn__))
@@ -31,7 +31,6 @@ void warn(const char *fmt, ...);
 void *xmalloc(size_t size);
 void *xcalloc(size_t size);
 void *xrealloc(void *ptr, size_t size);
-void *xdup(const void *ptr, size_t size);
 
 static int hash_count = 0, comp_count = 0;
 unsigned s_hash(const unsigned char *p);
@@ -107,6 +106,8 @@ main(int argc, char **argv)
 	if (!dct)
 		quit("can't create container");
 
+	printf("Container uses %zukB memory.\n", (malloced+1023)>>10);
+
 	fp = fopen(argv[1], "r");
 	if (fp == NULL)
 		quit("cant open file `%s': %s", argv[1], strerror(errno));
@@ -118,18 +119,21 @@ main(int argc, char **argv)
 		quit("nothing read from file");
 
 	printf("Processing %u words\n", nwords);
-	words = xmalloc(sizeof(*words) * nwords);
+	words = malloc(sizeof(*words) * nwords);
+	if (!words)
+		quit("out of memory");
 
 	rewind(fp);
 	for (i = 0; i < nwords && fgets(buf, sizeof(buf), fp); i++) {
 		strtok(buf, "\n");
-		words[i] = xstrdup(buf);
+		words[i] = my_strdup(buf);
+		if (!words[i])
+			quit("out of memory");
 	}
 	fclose(fp);
 
 	total_comp = total_hash = 0;
 
-	malloced = 0; /* Reset memory usage counter. */
 	comp_count = hash_count = 0;
 	timer_start(&start);
 	for (i = 0; i < nwords; i++) {
@@ -141,7 +145,7 @@ main(int argc, char **argv)
 		   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) / 1000000.0, comp_count, hash_count);
 	total_comp += comp_count; comp_count = 0;
 	total_hash += hash_count; hash_count = 0;
-	printf("memory used = %lukB bytes\n", (malloced+1023)>>10);
+	printf("memory used = %zukB bytes\n", (malloced+1023)>>10);
 
 	if ((i = dict_count(dct)) != nwords)
 		quit("bad count (%u - should be %u)!", i, nwords);
@@ -235,9 +239,13 @@ main(int argc, char **argv)
 }
 
 char *
-xstrdup(const char *str)
+my_strdup(const char *str)
 {
-	return xdup(str, strlen(str) + 1);
+	size_t len = strlen(str) + 1;
+	char* dup = malloc(len);
+	if (dup)
+		memcpy(dup, str, len);
+	return dup;
 }
 
 void
@@ -294,16 +302,6 @@ xrealloc(void *ptr, size_t size)
 
 	if ((p = realloc(ptr, size)) == NULL && size != 0)
 		quit("out of memory");
-	return p;
-}
-
-void *
-xdup(const void *ptr, size_t size)
-{
-	void *p;
-
-	p = xmalloc(size);
-	memcpy(p, ptr, size);
 	return p;
 }
 
