@@ -247,7 +247,7 @@ skiplist_probe(skiplist *list, void *key, void **datum)
 		}
 		update[k] = x;
 	}
-	return node_insert(list, key, *datum, update) ? 0 : -1;
+	return node_insert(list, key, *datum, update) ? 1 : -1;
 }
 
 void *
