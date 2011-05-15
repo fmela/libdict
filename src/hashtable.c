@@ -32,6 +32,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h> /* For memset() */
 
 #include "hashtable.h"
 #include "dict_private.h"
