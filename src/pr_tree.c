@@ -220,6 +220,7 @@ again:
 	wl = WEIGHT(node->llink);
 	wr = WEIGHT(node->rlink);
 	if (wr > wl) {
+		ASSERT(node->rlink != NULL);
 		if (WEIGHT(node->rlink->rlink) > wl) {			/* LL */
 			rot_left(tree, node);
 			goto again;
@@ -232,6 +233,7 @@ again:
 			goto again;
 		}
 	} else if (wl > wr) {
+		ASSERT(node->llink != NULL);
 		if (WEIGHT(node->llink->llink) > wr) {			/* RR */
 			rot_right(tree, node);
 			goto again;
@@ -260,6 +262,7 @@ again:																		\
 	wl = WEIGHT(n->llink);													\
 	wr = WEIGHT(n->rlink);													\
 	if (wr > wl) {															\
+		ASSERT(node->rlink != NULL);										\
 		if (WEIGHT(n->rlink->rlink) > wl) {			/* LL */				\
 			rot_left((t), n);												\
 			goto again;														\
@@ -272,6 +275,7 @@ again:																		\
 			goto again;														\
 		}																	\
 	} else if (wl > wr) {													\
+		ASSERT(node->llink != NULL);										\
 		if (WEIGHT(n->llink->llink) > wr) {			/* RR */				\
 			rot_right((t), n);												\
 			goto again;														\

@@ -245,6 +245,7 @@ wb_tree_insert(wb_tree *tree, void *key, void *datum, int overwrite)
 		node->weight++;
 		wbal = WEIGHT(node->llink) / (float)node->weight;
 		if (wbal < ALPHA_0) {
+			ASSERT(node->rlink != NULL);
 			wbal = WEIGHT(node->rlink->llink) / (float)node->rlink->weight;
 			if (wbal < ALPHA_3) {		/* LL */
 				rot_left(tree, node);
@@ -253,6 +254,7 @@ wb_tree_insert(wb_tree *tree, void *key, void *datum, int overwrite)
 				rot_left(tree, node);
 			}
 		} else if (wbal > ALPHA_1) {
+			ASSERT(node->llink != NULL);
 			wbal = WEIGHT(node->llink->llink) / (float)node->llink->weight;
 			if (wbal > ALPHA_2) {		/* RR */
 				rot_right(tree, node);
@@ -306,6 +308,7 @@ wb_tree_probe(wb_tree *tree, void *key, void **datum)
 		node->weight++;
 		wbal = WEIGHT(node->llink) / (float)node->weight;
 		if (wbal < ALPHA_0) {
+			ASSERT(node->rlink != NULL);
 			wbal = WEIGHT(node->rlink->llink) / (float)node->rlink->weight;
 			if (wbal < ALPHA_3) {
 				rot_left(tree, node);
@@ -314,6 +317,7 @@ wb_tree_probe(wb_tree *tree, void *key, void **datum)
 				rot_left(tree, node);
 			}
 		} else if (wbal > ALPHA_1) {
+			ASSERT(node->llink != NULL);
 			wbal = WEIGHT(node->llink->llink) / (float)node->llink->weight;
 			if (wbal > ALPHA_2) {
 				rot_right(tree, node);
