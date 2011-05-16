@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdarg.h>
 #include <assert.h>
@@ -33,8 +34,10 @@ void *xcalloc(size_t size);
 void *xrealloc(void *ptr, size_t size);
 
 static int hash_count = 0, comp_count = 0;
-unsigned s_hash(const unsigned char *p);
-int my_str_cmp(const void *k1, const void *k2);
+unsigned str_hash(const void *p);
+int my_strcmp(const void *k1, const void *k2);
+unsigned ptr_hash(const void *p);
+int my_ptrcmp(const void *k1, const void *k2);
 void shuffle(char **p, unsigned size);
 void key_str_free(void *key, void *datum);
 
@@ -61,43 +64,46 @@ main(int argc, char **argv)
 	struct rusage start, end;
 	struct timeval total = { 0, 0 };
 	int total_comp, total_hash;
+	dict_compare_func cmp_func;
+	dict_hash_func hash_func;
 
 	if (argc != 3) {
 		fprintf(stderr, "usage: %s [type] [input]\n", appname);
 		exit(EXIT_FAILURE);
 	}
 
-	/* srand((unsigned)time(NULL)); */
 	srand(0xdeadbeef);
 
 	dict_set_malloc(xmalloc);
 
+	cmp_func = my_strcmp;
+	hash_func = str_hash;
+
 	++argv;
 	switch (argv[0][0]) {
 	case 'h':
-		dct = hb_dict_new(my_str_cmp, key_str_free);
+		dct = hb_dict_new(cmp_func, key_str_free);
 		break;
 	case 'p':
-		dct = pr_dict_new(my_str_cmp, key_str_free);
+		dct = pr_dict_new(cmp_func, key_str_free);
 		break;
 	case 'r':
-		dct = rb_dict_new(my_str_cmp, key_str_free);
+		dct = rb_dict_new(cmp_func, key_str_free);
 		break;
 	case 't':
-		dct = tr_dict_new(my_str_cmp, NULL, key_str_free);
+		dct = tr_dict_new(cmp_func, NULL, key_str_free);
 		break;
 	case 's':
-		dct = sp_dict_new(my_str_cmp, key_str_free);
+		dct = sp_dict_new(cmp_func, key_str_free);
 		break;
 	case 'S':
-		dct = skiplist_dict_new(my_str_cmp, key_str_free, 12);
+		dct = skiplist_dict_new(cmp_func, key_str_free, 12);
 		break;
 	case 'w':
-		dct = wb_dict_new(my_str_cmp, key_str_free);
+		dct = wb_dict_new(cmp_func, key_str_free);
 		break;
 	case 'H':
-		dct = hashtable_dict_new(my_str_cmp,
-								 (dict_hash_func)s_hash, key_str_free, HSIZE);
+		dct = hashtable_dict_new(cmp_func, hash_func, key_str_free, HSIZE);
 		break;
 	default:
 		quit("type must be one of h, p, r, t, s, w or H");
@@ -317,24 +323,40 @@ shuffle(char **p, unsigned size)
 	}
 }
 
+/* FNV 1-a string hash. */
 unsigned
-s_hash(const unsigned char *p)
+str_hash(const void *p)
 {
 	unsigned hash = 2166136261U;
+	const uint8_t *ptr = p;
 
 	hash_count++;
 
-	while (*p) {
-		hash = (hash ^ *p++) * 16777619U;
+	while (*ptr) {
+		hash = (hash ^ *ptr++) * 16777619U;
 	}
 	return hash;
 }
 
 int
-my_str_cmp(const void *k1, const void *k2)
+my_strcmp(const void *k1, const void *k2)
 {
 	comp_count++;
 	return strcmp(k1, k2);
+}
+
+unsigned
+ptr_hash(const void *p)
+{
+	hash_count++;
+	return (2166136261U ^ (uintptr_t)p) * 16777619U;
+}
+
+int
+my_ptrcmp(const void *k1, const void *k2)
+{
+	comp_count++;
+	return (k1 < k2) ? -1 : (k1 > k2);
 }
 
 void
