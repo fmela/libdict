@@ -71,7 +71,10 @@ clean:
 
 .PHONY: analyze
 analyze:
-	clang --analyze $(SOURCE)
+	@for x in $(SOURCE) $(PROG_SRC); \
+		do echo Analyzing $$x ...; \
+		clang --analyze -I$(HEADER_DIR) -I$(SOURCE_DIR) $$x -o /dev/null; \
+	done
 
 .PHONY: install
 install: $(STATIC_LIB) $(PROFIL_LIB) $(SHARED_LIB)
