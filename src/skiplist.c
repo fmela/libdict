@@ -176,7 +176,7 @@ node_insert(skiplist *list, void *key, void *datum, skip_node **update)
 		return NULL;
 
 	if (list->top_link < nlinks) {
-		for (k = list->top_link+1; k<=nlinks; k++) {
+		for (k = list->top_link+1; k <= nlinks; k++) {
 			ASSERT(update[k] == NULL);
 			update[k] = list->head;
 		}
