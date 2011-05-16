@@ -67,6 +67,7 @@ $(OUTPUT_DIR)/%: %.c $(STATIC_OBJ)
 
 .PHONY: clean
 clean:
+	rm -rf $(OUTPUT_DIR)/*.dSYM
 	rm -f $(OUTPUT_DIR)/*
 
 .PHONY: analyze
