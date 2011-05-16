@@ -94,8 +94,8 @@ static itor_vtable skiplist_itor_vtable = {
 	(dict_data_func)		skiplist_itor_data,
 	(dict_cdata_func)		skiplist_itor_cdata,
 	(dict_dataset_func)		skiplist_itor_set_data,
-	(dict_iremove_func)		NULL,	/* skiplist_itor_remove not implemented yet */
-	(dict_icompare_func)	NULL	/* skiplist_itor_compare not implemented yet */
+	(dict_iremove_func)		NULL,/* skiplist_itor_remove not implemented yet */
+	(dict_icompare_func)	NULL/* skiplist_itor_compare not implemented yet */
 };
 
 static skip_node*		node_new(void *key, void *datum, unsigned link_count);
@@ -104,7 +104,8 @@ static skip_node*		node_insert(skiplist *list, void *key, void *datum,
 static unsigned			rand_link_count(skiplist *list);
 
 skiplist *
-skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func, unsigned max_link)
+skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func,
+			 unsigned max_link)
 {
 	skiplist *list;
 
@@ -132,8 +133,8 @@ skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func, unsigned max
 }
 
 dict *
-skiplist_dict_new(dict_compare_func cmp_func, dict_delete_func del_func, unsigned max_link)
-{
+skiplist_dict_new(dict_compare_func cmp_func, dict_delete_func del_func,
+				  unsigned max_link) {
 	dict *dct;
 
 	if ((dct = MALLOC(sizeof(*dct))) == NULL)
