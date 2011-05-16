@@ -335,7 +335,7 @@ int
 wb_tree_remove(wb_tree *tree, const void *key)
 {
 	int cmp;
-	wb_node *node, *temp, *out = NULL; /* ergh @ GCC unitializated warning */
+	wb_node *node;
 
 	ASSERT(tree != NULL);
 	ASSERT(key != NULL);
@@ -348,47 +348,45 @@ wb_tree_remove(wb_tree *tree, const void *key)
 			continue;
 		}
 		if (node->llink == NULL || node->rlink == NULL) {
-			temp = node;
-			out = node->llink ? node->llink : node->rlink;
+			/* Splice in the successor, if any. */
+			wb_node *out = node->llink ? node->llink : node->rlink;
 			if (out)
 				out->parent = node->parent;
-			if (tree->del_func)
-				tree->del_func(node->key, node->datum);
 			if (node->parent) {
 				if (node->parent->llink == node)
 					node->parent->llink = out;
 				else
 					node->parent->rlink = out;
 			} else {
+				ASSERT(tree->root == node);
 				tree->root = out;
 			}
+			out = node->parent;
+			if (tree->del_func)
+				tree->del_func(node->key, node->datum);
 			FREE(node);
-			out = temp;
-		} else if (node->llink->weight > node->rlink->weight) {	/* We know llink and rlink are both not NULL. */
-			if (WEIGHT(node->llink->llink) < WEIGHT(node->llink->rlink))
-				rot_left(tree, node->llink);
-			out = node->llink;
-			rot_right(tree, node);
-			node = out->rlink;
-			continue;
-		} else {
-			if (WEIGHT(node->rlink->rlink) < WEIGHT(node->rlink->llink))
-				rot_right(tree, node->rlink);
-			out = node->rlink;
-			rot_left(tree, node);
-			node = out->llink;
-			continue;
-		}
-
-		if (--tree->count) {
-		/*	extern int printf(const char *, ...);
-			printf("tree->count=%d\n", tree->count); */
+			--tree->count;
+			/* Now move up the tree, decrementing weights. */
 			while (out) {
-				out->weight--;
+				--out->weight;
 				out = out->parent;
 			}
+			return 0;
 		}
-		return 0;
+		/* If we get here, both llink and rlink are not NULL. */
+		if (node->llink->weight > node->rlink->weight) {
+			wb_node *llink = node->llink;
+			if (WEIGHT(llink->llink) < WEIGHT(llink->rlink))
+				rot_left(tree, llink);
+			rot_right(tree, node);
+			node = llink->rlink;
+		} else {
+			wb_node *rlink = node->rlink;
+			if (WEIGHT(rlink->rlink) < WEIGHT(rlink->llink))
+				rot_right(tree, rlink);
+			rot_left(tree, node);
+			node = rlink->llink;
+		}
 	}
 	return -1;
 }
