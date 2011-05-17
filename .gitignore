@@ -1,7 +1,6 @@
 words-random
 words-sorted
 shuffle.pl
-mktgz.sh
 bin/*
 algorithms/*.log
 algorithms/*.pdf
