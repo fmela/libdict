@@ -51,7 +51,7 @@ struct rb_node {
 
 struct rb_tree {
 	rb_node*			root;
-	unsigned			count;
+	size_t				count;
 	dict_compare_func	cmp_func;
 	dict_delete_func	del_func;
 };
@@ -99,9 +99,9 @@ static void		rot_left(rb_tree *tree, rb_node *node);
 static void		rot_right(rb_tree *tree, rb_node *node);
 static void		insert_fixup(rb_tree *tree, rb_node *node);
 static void		delete_fixup(rb_tree *tree, rb_node *node);
-static unsigned	node_height(const rb_node *node);
-static unsigned	node_mheight(const rb_node *node);
-static unsigned	node_pathlen(const rb_node *node, unsigned level);
+static size_t	node_height(const rb_node *node);
+static size_t	node_mheight(const rb_node *node);
+static uint64_t	node_pathlen(const rb_node *node, uint64_t level);
 static rb_node*	node_new(void *key, void *datum);
 static rb_node*	node_next(rb_node *node);
 static rb_node*	node_prev(rb_node *node);
@@ -144,10 +144,10 @@ rb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 	return dct;
 }
 
-unsigned
+size_t
 rb_tree_free(rb_tree *tree)
 {
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 
@@ -438,11 +438,11 @@ delete_fixup(rb_tree *tree, rb_node *node)
 	node->color = RB_BLK;
 }
 
-unsigned
+size_t
 rb_tree_clear(rb_tree *tree)
 {
 	rb_node *node, *parent;
-	unsigned count;
+	size_t count;
 
 	ASSERT(tree != NULL);
 
@@ -478,7 +478,7 @@ rb_tree_clear(rb_tree *tree)
 	return count;
 }
 
-unsigned
+size_t
 rb_tree_count(const rb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -486,7 +486,7 @@ rb_tree_count(const rb_tree *tree)
 	return tree->count;
 }
 
-unsigned
+size_t
 rb_tree_height(const rb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -494,7 +494,7 @@ rb_tree_height(const rb_tree *tree)
 	return tree->root != RB_NULL ? node_height(tree->root) : 0;
 }
 
-unsigned
+size_t
 rb_tree_mheight(const rb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -502,7 +502,7 @@ rb_tree_mheight(const rb_tree *tree)
 	return tree->root != RB_NULL ? node_mheight(tree->root) : 0;
 }
 
-unsigned
+uint64_t
 rb_tree_pathlen(const rb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -540,11 +540,11 @@ rb_tree_max(const rb_tree *tree)
 	return node->key;
 }
 
-unsigned
+size_t
 rb_tree_traverse(rb_tree *tree, dict_visit_func visit)
 {
 	rb_node *node;
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 	ASSERT(visit != NULL);
@@ -560,29 +560,29 @@ rb_tree_traverse(rb_tree *tree, dict_visit_func visit)
 	return count;
 }
 
-static unsigned
+static size_t
 node_height(const rb_node *node)
 {
-	unsigned l, r;
+	size_t l, r;
 
 	l = node->llink != RB_NULL ? node_height(node->llink) + 1 : 0;
 	r = node->rlink != RB_NULL ? node_height(node->rlink) + 1 : 0;
 	return MAX(l, r);
 }
 
-static unsigned
+static size_t
 node_mheight(node)
 	const rb_node *node;
 {
-	unsigned l, r;
+	size_t l, r;
 
 	l = node->llink != RB_NULL ? node_mheight(node->llink) + 1 : 0;
 	r = node->rlink != RB_NULL ? node_mheight(node->rlink) + 1 : 0;
 	return MIN(l, r);
 }
 
-static unsigned
-node_pathlen(const rb_node *node, unsigned level)
+static uint64_t
+node_pathlen(const rb_node *node, uint64_t level)
 {
 	unsigned n = 0;
 
@@ -813,7 +813,7 @@ rb_itor_prev(rb_itor *itor)
 }
 
 int
-rb_itor_nextn(rb_itor *itor, unsigned count)
+rb_itor_nextn(rb_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 
@@ -831,7 +831,7 @@ rb_itor_nextn(rb_itor *itor, unsigned count)
 }
 
 int
-rb_itor_prevn(rb_itor *itor, unsigned count)
+rb_itor_prevn(rb_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 

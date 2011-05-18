@@ -32,6 +32,7 @@
  */
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <limits.h>
 
 #include "wb_tree.h"
@@ -60,8 +61,6 @@
 #define ALPHA_2		.414213f	/* sqrt(2) - 1			*/
 #define ALPHA_3		.585786f	/* 2 - sqrt(2)			*/
 
-typedef unsigned int	weight_t;
-
 typedef struct wb_node wb_node;
 struct wb_node {
 	void*				key;
@@ -69,7 +68,7 @@ struct wb_node {
 	wb_node*			parent;
 	wb_node*			llink;
 	wb_node*			rlink;
-	weight_t			weight;
+	uint32_t			weight;
 };
 
 #define WEIGHT(n)	((n) ? (n)->weight : 1)
@@ -77,7 +76,7 @@ struct wb_node {
 
 struct wb_tree {
 	wb_node*			root;
-	unsigned			count;
+	size_t				count;
 	dict_compare_func	cmp_func;
 	dict_delete_func	del_func;
 };
@@ -120,9 +119,9 @@ static itor_vtable wb_tree_itor_vtable = {
 
 static void		rot_left(wb_tree *tree, wb_node *node);
 static void		rot_right(wb_tree *tree, wb_node *node);
-static unsigned	node_height(const wb_node *node);
-static unsigned	node_mheight(const wb_node *node);
-static unsigned	node_pathlen(const wb_node *node, unsigned level);
+static size_t	node_height(const wb_node *node);
+static size_t	node_mheight(const wb_node *node);
+static uint64_t	node_pathlen(const wb_node *node, uint64_t level);
 static wb_node*	node_new(void *key, void *datum);
 static wb_node*	node_min(wb_node *node);
 static wb_node*	node_max(wb_node *node);
@@ -163,10 +162,10 @@ wb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 	return dct;
 }
 
-unsigned
+size_t
 wb_tree_free(wb_tree *tree)
 {
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 
@@ -391,11 +390,11 @@ wb_tree_remove(wb_tree *tree, const void *key)
 	return -1;
 }
 
-unsigned
+size_t
 wb_tree_clear(wb_tree *tree)
 {
 	wb_node *node, *parent;
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 
@@ -458,11 +457,11 @@ wb_tree_max(const wb_tree *tree)
 	return node->key;
 }
 
-unsigned
+size_t
 wb_tree_traverse(wb_tree *tree, dict_visit_func visit)
 {
 	wb_node *node;
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 
@@ -477,7 +476,7 @@ wb_tree_traverse(wb_tree *tree, dict_visit_func visit)
 	return count;
 }
 
-unsigned
+size_t
 wb_tree_count(const wb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -485,7 +484,7 @@ wb_tree_count(const wb_tree *tree)
 	return tree->count;
 }
 
-unsigned
+size_t
 wb_tree_height(const wb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -493,7 +492,7 @@ wb_tree_height(const wb_tree *tree)
 	return tree->root ? node_height(tree->root) : 0;
 }
 
-unsigned
+size_t
 wb_tree_mheight(const wb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -501,7 +500,7 @@ wb_tree_mheight(const wb_tree *tree)
 	return tree->root ? node_mheight(tree->root) : 0;
 }
 
-unsigned
+uint64_t
 wb_tree_pathlen(const wb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -587,10 +586,10 @@ node_prev(wb_node *node)
 	return temp;
 }
 
-static unsigned
+static size_t
 node_height(const wb_node *node)
 {
-	unsigned l, r;
+	size_t l, r;
 
 	ASSERT(node != NULL);
 
@@ -599,10 +598,10 @@ node_height(const wb_node *node)
 	return MAX(l, r);
 }
 
-static unsigned
+static size_t
 node_mheight(const wb_node *node)
 {
-	unsigned l, r;
+	size_t l, r;
 
 	ASSERT(node != NULL);
 
@@ -611,10 +610,10 @@ node_mheight(const wb_node *node)
 	return MIN(l, r);
 }
 
-static unsigned
-node_pathlen(const wb_node *node, unsigned level)
+static uint64_t
+node_pathlen(const wb_node *node, uint64_t level)
 {
-	unsigned n = 0;
+	size_t n = 0;
 
 	ASSERT(node != NULL);
 
@@ -797,7 +796,7 @@ wb_itor_prev(wb_itor *itor)
 }
 
 int
-wb_itor_nextn(wb_itor *itor, unsigned count)
+wb_itor_nextn(wb_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 
@@ -815,7 +814,7 @@ wb_itor_nextn(wb_itor *itor, unsigned count)
 }
 
 int
-wb_itor_prevn(wb_itor *itor, unsigned count)
+wb_itor_prevn(wb_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 

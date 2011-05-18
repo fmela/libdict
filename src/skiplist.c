@@ -55,7 +55,7 @@ struct skiplist {
 	unsigned			top_link;
 	dict_compare_func	cmp_func;
 	dict_delete_func	del_func;
-	unsigned			count;
+	size_t				count;
 	unsigned			randgen;
 };
 
@@ -149,10 +149,10 @@ skiplist_dict_new(dict_compare_func cmp_func, dict_delete_func del_func,
 	return dct;
 }
 
-unsigned
+size_t
 skiplist_free(skiplist *list)
 {
-	unsigned count;
+	size_t count;
 
 	ASSERT(list != NULL);
 
@@ -307,10 +307,10 @@ skiplist_remove(skiplist *list, const void *key)
 	return 0;
 }
 
-unsigned
+size_t
 skiplist_clear(skiplist *list)
 {
-	unsigned count;
+	size_t count;
 	skip_node *node;
 
 	ASSERT(list != NULL);
@@ -333,11 +333,11 @@ skiplist_clear(skiplist *list)
 	return count;
 }
 
-unsigned
+size_t
 skiplist_traverse(skiplist *list, dict_visit_func visit)
 {
 	skip_node *node;
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(list != NULL);
 	ASSERT(visit != NULL);
@@ -350,7 +350,7 @@ skiplist_traverse(skiplist *list, dict_visit_func visit)
 	return count;
 }
 
-unsigned
+size_t
 skiplist_count(const skiplist *list)
 {
 	ASSERT(list != NULL);
@@ -444,7 +444,7 @@ skiplist_itor_prev(skiplist_itor *itor)
 }
 
 int
-skiplist_itor_nextn(skiplist_itor *itor, unsigned count)
+skiplist_itor_nextn(skiplist_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 
@@ -459,7 +459,7 @@ skiplist_itor_nextn(skiplist_itor *itor, unsigned count)
 }
 
 int
-skiplist_itor_prevn(skiplist_itor *itor, unsigned count)
+skiplist_itor_prevn(skiplist_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 
@@ -614,15 +614,12 @@ skiplist_verify(const skiplist *list)
 	node = list->head->link[0];
 	while (node != NULL) {
 		ASSERT(node->link_count >= 1);
-		if (node->link_count > list->top_link) {
-			printf("Node has link count %u but list top link is %u.\n",
-				   node->link_count, list->top_link);
-		}
-	/*	ASSERT(node->link_count <= list->top_link); */
+		ASSERT(node->link_count <= list->top_link);
 		for (k = 0; k < node->link_count; k++) {
 			next = node->link[k];
-			if (next != NULL)
+			if (next != NULL) {
 				ASSERT(next->link_count >= k);
+			}
 		}
 
 		node = node->link[0];

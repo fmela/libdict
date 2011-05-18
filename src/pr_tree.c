@@ -53,7 +53,7 @@ struct pr_node {
 
 struct pr_tree {
 	pr_node*			root;
-	unsigned			count;
+	size_t				count;
 	dict_compare_func	cmp_func;
 	dict_delete_func	del_func;
 };
@@ -97,9 +97,9 @@ static itor_vtable pr_tree_itor_vtable = {
 static void		fixup(pr_tree *tree, pr_node *node);
 static void		rot_left(pr_tree *tree, pr_node *node);
 static void		rot_right(pr_tree *tree, pr_node *node);
-static unsigned	node_height(const pr_node *node);
-static unsigned	node_mheight(const pr_node *node);
-static unsigned	node_pathlen(const pr_node *node, unsigned level);
+static size_t	node_height(const pr_node *node);
+static size_t	node_mheight(const pr_node *node);
+static uint64_t	node_pathlen(const pr_node *node, uint64_t level);
 static pr_node*	node_new(void *key, void *datum);
 static pr_node*	node_min(pr_node *node);
 static pr_node*	node_max(pr_node *node);
@@ -142,10 +142,10 @@ pr_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 	return dct;
 }
 
-unsigned
+size_t
 pr_tree_free(pr_tree *tree)
 {
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 
@@ -462,11 +462,11 @@ pr_tree_remove(pr_tree *tree, const void *key)
 	return -1;
 }
 
-unsigned
+size_t
 pr_tree_clear(pr_tree *tree)
 {
 	pr_node *node, *parent;
-	unsigned count;
+	size_t count;
 
 	ASSERT(tree != NULL);
 
@@ -529,11 +529,11 @@ pr_tree_max(const pr_tree *tree)
 	return node->key;
 }
 
-unsigned
+size_t
 pr_tree_traverse(pr_tree *tree, dict_visit_func visit)
 {
 	pr_node *node;
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 
@@ -548,7 +548,7 @@ pr_tree_traverse(pr_tree *tree, dict_visit_func visit)
 	return count;
 }
 
-unsigned
+size_t
 pr_tree_count(const pr_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -556,7 +556,7 @@ pr_tree_count(const pr_tree *tree)
 	return tree->count;
 }
 
-unsigned
+size_t
 pr_tree_height(const pr_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -564,7 +564,7 @@ pr_tree_height(const pr_tree *tree)
 	return tree->root ? node_height(tree->root) : 0;
 }
 
-unsigned
+size_t
 pr_tree_mheight(const pr_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -572,7 +572,7 @@ pr_tree_mheight(const pr_tree *tree)
 	return tree->root ? node_mheight(tree->root) : 0;
 }
 
-unsigned
+uint64_t
 pr_tree_pathlen(const pr_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -658,10 +658,10 @@ node_prev(pr_node *node)
 	return temp;
 }
 
-static unsigned
+static size_t
 node_height(const pr_node *node)
 {
-	unsigned l, r;
+	size_t l, r;
 
 	ASSERT(node != NULL);
 
@@ -670,10 +670,10 @@ node_height(const pr_node *node)
 	return MAX(l, r);
 }
 
-static unsigned
+static size_t
 node_mheight(const pr_node *node)
 {
-	unsigned l, r;
+	size_t l, r;
 
 	ASSERT(node != NULL);
 
@@ -682,8 +682,8 @@ node_mheight(const pr_node *node)
 	return MIN(l, r);
 }
 
-static unsigned
-node_pathlen(const pr_node *node, unsigned level)
+static uint64_t
+node_pathlen(const pr_node *node, uint64_t level)
 {
 	unsigned n = 0;
 
@@ -868,7 +868,7 @@ pr_itor_prev(pr_itor *itor)
 }
 
 int
-pr_itor_nextn(pr_itor *itor, unsigned count)
+pr_itor_nextn(pr_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 
@@ -886,7 +886,7 @@ pr_itor_nextn(pr_itor *itor, unsigned count)
 }
 
 int
-pr_itor_prevn(pr_itor *itor, unsigned count)
+pr_itor_prevn(pr_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 

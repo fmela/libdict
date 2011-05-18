@@ -53,7 +53,7 @@ struct hashtable {
 	dict_compare_func	cmp_func;
 	dict_hash_func		hash_func;
 	dict_delete_func	del_func;
-	unsigned			count;
+	size_t				count;
 };
 
 struct hashtable_itor {
@@ -143,10 +143,10 @@ hashtable_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func,
 	return dct;
 }
 
-unsigned
+size_t
 hashtable_free(hashtable *table)
 {
-	unsigned count;
+	size_t count;
 
 	ASSERT(table != NULL);
 
@@ -301,14 +301,13 @@ hashtable_remove(hashtable *table, const void *key)
 	return -1;
 }
 
-unsigned
+size_t
 hashtable_clear(hashtable *table)
 {
-	unsigned slot, count;
+	unsigned slot;
+	size_t count;
 
 	ASSERT(table != NULL);
-
-	count = table->count;
 
 	for (slot = 0; slot < table->size; slot++) {
 		hash_node *node = table->table[slot];
@@ -322,15 +321,17 @@ hashtable_clear(hashtable *table)
 		table->table[slot] = NULL;
 	}
 
+	count = table->count;
 	table->count = 0;
 	return count;
 }
 
-unsigned
+size_t
 hashtable_traverse(hashtable *table, dict_visit_func visit)
 {
 	hash_node *node;
-	unsigned i, count = 0;
+	unsigned i;
+	size_t count = 0;
 
 	ASSERT(table != NULL);
 	ASSERT(visit != NULL);
@@ -346,7 +347,7 @@ out:
 	return count;
 }
 
-unsigned
+size_t
 hashtable_count(const hashtable *table)
 {
 	ASSERT(table != NULL);
@@ -354,7 +355,7 @@ hashtable_count(const hashtable *table)
 	return table->count;
 }
 
-unsigned
+size_t
 hashtable_size(const hashtable *table)
 {
 	ASSERT(table != NULL);
@@ -362,10 +363,11 @@ hashtable_size(const hashtable *table)
 	return table->size;
 }
 
-unsigned
+size_t
 hashtable_slots_used(const hashtable *table)
 {
-	unsigned i, count = 0;
+	unsigned i;
+	size_t count = 0;
 
 	ASSERT(table != NULL);
 
@@ -535,7 +537,7 @@ hashtable_itor_prev(hashtable_itor *itor)
 }
 
 int
-hashtable_itor_nextn(hashtable_itor *itor, unsigned count)
+hashtable_itor_nextn(hashtable_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 
@@ -551,7 +553,7 @@ hashtable_itor_nextn(hashtable_itor *itor, unsigned count)
 }
 
 int
-hashtable_itor_prevn(hashtable_itor *itor, unsigned count)
+hashtable_itor_prevn(hashtable_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 

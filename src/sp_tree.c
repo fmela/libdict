@@ -64,7 +64,7 @@ struct sp_node {
 
 struct sp_tree {
 	sp_node*			root;
-	unsigned			count;
+	size_t				count;
 	dict_compare_func	cmp_func;
 	dict_delete_func	del_func;
 };
@@ -112,9 +112,9 @@ static sp_node*	node_next(sp_node *node);
 static sp_node*	node_prev(sp_node *node);
 static sp_node*	node_max(sp_node *node);
 static sp_node*	node_min(sp_node *node);
-static unsigned	node_height(const sp_node *node);
-static unsigned	node_mheight(const sp_node *node);
-static unsigned	node_pathlen(const sp_node *node, unsigned level);
+static size_t	node_height(const sp_node *node);
+static size_t	node_mheight(const sp_node *node);
+static uint64_t	node_pathlen(const sp_node *node, uint64_t level);
 
 sp_tree *
 sp_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
@@ -150,10 +150,10 @@ sp_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 	return dct;
 }
 
-unsigned
+size_t
 sp_tree_free(sp_tree *tree)
 {
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 
@@ -164,11 +164,11 @@ sp_tree_free(sp_tree *tree)
 	return count;
 }
 
-unsigned
+size_t
 sp_tree_clear(sp_tree *tree)
 {
 	sp_node *node, *parent;
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 
@@ -458,11 +458,11 @@ sp_tree_remove(sp_tree *tree, const void *key)
 	return 0;
 }
 
-unsigned
+size_t
 sp_tree_traverse(sp_tree *tree, dict_visit_func visit)
 {
 	sp_node *node;
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 	ASSERT(visit != NULL);
@@ -478,7 +478,7 @@ sp_tree_traverse(sp_tree *tree, dict_visit_func visit)
 	return count;
 }
 
-unsigned
+size_t
 sp_tree_count(const sp_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -486,7 +486,7 @@ sp_tree_count(const sp_tree *tree)
 	return tree->count;
 }
 
-unsigned
+size_t
 sp_tree_height(const sp_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -494,7 +494,7 @@ sp_tree_height(const sp_tree *tree)
 	return tree->root ? node_height(tree->root) : 0;
 }
 
-unsigned
+size_t
 sp_tree_mheight(const sp_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -502,7 +502,7 @@ sp_tree_mheight(const sp_tree *tree)
 	return tree->root ? node_mheight(tree->root) : 0;
 }
 
-unsigned
+uint64_t
 sp_tree_pathlen(const sp_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -671,30 +671,30 @@ node_min(sp_node *node)
 	return node;
 }
 
-static unsigned
+static size_t
 node_height(const sp_node *node)
 {
-	unsigned l, r;
+	size_t l, r;
 
 	l = node->llink ? node_height(node->llink) + 1 : 0;
 	r = node->rlink ? node_height(node->rlink) + 1 : 0;
 	return MAX(l, r);
 }
 
-static unsigned
+static size_t
 node_mheight(const sp_node *node)
 {
-	unsigned l, r;
+	size_t l, r;
 
 	l = node->llink ? node_mheight(node->llink) + 1 : 0;
 	r = node->rlink ? node_mheight(node->rlink) + 1 : 0;
 	return MIN(l, r);
 }
 
-static unsigned
-node_pathlen(const sp_node *node, unsigned level)
+static uint64_t
+node_pathlen(const sp_node *node, uint64_t level)
 {
-	unsigned n = 0;
+	size_t n = 0;
 
 	ASSERT(node != NULL);
 
@@ -791,7 +791,7 @@ sp_itor_prev(sp_itor *itor)
 }
 
 int
-sp_itor_nextn(sp_itor *itor, unsigned count)
+sp_itor_nextn(sp_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 
@@ -809,7 +809,7 @@ sp_itor_nextn(sp_itor *itor, unsigned count)
 }
 
 int
-sp_itor_prevn(sp_itor *itor, unsigned count)
+sp_itor_prevn(sp_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 

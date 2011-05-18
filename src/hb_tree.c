@@ -48,7 +48,7 @@ struct hb_node {
 
 struct hb_tree {
 	hb_node*			root;
-	unsigned			count;
+	size_t				count;
 	dict_compare_func	cmp_func;
 	dict_delete_func	del_func;
 };
@@ -93,9 +93,9 @@ static itor_vtable hb_tree_itor_vtable = {
 
 static int		rot_left(hb_tree * RESTRICT tree, hb_node * RESTRICT node);
 static int		rot_right(hb_tree * RESTRICT tree, hb_node * RESTRICT node);
-static unsigned	node_height(const hb_node *node);
-static unsigned	node_mheight(const hb_node *node);
-static unsigned	node_pathlen(const hb_node *node, unsigned level);
+static size_t	node_height(const hb_node *node);
+static size_t	node_mheight(const hb_node *node);
+static uint64_t	node_pathlen(const hb_node *node, uint64_t level);
 static hb_node*	node_new(void *key, void *datum);
 static hb_node*	node_min(hb_node *node);
 static hb_node*	node_max(hb_node *node);
@@ -138,10 +138,10 @@ hb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 	return dct;
 }
 
-unsigned
+size_t
 hb_tree_free(hb_tree *tree)
 {
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 
@@ -153,11 +153,11 @@ hb_tree_free(hb_tree *tree)
 	return count;
 }
 
-unsigned
+size_t
 hb_tree_clear(hb_tree *tree)
 {
 	hb_node *node, *parent;
-	unsigned count;
+	size_t count;
 
 	ASSERT(tree != NULL);
 
@@ -472,11 +472,11 @@ hb_tree_max(const hb_tree *tree)
 	return node->key;
 }
 
-unsigned
+size_t
 hb_tree_traverse(hb_tree *tree, dict_visit_func visit)
 {
 	hb_node *node;
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 
@@ -491,7 +491,7 @@ hb_tree_traverse(hb_tree *tree, dict_visit_func visit)
 	return count;
 }
 
-unsigned
+size_t
 hb_tree_count(const hb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -499,7 +499,7 @@ hb_tree_count(const hb_tree *tree)
 	return tree->count;
 }
 
-unsigned
+size_t
 hb_tree_height(const hb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -507,7 +507,7 @@ hb_tree_height(const hb_tree *tree)
 	return tree->root ? node_height(tree->root) : 0;
 }
 
-unsigned
+size_t
 hb_tree_mheight(const hb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -515,7 +515,7 @@ hb_tree_mheight(const hb_tree *tree)
 	return tree->root ? node_mheight(tree->root) : 0;
 }
 
-unsigned
+uint64_t
 hb_tree_pathlen(const hb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -601,10 +601,10 @@ node_prev(hb_node *node)
 	return temp;
 }
 
-static unsigned
+static size_t
 node_height(const hb_node *node)
 {
-	unsigned l, r;
+	size_t l, r;
 
 	ASSERT(node != NULL);
 
@@ -613,10 +613,10 @@ node_height(const hb_node *node)
 	return MAX(l, r);
 }
 
-static unsigned
+static size_t
 node_mheight(const hb_node *node)
 {
-	unsigned l, r;
+	size_t l, r;
 
 	ASSERT(node != NULL);
 
@@ -625,10 +625,10 @@ node_mheight(const hb_node *node)
 	return MIN(l, r);
 }
 
-static unsigned
-node_pathlen(const hb_node *node, unsigned level)
+static uint64_t
+node_pathlen(const hb_node *node, uint64_t level)
 {
-	unsigned n = 0;
+	uint64_t n = 0;
 
 	ASSERT(node != NULL);
 
@@ -812,7 +812,7 @@ hb_itor_prev(hb_itor *itor)
 }
 
 int
-hb_itor_nextn(hb_itor *itor, unsigned count)
+hb_itor_nextn(hb_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 
@@ -830,7 +830,7 @@ hb_itor_nextn(hb_itor *itor, unsigned count)
 }
 
 int
-hb_itor_prevn(hb_itor *itor, unsigned count)
+hb_itor_prevn(hb_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 

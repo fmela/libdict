@@ -46,22 +46,15 @@
  */
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <limits.h>
 
 #include "tr_tree.h"
 #include "dict_private.h"
 
-/* We want a priority_t to be a 32-bit value.
- * I_{j+1} = I_j * A + M; A suggested by Knuth, M by H.W. Lewis. */
-#if UINT_MAX == 0xffffffffU
-typedef unsigned int priority_t;
+/* I_{j+1} = I_j * A + M; A suggested by Knuth, M by H.W. Lewis. */
 #define RGEN_A		1664525U
 #define RGEN_M		1013904223U
-#else
-typedef unsigned long priority_t;
-#define RGEN_A		1664525UL
-#define RGEN_M		1013904223UL
-#endif
 
 typedef struct tr_node tr_node;
 struct tr_node {
@@ -70,12 +63,12 @@ struct tr_node {
 	tr_node*			parent;
 	tr_node*			llink;
 	tr_node*			rlink;
-	priority_t			prio;
+	uint32_t			prio;
 };
 
 struct tr_tree {
 	tr_node*			root;
-	unsigned			count;
+	size_t				count;
 	dict_compare_func	cmp_func;
 	dict_prio_func		prio_func;
 	dict_delete_func	del_func;
@@ -120,9 +113,9 @@ static itor_vtable tr_tree_itor_vtable = {
 
 static void		rot_left(tr_tree *tree, tr_node *node);
 static void		rot_right(tr_tree *tree, tr_node *node);
-static unsigned	node_height(const tr_node *node);
-static unsigned	node_mheight(const tr_node *node);
-static unsigned	node_pathlen(const tr_node *node, unsigned level);
+static size_t	node_height(const tr_node *node);
+static size_t	node_mheight(const tr_node *node);
+static uint64_t	node_pathlen(const tr_node *node, uint64_t level);
 static tr_node*	node_new(void *key, void *datum);
 static tr_node*	node_next(tr_node *node);
 static tr_node*	node_prev(tr_node *node);
@@ -167,10 +160,10 @@ tr_dict_new(dict_compare_func cmp_func, dict_prio_func prio_func, dict_delete_fu
 	return dct;
 }
 
-unsigned
+size_t
 tr_tree_free(tr_tree *tree)
 {
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 
@@ -180,11 +173,11 @@ tr_tree_free(tr_tree *tree)
 	return count;
 }
 
-unsigned
+size_t
 tr_tree_clear(tr_tree *tree)
 {
 	tr_node *node, *parent;
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 
@@ -395,11 +388,11 @@ tr_tree_search(tr_tree *tree, const void *key)
 	return NULL;
 }
 
-unsigned
+size_t
 tr_tree_traverse(tr_tree *tree, dict_visit_func visit)
 {
 	tr_node *node;
-	unsigned count = 0;
+	size_t count = 0;
 
 	ASSERT(tree != NULL);
 	ASSERT(visit != NULL);
@@ -415,7 +408,7 @@ tr_tree_traverse(tr_tree *tree, dict_visit_func visit)
 	return count;
 }
 
-unsigned
+size_t
 tr_tree_count(const tr_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -423,7 +416,7 @@ tr_tree_count(const tr_tree *tree)
 	return tree->count;
 }
 
-unsigned
+size_t
 tr_tree_height(const tr_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -431,7 +424,7 @@ tr_tree_height(const tr_tree *tree)
 	return tree->root ? node_height(tree->root) : 0;
 }
 
-unsigned
+size_t
 tr_tree_mheight(const tr_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -439,7 +432,7 @@ tr_tree_mheight(const tr_tree *tree)
 	return tree->root ? node_mheight(tree->root) : 0;
 }
 
-unsigned
+uint64_t
 tr_tree_pathlen(const tr_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -608,10 +601,10 @@ node_min(tr_node *node)
 	return node;
 }
 
-static unsigned
+static size_t
 node_height(const tr_node *node)
 {
-	unsigned l, r;
+	size_t l, r;
 
 	ASSERT(node != NULL);
 
@@ -620,10 +613,10 @@ node_height(const tr_node *node)
 	return MAX(l, r);
 }
 
-static unsigned
+static size_t
 node_mheight(const tr_node *node)
 {
-	unsigned l, r;
+	size_t l, r;
 
 	ASSERT(node != NULL);
 
@@ -632,10 +625,10 @@ node_mheight(const tr_node *node)
 	return MIN(l, r);
 }
 
-static unsigned
-node_pathlen(const tr_node *node, unsigned level)
+static uint64_t
+node_pathlen(const tr_node *node, uint64_t level)
 {
-	unsigned n = 0;
+	size_t n = 0;
 
 	ASSERT(node != NULL);
 
@@ -733,7 +726,7 @@ tr_itor_prev(tr_itor *itor)
 }
 
 int
-tr_itor_nextn(tr_itor *itor, unsigned count)
+tr_itor_nextn(tr_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 
@@ -751,7 +744,7 @@ tr_itor_nextn(tr_itor *itor, unsigned count)
 }
 
 int
-tr_itor_prevn(tr_itor *itor, unsigned count)
+tr_itor_prevn(tr_itor *itor, size_t count)
 {
 	ASSERT(itor != NULL);
 
