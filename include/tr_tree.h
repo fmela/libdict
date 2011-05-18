@@ -44,19 +44,19 @@ tr_tree*	tr_tree_new(dict_compare_func compare_func,
 						dict_prio_func prio_func, dict_delete_func del_func);
 dict*		tr_dict_new(dict_compare_func compare_func,
 						dict_prio_func prio_func, dict_delete_func del_func);
-unsigned	tr_tree_free(tr_tree *tree);
+size_t		tr_tree_free(tr_tree *tree);
 
 int			tr_tree_insert(tr_tree *tree, void *key, void *datum,
 						   int overwrite);
 int			tr_tree_probe(tr_tree *tree, void *key, void **datum);
 void*		tr_tree_search(tr_tree *tree, const void *key);
 int			tr_tree_remove(tr_tree *tree, const void *key);
-unsigned	tr_tree_clear(tr_tree *tree);
-unsigned	tr_tree_traverse(tr_tree *tree, dict_visit_func visit);
-unsigned	tr_tree_count(const tr_tree *tree);
-unsigned	tr_tree_height(const tr_tree *tree);
-unsigned	tr_tree_mheight(const tr_tree *tree);
-unsigned	tr_tree_pathlen(const tr_tree *tree);
+size_t		tr_tree_clear(tr_tree *tree);
+size_t		tr_tree_traverse(tr_tree *tree, dict_visit_func visit);
+size_t		tr_tree_count(const tr_tree *tree);
+size_t		tr_tree_height(const tr_tree *tree);
+size_t		tr_tree_mheight(const tr_tree *tree);
+uint64_t	tr_tree_pathlen(const tr_tree *tree);
 const void*	tr_tree_min(const tr_tree *tree);
 const void*	tr_tree_max(const tr_tree *tree);
 
@@ -71,8 +71,8 @@ int			tr_itor_valid(const tr_itor *itor);
 void		tr_itor_invalidate(tr_itor *itor);
 int			tr_itor_next(tr_itor *itor);
 int			tr_itor_prev(tr_itor *itor);
-int			tr_itor_nextn(tr_itor *itor, unsigned count);
-int			tr_itor_prevn(tr_itor *itor, unsigned count);
+int			tr_itor_nextn(tr_itor *itor, size_t count);
+int			tr_itor_prevn(tr_itor *itor, size_t count);
 int			tr_itor_first(tr_itor *itor);
 int			tr_itor_last(tr_itor *itor);
 int			tr_itor_search(tr_itor *itor, const void *key);
