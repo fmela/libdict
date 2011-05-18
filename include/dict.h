@@ -87,7 +87,7 @@ typedef struct dict_itor
 					dict_itor;
 
 typedef dict_itor*	(*dict_inew_func)		(void *obj);
-typedef unsigned	(*dict_dfree_func)		(void *obj);
+typedef size_t		(*dict_dfree_func)		(void *obj);
 typedef int			(*dict_insert_func)		(void *obj, void *key, void *datum,
 											 int overwrite);
 typedef int			(*dict_probe_func)		(void *obj, void *key,
@@ -95,10 +95,10 @@ typedef int			(*dict_probe_func)		(void *obj, void *key,
 typedef void*		(*dict_search_func)		(void *obj, const void *key);
 typedef const void*	(*dict_csearch_func)	(const void *obj, const void *key);
 typedef int			(*dict_remove_func)		(void *obj, const void *key);
-typedef unsigned	(*dict_clear_func)		(void *obj);
-typedef unsigned	(*dict_traverse_func)	(void *obj,
+typedef size_t		(*dict_clear_func)		(void *obj);
+typedef size_t		(*dict_traverse_func)	(void *obj,
 											 dict_visit_func visit_func);
-typedef unsigned	(*dict_count_func)		(const void *obj);
+typedef size_t		(*dict_count_func)		(const void *obj);
 
 typedef struct {
 	dict_inew_func			inew;
@@ -118,8 +118,8 @@ typedef int			(*dict_valid_func)		(const void *itor);
 typedef void		(*dict_invalidate_func)	(void *itor);
 typedef int			(*dict_next_func)		(void *itor);
 typedef int			(*dict_prev_func)		(void *itor);
-typedef int			(*dict_nextn_func)		(void *itor, unsigned count);
-typedef int			(*dict_prevn_func)		(void *itor, unsigned count);
+typedef int			(*dict_nextn_func)		(void *itor, size_t count);
+typedef int			(*dict_prevn_func)		(void *itor, size_t count);
 typedef int			(*dict_first_func)		(void *itor);
 typedef int			(*dict_last_func)		(void *itor);
 typedef void*		(*dict_key_func)		(void *itor);
