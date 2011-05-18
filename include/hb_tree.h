@@ -42,19 +42,19 @@ typedef struct hb_tree
 
 hb_tree*	hb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
 dict*		hb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
-unsigned	hb_tree_free(hb_tree *tree);
+size_t		hb_tree_free(hb_tree *tree);
 
 int			hb_tree_insert(hb_tree *tree, void *key, void *datum,
 						   int overwrite);
 int			hb_tree_probe(hb_tree *tree, void *key, void **datum);
 void*		hb_tree_search(hb_tree *tree, const void *key);
 int			hb_tree_remove(hb_tree *tree, const void *key);
-unsigned	hb_tree_clear(hb_tree *tree);
-unsigned	hb_tree_traverse(hb_tree *tree, dict_visit_func visit);
-unsigned	hb_tree_count(const hb_tree *tree);
-unsigned	hb_tree_height(const hb_tree *tree);
-unsigned	hb_tree_mheight(const hb_tree *tree);
-unsigned	hb_tree_pathlen(const hb_tree *tree);
+size_t		hb_tree_clear(hb_tree *tree);
+size_t		hb_tree_traverse(hb_tree *tree, dict_visit_func visit);
+size_t		hb_tree_count(const hb_tree *tree);
+size_t		hb_tree_height(const hb_tree *tree);
+size_t		hb_tree_mheight(const hb_tree *tree);
+uint64_t	hb_tree_pathlen(const hb_tree *tree);
 const void*	hb_tree_min(const hb_tree *tree);
 const void*	hb_tree_max(const hb_tree *tree);
 
@@ -69,8 +69,8 @@ int			hb_itor_valid(const hb_itor *itor);
 void		hb_itor_invalidate(hb_itor *itor);
 int			hb_itor_next(hb_itor *itor);
 int			hb_itor_prev(hb_itor *itor);
-int			hb_itor_nextn(hb_itor *itor, unsigned count);
-int			hb_itor_prevn(hb_itor *itor, unsigned count);
+int			hb_itor_nextn(hb_itor *itor, size_t count);
+int			hb_itor_prevn(hb_itor *itor, size_t count);
 int			hb_itor_first(hb_itor *itor);
 int			hb_itor_last(hb_itor *itor);
 int			hb_itor_search(hb_itor *itor, const void *key);
