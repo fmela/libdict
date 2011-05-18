@@ -177,7 +177,7 @@ main(int argc, char **argv)
 				printf("usage: count\n");
 				continue;
 			}
-			printf("count = %u\n", dict_count(dct));
+			printf("count = %zu\n", dict_count(dct));
 		} else if (strcmp(buf, "quit") == 0) {
 			break;
 		} else {
