@@ -42,19 +42,19 @@ typedef struct pr_tree
 
 pr_tree*	pr_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
 dict*		pr_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
-unsigned	pr_tree_free(pr_tree *tree);
+size_t		pr_tree_free(pr_tree *tree);
 
 int			pr_tree_insert(pr_tree *tree, void *key, void *datum,
 						   int overwrite);
 int			pr_tree_probe(pr_tree *tree, void *key, void **datum);
 void*		pr_tree_search(pr_tree *tree, const void *key);
 int			pr_tree_remove(pr_tree *tree, const void *key);
-unsigned	pr_tree_clear(pr_tree *tree);
-unsigned	pr_tree_traverse(pr_tree *tree, dict_visit_func visit);
-unsigned	pr_tree_count(const pr_tree *tree);
-unsigned	pr_tree_height(const pr_tree *tree);
-unsigned	pr_tree_mheight(const pr_tree *tree);
-unsigned	pr_tree_pathlen(const pr_tree *tree);
+size_t		pr_tree_clear(pr_tree *tree);
+size_t		pr_tree_traverse(pr_tree *tree, dict_visit_func visit);
+size_t		pr_tree_count(const pr_tree *tree);
+size_t		pr_tree_height(const pr_tree *tree);
+size_t		pr_tree_mheight(const pr_tree *tree);
+uint64_t	pr_tree_pathlen(const pr_tree *tree);
 const void*	pr_tree_min(const pr_tree *tree);
 const void*	pr_tree_max(const pr_tree *tree);
 
@@ -69,8 +69,8 @@ int			pr_itor_valid(const pr_itor *itor);
 void		pr_itor_invalidate(pr_itor *itor);
 int			pr_itor_next(pr_itor *itor);
 int			pr_itor_prev(pr_itor *itor);
-int			pr_itor_nextn(pr_itor *itor, unsigned count);
-int			pr_itor_prevn(pr_itor *itor, unsigned count);
+int			pr_itor_nextn(pr_itor *itor, size_t count);
+int			pr_itor_prevn(pr_itor *itor, size_t count);
 int			pr_itor_first(pr_itor *itor);
 int			pr_itor_last(pr_itor *itor);
 int			pr_itor_search(pr_itor *itor, const void *key);
