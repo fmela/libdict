@@ -34,6 +34,7 @@
 #define _DICT_H_
 
 #include <stddef.h>
+#include <stdint.h>
 
 #define DICT_VERSION_MAJOR		0
 #define DICT_VERSION_MINOR		3
