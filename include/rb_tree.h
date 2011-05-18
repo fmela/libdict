@@ -42,19 +42,19 @@ typedef struct rb_tree
 
 rb_tree*	rb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
 dict*		rb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
-unsigned	rb_tree_free(rb_tree *tree);
+size_t		rb_tree_free(rb_tree *tree);
 
 int			rb_tree_insert(rb_tree *tree, void *key, void *datum,
 						   int overwrite);
 int			rb_tree_probe(rb_tree *tree, void *key, void **datum);
 void*		rb_tree_search(rb_tree *tree, const void *key);
 int			rb_tree_remove(rb_tree *tree, const void *key);
-unsigned	rb_tree_clear(rb_tree *tree);
-unsigned	rb_tree_traverse(rb_tree *tree, dict_visit_func visit);
-unsigned	rb_tree_count(const rb_tree *tree);
-unsigned	rb_tree_height(const rb_tree *tree);
-unsigned	rb_tree_mheight(const rb_tree *tree);
-unsigned	rb_tree_pathlen(const rb_tree *tree);
+size_t		rb_tree_clear(rb_tree *tree);
+size_t		rb_tree_traverse(rb_tree *tree, dict_visit_func visit);
+size_t		rb_tree_count(const rb_tree *tree);
+size_t		rb_tree_height(const rb_tree *tree);
+size_t		rb_tree_mheight(const rb_tree *tree);
+uint64_t	rb_tree_pathlen(const rb_tree *tree);
 const void*	rb_tree_min(const rb_tree *tree);
 const void*	rb_tree_max(const rb_tree *tree);
 
@@ -69,8 +69,8 @@ int			rb_itor_valid(const rb_itor *itor);
 void		rb_itor_invalidate(rb_itor *itor);
 int			rb_itor_next(rb_itor *itor);
 int			rb_itor_prev(rb_itor *itor);
-int			rb_itor_nextn(rb_itor *itor, unsigned count);
-int			rb_itor_prevn(rb_itor *itor, unsigned count);
+int			rb_itor_nextn(rb_itor *itor, size_t count);
+int			rb_itor_prevn(rb_itor *itor, size_t count);
 int			rb_itor_first(rb_itor *itor);
 int			rb_itor_last(rb_itor *itor);
 int			rb_itor_search(rb_itor *itor, const void *key);
