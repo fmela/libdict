@@ -112,7 +112,7 @@ main(int argc, char **argv)
 	if (!dct)
 		quit("can't create container");
 
-	printf("Container uses %zukB memory.\n", (malloced+1023)>>10);
+	printf("Container uses %.02fkB memory.\n", malloced/1024.);
 
 	fp = fopen(argv[1], "r");
 	if (fp == NULL)
