@@ -1,9 +1,9 @@
 # libdict
 
-libdict is a C library which provides a set of efficient data structures for
-storing key-value pairs, including height-balanced (AVL) trees, red-black trees,
-splay trees, weight-balanced trees, path-reduction trees, treaps, and
-hashtables. An object-oriented interface for these data structures is provided.
+libdict is a C library that provides a set of efficient key-value data
+structures, including height-balanced (AVL) trees, red-black trees, splay trees,
+weight-balanced trees, path-reduction trees, treaps, and hashtables. A generic
+object-oriented interface is provided, but is not required.
 
 ## License
 
