@@ -21,7 +21,7 @@ PROFIL_LIB := $(OUTPUT_DIR)/$(PROFIL_LIB_NAME)
 SHARED_LIB := $(OUTPUT_DIR)/$(SHARED_LIB_NAME)
 
 # Plug in your favorite compiler here:
-CC := $(shell which gcc-4.5 || which clang || which gcc)
+CC := $(shell which clang || which gcc)
 CFLAGS = -Wall -Wextra -W -ansi -pedantic -O2 -I$(HEADER_DIR) -I$(SOURCE_DIR)
 LDFLAGS =
 
