@@ -75,7 +75,7 @@ void*		skiplist_itor_data(skiplist_itor *itor);
 const void*	skiplist_itor_cdata(const skiplist_itor *itor);
 int			skiplist_itor_set_data(skiplist_itor *itor, void *datum,
 				void **prev_datum);
-int			skiplist_itor_remove(skiplist_itor *itor, int del);
+int			skiplist_itor_remove(skiplist_itor *itor);
 
 END_DECL
 

@@ -79,7 +79,7 @@ void*		hashtable_itor_data(hashtable_itor *itor);
 const void*	hashtable_itor_cdata(const hashtable_itor *itor);
 int			hashtable_itor_set_data(hashtable_itor *itor,
 									void *datum, void **prev_datum);
-int			hashtable_itor_remove(hashtable_itor *itor, int del);
+int			hashtable_itor_remove(hashtable_itor *itor);
 
 END_DECL
 

@@ -76,7 +76,7 @@ const void*	sp_itor_key(const sp_itor *itor);
 void*		sp_itor_data(sp_itor *itor);
 const void*	sp_itor_cdata(const sp_itor *itor);
 int			sp_itor_set_data(sp_itor *itor, void *datum, void **old_datum);
-int			sp_itor_remove(sp_itor *itor, int del);
+int			sp_itor_remove(sp_itor *itor);
 
 END_DECL
 

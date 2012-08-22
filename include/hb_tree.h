@@ -76,7 +76,7 @@ const void*	hb_itor_key(const hb_itor *itor);
 void*		hb_itor_data(hb_itor *itor);
 const void*	hb_itor_cdata(const hb_itor *itor);
 int			hb_itor_set_data(hb_itor *itor, void *datum, void **old_datum);
-int			hb_itor_remove(hb_itor *itor, int del);
+int			hb_itor_remove(hb_itor *itor);
 
 END_DECL
 

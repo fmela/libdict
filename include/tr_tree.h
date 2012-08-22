@@ -78,7 +78,7 @@ const void*	tr_itor_key(const tr_itor *itor);
 void*		tr_itor_data(tr_itor *itor);
 const void*	tr_itor_cdata(const tr_itor *itor);
 int			tr_itor_set_data(tr_itor *itor, void *datum, void **old_datum);
-int			tr_itor_remove(tr_itor *itor, int del);
+int			tr_itor_remove(tr_itor *itor);
 
 END_DECL
 
