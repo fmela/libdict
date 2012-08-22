@@ -2,6 +2,8 @@ SOURCE_DIR = src
 HEADER_DIR = include
 OUTPUT_DIR = bin
 
+CUNIT_PREFIX=$(HOME)/homebrew
+
 SOURCE := $(wildcard $(SOURCE_DIR)/*.c)
 HEADER := $(wildcard $(HEADER_DIR)/*.h $(SOURCE_DIR)/*.h)
 
@@ -22,7 +24,7 @@ SHARED_LIB := $(OUTPUT_DIR)/$(SHARED_LIB_NAME)
 
 # Plug in your favorite compiler here:
 CC := $(shell which clang || which gcc)
-CFLAGS = -Wall -Wextra -W -ansi -pedantic -O2 -I$(HEADER_DIR) -I$(SOURCE_DIR)
+CFLAGS = -Wall -Wextra -Wshadow -W -std=c99 -O2 -I$(HEADER_DIR) -I$(SOURCE_DIR)
 LDFLAGS =
 
 AR = ar
@@ -62,13 +64,15 @@ $(OUTPUT_DIR)/%.po: $(SOURCE_DIR)/%.c $(HEADER)
 $(OUTPUT_DIR)/%.So: $(SOURCE_DIR)/%.c $(HEADER)
 	$(CC) $(CFLAGS) -fPIC -DPIC -c -o $(@) $(<)
 
+$(OUTPUT_DIR)/unit_tests: unit_tests.c $(STATIC_OBJ)
+	$(CC) $(CFLAGS) -I$(CUNIT_PREFIX)/include -o $(@) $(<) $(STATIC_OBJ) -L$(CUNIT_PREFIX)/lib $(LDFLAGS) -lcunit
+
 $(OUTPUT_DIR)/%: %.c $(STATIC_OBJ)
 	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_OBJ) $(LDFLAGS)
 
 .PHONY: clean
 clean:
-	rm -rf $(OUTPUT_DIR)/*.dSYM
-	rm -f $(OUTPUT_DIR)/*
+	rm -r $(OUTPUT_DIR)
 
 .PHONY: analyze
 analyze:
