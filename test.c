@@ -74,7 +74,7 @@ main(int argc, char **argv)
 
 	srand(0xdeadbeef);
 
-	dict_set_malloc(xmalloc);
+	dict_malloc_func = xmalloc;
 
 	cmp_func = my_strcmp;
 	hash_func = str_hash;

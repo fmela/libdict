@@ -64,7 +64,6 @@ static dict_vtable hb_tree_vtable = {
 	(dict_insert_func)		hb_tree_insert,
 	(dict_probe_func)		hb_tree_probe,
 	(dict_search_func)		hb_tree_search,
-	(dict_csearch_func)		hb_tree_search,
 	(dict_remove_func)		hb_tree_remove,
 	(dict_clear_func)		hb_tree_clear,
 	(dict_traverse_func)	hb_tree_traverse,
@@ -83,7 +82,6 @@ static itor_vtable hb_tree_itor_vtable = {
 	(dict_last_func)		hb_itor_last,
 	(dict_key_func)			hb_itor_key,
 	(dict_data_func)		hb_itor_data,
-	(dict_cdata_func)		hb_itor_cdata,
 	(dict_dataset_func)		hb_itor_set_data,
 	(dict_iremove_func)		NULL,/* hb_itor_remove not implemented yet */
 	(dict_icompare_func)	NULL /* hb_itor_compare not implemented yet */
@@ -219,7 +217,7 @@ hb_tree_search(hb_tree *tree, const void *key)
 }
 
 int
-hb_tree_insert(hb_tree *tree, void *key, void *datum, int overwrite)
+hb_tree_insert(hb_tree *tree, void *key, void *datum, bool overwrite)
 {
 	int cmp = 0;
 	hb_node *node, *parent = NULL, *q = NULL;
@@ -901,14 +899,6 @@ hb_itor_key(const hb_itor *itor)
 
 void *
 hb_itor_data(hb_itor *itor)
-{
-	ASSERT(itor != NULL);
-
-	return itor->node ? itor->node->datum : NULL;
-}
-
-const void *
-hb_itor_cdata(const hb_itor *itor)
 {
 	ASSERT(itor != NULL);
 

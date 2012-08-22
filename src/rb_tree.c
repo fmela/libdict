@@ -67,7 +67,6 @@ static dict_vtable rb_tree_vtable = {
 	(dict_insert_func)		rb_tree_insert,
 	(dict_probe_func)		rb_tree_probe,
 	(dict_search_func)		rb_tree_search,
-	(dict_csearch_func)		rb_tree_search,
 	(dict_remove_func)		rb_tree_remove,
 	(dict_clear_func)		rb_tree_clear,
 	(dict_traverse_func)	rb_tree_traverse,
@@ -86,7 +85,6 @@ static itor_vtable rb_tree_itor_vtable = {
 	(dict_last_func)		rb_itor_last,
 	(dict_key_func)			rb_itor_key,
 	(dict_data_func)		rb_itor_data,
-	(dict_cdata_func)		rb_itor_cdata,
 	(dict_dataset_func)		rb_itor_set_data,
 	(dict_iremove_func)		NULL,/* rb_itor_remove not implemented yet */
 	(dict_icompare_func)	NULL /* rb_itor_compare not implemented yet */
@@ -181,7 +179,7 @@ rb_tree_search(rb_tree *tree, const void *key)
 }
 
 int
-rb_tree_insert(rb_tree *tree, void *key, void *datum, int overwrite)
+rb_tree_insert(rb_tree *tree, void *key, void *datum, bool overwrite)
 {
 	int cmp = 0;	/* Quell GCC warning about uninitialized usage. */
 	rb_node *node, *parent = RB_NULL;
@@ -904,14 +902,6 @@ rb_itor_key(const rb_itor *itor)
 
 void *
 rb_itor_data(rb_itor *itor)
-{
-	ASSERT(itor != NULL);
-
-	return itor->node != RB_NULL ? itor->node->datum : NULL;
-}
-
-const void *
-rb_itor_cdata(const rb_itor *itor)
 {
 	ASSERT(itor != NULL);
 

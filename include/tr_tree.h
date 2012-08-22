@@ -37,8 +37,7 @@
 
 BEGIN_DECL
 
-typedef struct tr_tree
-			tr_tree;
+typedef struct tr_tree tr_tree;
 
 tr_tree*	tr_tree_new(dict_compare_func compare_func,
 						dict_prio_func prio_func, dict_delete_func del_func);
@@ -47,7 +46,7 @@ dict*		tr_dict_new(dict_compare_func compare_func,
 size_t		tr_tree_free(tr_tree *tree);
 
 int			tr_tree_insert(tr_tree *tree, void *key, void *datum,
-						   int overwrite);
+						   bool overwrite);
 int			tr_tree_probe(tr_tree *tree, void *key, void **datum);
 void*		tr_tree_search(tr_tree *tree, const void *key);
 int			tr_tree_remove(tr_tree *tree, const void *key);
@@ -60,8 +59,7 @@ uint64_t	tr_tree_pathlen(const tr_tree *tree);
 const void*	tr_tree_min(const tr_tree *tree);
 const void*	tr_tree_max(const tr_tree *tree);
 
-typedef struct tr_itor
-			tr_itor;
+typedef struct tr_itor tr_itor;
 
 tr_itor*	tr_itor_new(tr_tree *tree);
 dict_itor*	tr_dict_itor_new(tr_tree *tree);

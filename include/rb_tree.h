@@ -37,15 +37,14 @@
 
 BEGIN_DECL
 
-typedef struct rb_tree
-			rb_tree;
+typedef struct rb_tree rb_tree;
 
 rb_tree*	rb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
 dict*		rb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
 size_t		rb_tree_free(rb_tree *tree);
 
 int			rb_tree_insert(rb_tree *tree, void *key, void *datum,
-						   int overwrite);
+						   bool overwrite);
 int			rb_tree_probe(rb_tree *tree, void *key, void **datum);
 void*		rb_tree_search(rb_tree *tree, const void *key);
 int			rb_tree_remove(rb_tree *tree, const void *key);
@@ -58,8 +57,7 @@ uint64_t	rb_tree_pathlen(const rb_tree *tree);
 const void*	rb_tree_min(const rb_tree *tree);
 const void*	rb_tree_max(const rb_tree *tree);
 
-typedef struct rb_itor
-			rb_itor;
+typedef struct rb_itor rb_itor;
 
 rb_itor*	rb_itor_new(rb_tree *tree);
 dict_itor*	rb_dict_itor_new(rb_tree *tree);

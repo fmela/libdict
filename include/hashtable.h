@@ -37,8 +37,7 @@
 
 BEGIN_DECL
 
-typedef struct hashtable
-			hashtable;
+typedef struct hashtable hashtable;
 
 hashtable*	hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func,
 						  dict_delete_func del_func, unsigned size);
@@ -48,7 +47,7 @@ dict*		hashtable_dict_new(dict_compare_func cmp_func,
 size_t		hashtable_free(hashtable *table);
 
 int			hashtable_insert(hashtable *table, void *key, void *datum,
-							 int overwrite);
+							 bool overwrite);
 int			hashtable_probe(hashtable *table, void *key, void **datum);
 void*		hashtable_search(hashtable *table, const void *key);
 int			hashtable_remove(hashtable *table, const void *key);
@@ -59,8 +58,7 @@ size_t		hashtable_size(const hashtable *table);
 size_t		hashtable_slots_used(const hashtable *table);
 int			hashtable_resize(hashtable *table, unsigned size);
 
-typedef struct hashtable_itor
-			hashtable_itor;
+typedef struct hashtable_itor hashtable_itor;
 
 hashtable_itor*
 			hashtable_itor_new(hashtable *table);

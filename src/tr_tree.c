@@ -86,7 +86,6 @@ static dict_vtable tr_tree_vtable = {
 	(dict_insert_func)		tr_tree_insert,
 	(dict_probe_func)		tr_tree_probe,
 	(dict_search_func)		tr_tree_search,
-	(dict_csearch_func)		tr_tree_search,
 	(dict_remove_func)		tr_tree_remove,
 	(dict_clear_func)		tr_tree_clear,
 	(dict_traverse_func)	tr_tree_traverse,
@@ -105,7 +104,6 @@ static itor_vtable tr_tree_itor_vtable = {
 	(dict_last_func)		tr_itor_last,
 	(dict_key_func)			tr_itor_key,
 	(dict_data_func)		tr_itor_data,
-	(dict_cdata_func)		tr_itor_cdata,
 	(dict_dataset_func)		tr_itor_set_data,
 	(dict_iremove_func)		NULL,/* tr_itor_remove not implemented yet */
 	(dict_icompare_func)	NULL /* tr_itor_compare not implemented yet */
@@ -209,7 +207,7 @@ tr_tree_clear(tr_tree *tree)
 }
 
 int
-tr_tree_insert(tr_tree *tree, void *key, void *datum, int overwrite)
+tr_tree_insert(tr_tree *tree, void *key, void *datum, bool overwrite)
 {
 	int cmp = 0;
 	tr_node *node, *parent = NULL;
@@ -803,11 +801,11 @@ tr_itor_search(tr_itor *itor, const void *key)
 			node = node->rlink;
 		else {
 			itor->node = node;
-			return TRUE;
+			return true;
 		}
 	}
 	itor->node = NULL;
-	return FALSE;
+	return false;
 }
 
 const void *
@@ -820,14 +818,6 @@ tr_itor_key(const tr_itor *itor)
 
 void *
 tr_itor_data(tr_itor *itor)
-{
-	ASSERT(itor != NULL);
-
-	return itor->node ? itor->node->datum : NULL;
-}
-
-const void *
-tr_itor_cdata(const tr_itor *itor)
 {
 	ASSERT(itor != NULL);
 

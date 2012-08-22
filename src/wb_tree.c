@@ -200,7 +200,7 @@ wb_tree_search(wb_tree *tree, const void *key)
 }
 
 int
-wb_tree_insert(wb_tree *tree, void *key, void *datum, int overwrite)
+wb_tree_insert(wb_tree *tree, void *key, void *datum, bool overwrite)
 {
 	int cmp = 0;
 	wb_node *node, *parent = NULL;
@@ -874,11 +874,11 @@ wb_itor_search(wb_itor *itor, const void *key)
 			node = node->rlink;
 		else {
 			itor->node = node;
-			return TRUE;
+			return true;
 		}
 	}
 	itor->node = NULL;
-	return FALSE;
+	return false;
 }
 
 const void *
@@ -891,14 +891,6 @@ wb_itor_key(const wb_itor *itor)
 
 void *
 wb_itor_data(wb_itor *itor)
-{
-	ASSERT(itor != NULL);
-
-	return itor->node ? itor->node->datum : NULL;
-}
-
-const void *
-wb_itor_cdata(const wb_itor *itor)
 {
 	ASSERT(itor != NULL);
 

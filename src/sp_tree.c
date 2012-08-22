@@ -80,7 +80,6 @@ static dict_vtable sp_tree_vtable = {
 	(dict_insert_func)		sp_tree_insert,
 	(dict_probe_func)		sp_tree_probe,
 	(dict_search_func)		sp_tree_search,
-	(dict_csearch_func)		sp_tree_search,
 	(dict_remove_func)		sp_tree_remove,
 	(dict_clear_func)		sp_tree_clear,
 	(dict_traverse_func)	sp_tree_traverse,
@@ -99,7 +98,6 @@ static itor_vtable sp_tree_itor_vtable = {
 	(dict_last_func)		sp_itor_last,
 	(dict_key_func)			sp_itor_key,
 	(dict_data_func)		sp_itor_data,
-	(dict_cdata_func)		sp_itor_cdata,
 	(dict_dataset_func)		sp_itor_set_data,
 	(dict_iremove_func)		NULL,/* sp_itor_remove not implemented yet */
 	(dict_icompare_func)	NULL /* sp_itor_compare not implemented yet */
@@ -273,7 +271,7 @@ sp_tree_clear(sp_tree *tree)
 }
 
 int
-sp_tree_insert(sp_tree *tree, void *key, void *datum, int overwrite)
+sp_tree_insert(sp_tree *tree, void *key, void *datum, bool overwrite)
 {
 	int cmp = 0; /* shut up GCC */
 	sp_node *node, *parent = NULL;
@@ -868,11 +866,11 @@ sp_itor_search(sp_itor *itor, const void *key)
 			node = node->rlink;
 		else {
 			itor->node = node;
-			return TRUE;
+			return true;
 		}
 	}
 	itor->node = NULL;
-	return FALSE;
+	return false;
 }
 
 const void *
@@ -885,14 +883,6 @@ sp_itor_key(const sp_itor *itor)
 
 void *
 sp_itor_data(sp_itor *itor)
-{
-	ASSERT(itor != NULL);
-
-	return itor->node ? itor->node->datum : NULL;
-}
-
-const void *
-sp_itor_cdata(const sp_itor *itor)
 {
 	ASSERT(itor != NULL);
 

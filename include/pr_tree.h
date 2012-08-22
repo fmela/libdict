@@ -37,15 +37,14 @@
 
 BEGIN_DECL
 
-typedef struct pr_tree
-			pr_tree;
+typedef struct pr_tree pr_tree;
 
 pr_tree*	pr_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
 dict*		pr_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
 size_t		pr_tree_free(pr_tree *tree);
 
 int			pr_tree_insert(pr_tree *tree, void *key, void *datum,
-						   int overwrite);
+						   bool overwrite);
 int			pr_tree_probe(pr_tree *tree, void *key, void **datum);
 void*		pr_tree_search(pr_tree *tree, const void *key);
 int			pr_tree_remove(pr_tree *tree, const void *key);
@@ -58,8 +57,7 @@ uint64_t	pr_tree_pathlen(const pr_tree *tree);
 const void*	pr_tree_min(const pr_tree *tree);
 const void*	pr_tree_max(const pr_tree *tree);
 
-typedef struct pr_itor
-			pr_itor;
+typedef struct pr_itor pr_itor;
 
 pr_itor*	pr_itor_new(pr_tree *tree);
 dict_itor*	pr_dict_itor_new(pr_tree *tree);

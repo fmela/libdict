@@ -73,7 +73,6 @@ static dict_vtable skiplist_vtable = {
 	(dict_insert_func)		skiplist_insert,
 	(dict_probe_func)		skiplist_probe,
 	(dict_search_func)		skiplist_search,
-	(dict_csearch_func)		skiplist_search,
 	(dict_remove_func)		skiplist_remove,
 	(dict_clear_func)		skiplist_clear,
 	(dict_traverse_func)	skiplist_traverse,
@@ -92,7 +91,6 @@ static itor_vtable skiplist_itor_vtable = {
 	(dict_last_func)		skiplist_itor_last,
 	(dict_key_func)			skiplist_itor_key,
 	(dict_data_func)		skiplist_itor_data,
-	(dict_cdata_func)		skiplist_itor_cdata,
 	(dict_dataset_func)		skiplist_itor_set_data,
 	(dict_iremove_func)		NULL,/* skiplist_itor_remove not implemented yet */
 	(dict_icompare_func)	NULL/* skiplist_itor_compare not implemented yet */
@@ -197,7 +195,7 @@ node_insert(skiplist *list, void *key, void *datum, skip_node **update)
 }
 
 int
-skiplist_insert(skiplist *list, void *key, void *datum, int overwrite)
+skiplist_insert(skiplist *list, void *key, void *datum, bool overwrite)
 {
 	skip_node *x, *update[MAX_LINK] = { 0 };
 	unsigned k;
@@ -453,9 +451,9 @@ skiplist_itor_nextn(skiplist_itor *itor, size_t count)
 
 	while (count--) {
 		if (!skiplist_itor_next(itor))
-			return FALSE;
+			return false;
 	}
-	return TRUE;
+	return true;
 }
 
 int
@@ -468,9 +466,9 @@ skiplist_itor_prevn(skiplist_itor *itor, size_t count)
 
 	while (count--) {
 		if (!skiplist_itor_prev(itor))
-			return FALSE;
+			return false;
 	}
-	return TRUE;
+	return true;
 }
 
 int
@@ -497,10 +495,10 @@ skiplist_itor_last(skiplist_itor *itor)
 	}
 	if (x == itor->list->head) {
 		itor->node = NULL;
-		return FALSE;
+		return false;
 	} else {
 		itor->node = x;
-		return TRUE;
+		return true;
 	}
 }
 
@@ -523,12 +521,12 @@ skiplist_itor_search(skiplist_itor *itor, const void *key)
 			x = x->link[k];
 			if (cmp == 0) {
 				itor->node = x;
-				return TRUE;
+				return true;
 			}
 		}
 	}
 	itor->node = NULL;
-	return FALSE;
+	return false;
 }
 
 const void *
@@ -541,14 +539,6 @@ skiplist_itor_key(const skiplist_itor *itor)
 
 void *
 skiplist_itor_data(skiplist_itor *itor)
-{
-	ASSERT(itor != NULL);
-
-	return itor->node ? itor->node->datum : NULL;
-}
-
-const void *
-skiplist_itor_cdata(const skiplist_itor *itor)
 {
 	ASSERT(itor != NULL);
 

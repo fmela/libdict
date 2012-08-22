@@ -68,7 +68,6 @@ static dict_vtable hashtable_vtable = {
 	(dict_insert_func)		hashtable_insert,
 	(dict_probe_func)		hashtable_probe,
 	(dict_search_func)		hashtable_search,
-	(dict_csearch_func)		hashtable_search,
 	(dict_remove_func)		hashtable_remove,
 	(dict_clear_func)		hashtable_clear,
 	(dict_traverse_func)	hashtable_traverse,
@@ -87,7 +86,6 @@ static itor_vtable hashtable_itor_vtable = {
 	(dict_last_func)		hashtable_itor_last,
 	(dict_key_func)			hashtable_itor_key,
 	(dict_data_func)		hashtable_itor_data,
-	(dict_cdata_func)		hashtable_itor_cdata,
 	(dict_dataset_func)		hashtable_itor_set_data,
 	(dict_iremove_func)		NULL,/* hashtable_itor_remove not implemented yet */
 	(dict_icompare_func)	NULL/* hashtable_itor_compare not implemented yet */
@@ -159,7 +157,7 @@ hashtable_free(hashtable *table)
 }
 
 int
-hashtable_insert(hashtable *table, void *key, void *datum, int overwrite)
+hashtable_insert(hashtable *table, void *key, void *datum, bool overwrite)
 {
 	unsigned hash, mhash;
 	hash_node *node, *prev, *add;
@@ -579,11 +577,11 @@ hashtable_itor_first(hashtable_itor *itor)
 		if (itor->table->table[slot]) {
 			itor->node = itor->table->table[slot];
 			itor->slot = slot;
-			return TRUE;
+			return true;
 		}
 	itor->node = NULL;
 	itor->slot = 0;
-	return FALSE;
+	return false;
 }
 
 int
@@ -600,11 +598,11 @@ hashtable_itor_last(hashtable_itor *itor)
 				/* void */;
 			itor->node = node;
 			itor->slot = slot;
-			return TRUE;
+			return true;
 		}
 	itor->node = NULL;
 	itor->slot = 0;
-	return FALSE;
+	return false;
 }
 
 int
@@ -621,12 +619,12 @@ hashtable_itor_search(hashtable_itor *itor, const void *key)
 		if (hash == node->hash && itor->table->cmp_func(key, node->key) == 0) {
 			itor->node = node;
 			itor->slot = mhash;
-			return TRUE;
+			return true;
 		}
 	}
 	itor->node = NULL;
 	itor->slot = 0;
-	return FALSE;
+	return false;
 }
 
 const void *
@@ -639,14 +637,6 @@ hashtable_itor_key(const hashtable_itor *itor)
 
 void *
 hashtable_itor_data(hashtable_itor *itor)
-{
-	ASSERT(itor != NULL);
-
-	return itor->node ? itor->node->datum : NULL;
-}
-
-const void *
-hashtable_itor_cdata(const hashtable_itor *itor)
 {
 	ASSERT(itor != NULL);
 

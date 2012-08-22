@@ -37,15 +37,14 @@
 
 BEGIN_DECL
 
-typedef struct wb_tree
-			wb_tree;
+typedef struct wb_tree wb_tree;
 
 wb_tree*	wb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
 dict*		wb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
 size_t		wb_tree_free(wb_tree *tree);
 
 int			wb_tree_insert(wb_tree *tree, void *key, void *datum,
-						   int overwrite);
+						   bool overwrite);
 int			wb_tree_probe(wb_tree *tree, void *key, void **datum);
 void*		wb_tree_search(wb_tree *tree, const void *key);
 int			wb_tree_remove(wb_tree *tree, const void *key);
@@ -59,8 +58,7 @@ const void*	wb_tree_min(const wb_tree *tree);
 const void*	wb_tree_max(const wb_tree *tree);
 void		wb_tree_verify(const wb_tree *tree);
 
-typedef struct wb_itor
-			wb_itor;
+typedef struct wb_itor wb_itor;
 
 wb_itor*	wb_itor_new(wb_tree *tree);
 dict_itor*	wb_dict_itor_new(wb_tree *tree);

@@ -63,7 +63,7 @@ main(int argc, char **argv)
 
 	srand((unsigned)time(NULL));
 
-	dict_set_malloc(xmalloc);
+	dict_malloc_func = xmalloc;
 
 	++argv;
 	switch (argv[0][0]) {
@@ -115,7 +115,7 @@ main(int argc, char **argv)
 				printf("usage: insert <key> <data>\n");
 				continue;
 			}
-			rv = dict_insert(dct, xstrdup(ptr), xstrdup(ptr2), FALSE);
+			rv = dict_insert(dct, xstrdup(ptr), xstrdup(ptr2), false);
 			if (rv == 0)
 				printf("inserted `%s' ==> `%s'\n", ptr, ptr2);
 			else

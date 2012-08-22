@@ -37,8 +37,7 @@
 
 BEGIN_DECL
 
-typedef struct skiplist
-			skiplist;
+typedef struct skiplist skiplist;
 
 skiplist*	skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func,
 						 unsigned max_link);
@@ -47,7 +46,7 @@ dict*		skiplist_dict_new(dict_compare_func cmp_func,
 size_t		skiplist_free(skiplist *list);
 
 int			skiplist_insert(skiplist *list, void *key, void *datum,
-							int overwrite);
+							bool overwrite);
 int			skiplist_probe(skiplist *list, void *key, void **datum);
 void*		skiplist_search(skiplist *list, const void *key);
 int			skiplist_remove(skiplist *list, const void *key);
@@ -55,8 +54,7 @@ size_t		skiplist_clear(skiplist *list);
 size_t		skiplist_traverse(skiplist *list, dict_visit_func visit);
 size_t		skiplist_count(const skiplist *list);
 
-typedef struct skiplist_itor
-			skiplist_itor;
+typedef struct skiplist_itor skiplist_itor;
 
 skiplist_itor*
 			skiplist_itor_new(skiplist *list);
