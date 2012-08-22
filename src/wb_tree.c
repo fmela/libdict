@@ -92,7 +92,6 @@ static dict_vtable wb_tree_vtable = {
 	(dict_insert_func)		wb_tree_insert,
 	(dict_probe_func)		wb_tree_probe,
 	(dict_search_func)		wb_tree_search,
-	(dict_csearch_func)		wb_tree_search,
 	(dict_remove_func)		wb_tree_remove,
 	(dict_clear_func)		wb_tree_clear,
 	(dict_traverse_func)	wb_tree_traverse,
@@ -111,7 +110,6 @@ static itor_vtable wb_tree_itor_vtable = {
 	(dict_last_func)		wb_itor_last,
 	(dict_key_func)			wb_itor_key,
 	(dict_data_func)		wb_itor_data,
-	(dict_cdata_func)		wb_itor_cdata,
 	(dict_dataset_func)		wb_itor_set_data,
 	(dict_iremove_func)		NULL,/* wb_itor_remove not implemented yet */
 	(dict_icompare_func)	NULL /* wb_itor_compare not implemented yet */

@@ -77,7 +77,7 @@ const void*	wb_itor_key(const wb_itor *itor);
 void*		wb_itor_data(wb_itor *itor);
 const void*	wb_itor_cdata(const wb_itor *itor);
 int			wb_itor_set_data(wb_itor *itor, void *datum, void **old_datum);
-int			wb_itor_remove(wb_itor *itor, int del);
+int			wb_itor_remove(wb_itor *itor);
 
 END_DECL
 
