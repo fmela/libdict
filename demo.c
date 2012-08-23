@@ -24,7 +24,6 @@ char *xstrdup(const char *str);
 #endif
 void quit(const char *, ...) NORETURN;
 void *xmalloc(size_t size);
-void *xcalloc(size_t size);
 void *xrealloc(void *ptr, size_t size);
 void *xdup(const void *ptr, size_t size);
 
@@ -229,31 +228,11 @@ xmalloc(size_t size)
 }
 
 void *
-xcalloc(size_t size)
-{
-	void *p;
-
-	p = xmalloc(size);
-	memset(p, 0, size);
-	return p;
-}
-
-void *
-xrealloc(void *ptr, size_t size)
-{
-	void *p;
-
-	if ((p = realloc(ptr, size)) == NULL && size != 0)
-		quit("out of memory");
-	return p;
-}
-
-void *
 xdup(const void *ptr, size_t size)
 {
-	void *p;
+    void *p;
 
-	p = xmalloc(size);
-	memcpy(p, ptr, size);
-	return p;
+    p = xmalloc(size);
+    memcpy(p, ptr, size);
+    return p;
 }

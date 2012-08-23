@@ -39,43 +39,43 @@ BEGIN_DECL
 
 typedef struct skiplist skiplist;
 
-skiplist*	skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func,
-						 unsigned max_link);
+skiplist*	skiplist_new(dict_compare_func cmp_func,
+			     dict_delete_func del_func,
+			     unsigned max_link);
 dict*		skiplist_dict_new(dict_compare_func cmp_func,
-							  dict_delete_func del_func, unsigned max_link);
+				  dict_delete_func del_func,
+				  unsigned max_link);
 size_t		skiplist_free(skiplist *list);
 
-int			skiplist_insert(skiplist *list, void *key, void *datum,
-							bool overwrite);
-int			skiplist_probe(skiplist *list, void *key, void **datum);
+int		skiplist_insert(skiplist *list, void *key, void *datum,
+				bool overwrite);
+int		skiplist_probe(skiplist *list, void *key, void **datum);
 void*		skiplist_search(skiplist *list, const void *key);
-int			skiplist_remove(skiplist *list, const void *key);
+bool		skiplist_remove(skiplist *list, const void *key);
 size_t		skiplist_clear(skiplist *list);
 size_t		skiplist_traverse(skiplist *list, dict_visit_func visit);
 size_t		skiplist_count(const skiplist *list);
 
 typedef struct skiplist_itor skiplist_itor;
 
-skiplist_itor*
-			skiplist_itor_new(skiplist *list);
+skiplist_itor*	skiplist_itor_new(skiplist *list);
 dict_itor*	skiplist_dict_itor_new(skiplist *list);
 void		skiplist_itor_free(skiplist_itor *);
 
-int			skiplist_itor_valid(const skiplist_itor *itor);
+bool		skiplist_itor_valid(const skiplist_itor *itor);
 void		skiplist_itor_invalidate(skiplist_itor *itor);
-int			skiplist_itor_next(skiplist_itor *itor);
-int			skiplist_itor_prev(skiplist_itor *itor);
-int			skiplist_itor_nextn(skiplist_itor *itor, size_t count);
-int			skiplist_itor_prevn(skiplist_itor *itor, size_t count);
-int			skiplist_itor_first(skiplist_itor *itor);
-int			skiplist_itor_last(skiplist_itor *itor);
-int			skiplist_itor_search(skiplist_itor *itor, const void *key);
+bool		skiplist_itor_next(skiplist_itor *itor);
+bool		skiplist_itor_prev(skiplist_itor *itor);
+bool		skiplist_itor_nextn(skiplist_itor *itor, size_t count);
+bool		skiplist_itor_prevn(skiplist_itor *itor, size_t count);
+bool		skiplist_itor_first(skiplist_itor *itor);
+bool		skiplist_itor_last(skiplist_itor *itor);
+bool		skiplist_itor_search(skiplist_itor *itor, const void *key);
 const void*	skiplist_itor_key(const skiplist_itor *itor);
 void*		skiplist_itor_data(skiplist_itor *itor);
-const void*	skiplist_itor_cdata(const skiplist_itor *itor);
-int			skiplist_itor_set_data(skiplist_itor *itor, void *datum,
-				void **prev_datum);
-int			skiplist_itor_remove(skiplist_itor *itor);
+bool		skiplist_itor_set_data(skiplist_itor *itor, void *datum,
+				       void **prev_datum);
+bool		skiplist_itor_remove(skiplist_itor *itor);
 
 END_DECL
 

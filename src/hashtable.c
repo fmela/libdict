@@ -40,619 +40,553 @@
 typedef struct hash_node hash_node;
 
 struct hash_node {
-	void*				key;
-	void*				datum;
-	unsigned			hash;	/* Untruncated hash value. */
-	hash_node*			next;
-	hash_node*			prev;	/* Only because iterators are bidirectional. */
+    void*		    key;
+    void*		    datum;
+    unsigned		    hash;	/* Untruncated hash value. */
+    hash_node*		    next;
+    /* Only because iterators are bidirectional: */
+    hash_node*		    prev;
 };
 
 struct hashtable {
-	hash_node**			table;
-	unsigned			size;
-	dict_compare_func	cmp_func;
-	dict_hash_func		hash_func;
-	dict_delete_func	del_func;
-	size_t				count;
+    hash_node**		    table;
+    unsigned		    size;
+    dict_compare_func	    cmp_func;
+    dict_hash_func	    hash_func;
+    dict_delete_func	    del_func;
+    size_t		    count;
 };
 
 struct hashtable_itor {
-	hashtable*			table;
-	hash_node*			node;
-	unsigned			slot;
+    hashtable*		    table;
+    hash_node*		    node;
+    unsigned		    slot;
 };
 
 static dict_vtable hashtable_vtable = {
-	(dict_inew_func)		hashtable_dict_itor_new,
-	(dict_dfree_func)		hashtable_free,
-	(dict_insert_func)		hashtable_insert,
-	(dict_probe_func)		hashtable_probe,
-	(dict_search_func)		hashtable_search,
-	(dict_remove_func)		hashtable_remove,
-	(dict_clear_func)		hashtable_clear,
-	(dict_traverse_func)	hashtable_traverse,
-	(dict_count_func)		hashtable_count
+    (dict_inew_func)	    hashtable_dict_itor_new,
+    (dict_dfree_func)	    hashtable_free,
+    (dict_insert_func)	    hashtable_insert,
+    (dict_probe_func)	    hashtable_probe,
+    (dict_search_func)	    hashtable_search,
+    (dict_remove_func)	    hashtable_remove,
+    (dict_clear_func)	    hashtable_clear,
+    (dict_traverse_func)    hashtable_traverse,
+    (dict_count_func)	    hashtable_count
 };
 
 static itor_vtable hashtable_itor_vtable = {
-	(dict_ifree_func)		hashtable_itor_free,
-	(dict_valid_func)		hashtable_itor_valid,
-	(dict_invalidate_func)	hashtable_itor_invalidate,
-	(dict_next_func)		hashtable_itor_next,
-	(dict_prev_func)		hashtable_itor_prev,
-	(dict_nextn_func)		hashtable_itor_nextn,
-	(dict_prevn_func)		hashtable_itor_prevn,
-	(dict_first_func)		hashtable_itor_first,
-	(dict_last_func)		hashtable_itor_last,
-	(dict_key_func)			hashtable_itor_key,
-	(dict_data_func)		hashtable_itor_data,
-	(dict_dataset_func)		hashtable_itor_set_data,
-	(dict_iremove_func)		NULL,/* hashtable_itor_remove not implemented yet */
-	(dict_icompare_func)	NULL/* hashtable_itor_compare not implemented yet */
+    (dict_ifree_func)	    hashtable_itor_free,
+    (dict_valid_func)	    hashtable_itor_valid,
+    (dict_invalidate_func)  hashtable_itor_invalidate,
+    (dict_next_func)	    hashtable_itor_next,
+    (dict_prev_func)	    hashtable_itor_prev,
+    (dict_nextn_func)	    hashtable_itor_nextn,
+    (dict_prevn_func)	    hashtable_itor_prevn,
+    (dict_first_func)	    hashtable_itor_first,
+    (dict_last_func)	    hashtable_itor_last,
+    (dict_key_func)	    hashtable_itor_key,
+    (dict_data_func)	    hashtable_itor_data,
+    (dict_dataset_func)	    hashtable_itor_set_data,
+    (dict_iremove_func)	    NULL,/* hashtable_itor_remove not implemented yet */
+    (dict_icompare_func)    NULL/* hashtable_itor_compare not implemented yet */
 };
 
 hashtable *
 hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func,
-			  dict_delete_func del_func, unsigned size)
+	      dict_delete_func del_func, unsigned size)
 {
-	hashtable *table;
-	unsigned i;
+    ASSERT(hash_func != NULL);
+    ASSERT(size != 0);
 
-	ASSERT(hash_func != NULL);
-	ASSERT(size != 0);
-
-	if ((table = MALLOC(sizeof(*table))) == NULL)
-		return NULL;
-	if ((table->table = MALLOC(size * sizeof(hash_node *))) == NULL) {
-		FREE(table);
-		return NULL;
+    hashtable *table = MALLOC(sizeof(*table));
+    if (table) {
+	table->table = MALLOC(size * sizeof(hash_node *));
+	if (!table->table) {
+	    FREE(table);
+	    return NULL;
 	}
-	for (i = 0; i < size; i++)
-		table->table[i] = NULL;
-
+	memset(table->table, 0, size * sizeof(hash_node *));
 	table->size = size;
 	table->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	table->hash_func = hash_func;
 	table->del_func = del_func;
 	table->count = 0;
-
-	return table;
+    }
+    return table;
 }
 
 dict *
 hashtable_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func,
-				   dict_delete_func del_func, unsigned size)
+		   dict_delete_func del_func, unsigned size)
 {
-	dict *dct;
+    ASSERT(hash_func != NULL);
+    ASSERT(size != 0);
 
-	ASSERT(hash_func != NULL);
-	ASSERT(size != 0);
-
-	if ((dct = MALLOC(sizeof(*dct))) == NULL)
-		return NULL;
-
+    dict *dct = MALLOC(sizeof(*dct));
+    if (dct) {
 	dct->_object = hashtable_new(cmp_func, hash_func, del_func, size);
-	if (dct->_object == NULL) {
-		FREE(dct);
-		return NULL;
+	if (!dct->_object) {
+	    FREE(dct);
+	    return NULL;
 	}
 	dct->_vtable = &hashtable_vtable;
-
-	return dct;
+    }
+    return dct;
 }
 
 size_t
 hashtable_free(hashtable *table)
 {
-	size_t count;
+    ASSERT(table != NULL);
 
-	ASSERT(table != NULL);
-
-	count = hashtable_clear(table);
-
-	FREE(table->table);
-	FREE(table);
-
-	return count;
+    size_t count = hashtable_clear(table);
+    FREE(table->table);
+    FREE(table);
+    return count;
 }
 
 int
 hashtable_insert(hashtable *table, void *key, void *datum, bool overwrite)
 {
-	unsigned hash, mhash;
-	hash_node *node, *prev, *add;
+    ASSERT(table != NULL);
 
-	ASSERT(table != NULL);
-
-	hash = table->hash_func(key);
-	mhash = hash % table->size;
-	prev = NULL;
-	for (node = table->table[mhash]; node; prev = node, node = node->next) {
-		if (hash < node->hash)
-			break;
-
-		if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
-			if (!overwrite)
-				return 1;
-			if (table->del_func)
-				table->del_func(node->key, node->datum);
-			node->key = key;
-			node->datum = datum;
-			return 0;
-		}
+    const unsigned hash = table->hash_func(key);
+    const unsigned mhash = hash % table->size;
+    hash_node *node = table->table[mhash], *prev = NULL;
+    while (node && hash >= node->hash) {
+	if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
+	    if (!overwrite)
+		return 1;
+	    if (table->del_func)
+		table->del_func(node->key, node->datum);
+	    node->key = key;
+	    node->datum = datum;
+	    return 0;
 	}
+	prev = node;
+	node = node->next;
+    }
 
-	if ((add = MALLOC(sizeof(*add))) == NULL)
-		return -1;
+    hash_node *add = MALLOC(sizeof(*add));
+    if (!add)
+	return -1;
 
-	add->key = key;
-	add->datum = datum;
-	add->hash = hash;
+    add->key = key;
+    add->datum = datum;
+    add->hash = hash;
+    add->prev = prev;
+    if (prev)
+	prev->next = add;
+    else
+	table->table[mhash] = add;
+    add->next = node;
+    if (node)
+	node->prev = add;
 
-	add->prev = prev;
-	if (prev)
-		prev->next = add;
-	else
-		table->table[mhash] = add;
-
-	add->next = node;
-	if (node)
-		node->prev = add;
-
-	table->count++;
-	return 0;
+    table->count++;
+    return 0;
 }
 
 int
 hashtable_probe(hashtable *table, void *key, void **datum)
 {
-	unsigned hash, mhash;
-	hash_node *node, *prev, *add;
+    ASSERT(table != NULL);
+    ASSERT(datum != NULL);
 
-	ASSERT(table != NULL);
-	ASSERT(datum != NULL);
-
-	mhash = (hash = table->hash_func(key)) % table->size;
-
-	prev = NULL;
-	for (node = table->table[mhash]; node; prev = node, node = node->next) {
-		if (hash < node->hash)
-			break;
-
-		if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
-			*datum = node->datum;
-			return 0;
-		}
+    const unsigned hash = table->hash_func(key);
+    const unsigned mhash = hash % table->size;
+    hash_node *node = table->table[mhash], *prev = NULL;
+    while (node && hash >= node->hash) {
+	if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
+	    *datum = node->datum;
+	    return 0;
 	}
+	prev = node;
+	node = node->next;
+    }
 
-	if ((add = MALLOC(sizeof(*add))) == NULL)
-		return -1;
+    hash_node *add = MALLOC(sizeof(*add));
+    if (!add)
+	return -1;
 
-	add->key = key;
-	add->datum = *datum;
-	add->hash = hash;
+    add->key = key;
+    add->datum = *datum;
+    add->hash = hash;
+    add->prev = prev;
+    if (prev)
+	prev->next = add;
+    else
+	table->table[mhash] = add;
+    add->next = node;
+    if (node)
+	node->prev = add;
 
-	add->prev = prev;
-	if (prev)
-		prev->next = add;
-	else
-		table->table[mhash] = add;
-
-	add->next = node;
-	if (node)
-		node->prev = add;
-
-	table->count++;
-	return 1;
+    table->count++;
+    return 1;
 }
 
 void *
 hashtable_search(hashtable *table, const void *key)
 {
-	unsigned hash;
-	hash_node *node;
+    ASSERT(table != NULL);
 
-	ASSERT(table != NULL);
-
-	hash = table->hash_func(key);
-	for (node = table->table[hash % table->size]; node; node = node->next) {
-		if (hash < node->hash)
-			break;
-		if (hash == node->hash && table->cmp_func(key, node->key) == 0)
-			return node->datum;
-	}
-	return NULL;
+    const unsigned hash = table->hash_func(key);
+    hash_node *node = table->table[hash % table->size];
+    while (node && hash >= node->hash) {
+	if (hash == node->hash && table->cmp_func(key, node->key) == 0)
+	    return node->datum;
+	node = node->next;
+    }
+    return NULL;
 }
 
-int
+bool
 hashtable_remove(hashtable *table, const void *key)
 {
-	hash_node *node, *prev;
-	unsigned hash, mhash;
+    ASSERT(table != NULL);
 
-	ASSERT(table != NULL);
+    const unsigned hash = table->hash_func(key);
+    const unsigned mhash = hash % table->size;
 
-	mhash = (hash = table->hash_func(key)) % table->size;
+    hash_node *node = table->table[mhash], *prev = NULL;
+    while (node && hash >= node->hash) {
+	if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
+	    if (prev)
+		prev->next = node->next;
+	    else
+		table->table[mhash] = node->next;
 
-	prev = NULL;
-	for (node = table->table[mhash]; node; prev = node, node = node->next) {
-		if (hash < node->hash)
-			break;
+	    if (node->next)
+		node->next->prev = prev;
 
-		if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
-			if (prev)
-				prev->next = node->next;
-			else
-				table->table[mhash] = node->next;
+	    if (table->del_func)
+		table->del_func(node->key, node->datum);
 
-			if (node->next)
-				node->next->prev = prev;
-
-			if (table->del_func)
-				table->del_func(node->key, node->datum);
-
-			FREE(node);
-			table->count--;
-			return 0;
-		}
+	    FREE(node);
+	    table->count--;
+	    return true;
 	}
-	return -1;
+	prev = node;
+	node = node->next;
+    }
+    return false;
 }
 
 size_t
 hashtable_clear(hashtable *table)
 {
-	unsigned slot;
-	size_t count;
+    ASSERT(table != NULL);
 
-	ASSERT(table != NULL);
-
-	for (slot = 0; slot < table->size; slot++) {
-		hash_node *node = table->table[slot];
-		while (node != NULL) {
-			hash_node *next = node->next;
-			if (table->del_func)
-				table->del_func(node->key, node->datum);
-			FREE(node);
-			node = next;
-		}
-		table->table[slot] = NULL;
+    for (unsigned slot = 0; slot < table->size; slot++) {
+	hash_node *node = table->table[slot];
+	while (node != NULL) {
+	    hash_node *next = node->next;
+	    if (table->del_func)
+		table->del_func(node->key, node->datum);
+	    FREE(node);
+	    node = next;
 	}
+	table->table[slot] = NULL;
+    }
 
-	count = table->count;
-	table->count = 0;
-	return count;
+    const size_t count = table->count;
+    table->count = 0;
+    return count;
 }
 
 size_t
 hashtable_traverse(hashtable *table, dict_visit_func visit)
 {
-	hash_node *node;
-	unsigned i;
-	size_t count = 0;
+    ASSERT(table != NULL);
+    ASSERT(visit != NULL);
 
-	ASSERT(table != NULL);
-	ASSERT(visit != NULL);
-
-	for (i = 0; i < table->size; i++)
-		for (node = table->table[i]; node; node = node->next) {
-			++count;
-			if (!visit(node->key, node->datum))
-				goto out;
-		}
-
-out:
-	return count;
+    size_t count = 0;
+    for (unsigned i = 0; i < table->size; i++)
+	for (hash_node *node = table->table[i]; node; node = node->next) {
+	    ++count;
+	    if (!visit(node->key, node->datum))
+		return count;
+	}
+    return count;
 }
 
 size_t
 hashtable_count(const hashtable *table)
 {
-	ASSERT(table != NULL);
+    ASSERT(table != NULL);
 
-	return table->count;
+    return table->count;
 }
 
 size_t
 hashtable_size(const hashtable *table)
 {
-	ASSERT(table != NULL);
+    ASSERT(table != NULL);
 
-	return table->size;
+    return table->size;
 }
 
 size_t
 hashtable_slots_used(const hashtable *table)
 {
-	unsigned i;
-	size_t count = 0;
+    ASSERT(table != NULL);
 
-	ASSERT(table != NULL);
-
-	for (i = 0; i < table->size; i++)
-		if (table->table[i])
-			count++;
-	return count;
+    size_t count = 0;
+    for (unsigned i = 0; i < table->size; i++)
+	if (table->table[i])
+	    count++;
+    return count;
 }
 
-int
+bool
 hashtable_resize(hashtable *table, unsigned size)
 {
-	hash_node **ntable;
-	hash_node *node, *next;
-	unsigned i, hash;
-	size_t table_memory;
+    ASSERT(table != NULL);
+    ASSERT(size != 0);
 
-	ASSERT(table != NULL);
-	ASSERT(size != 0);
-
-	if (table->size == size)
-		return 0;
-
-	/* TODO: use REALLOC instead of MALLOC. */
-	table_memory = size * sizeof(hash_node *);
-	if ((ntable = MALLOC(table_memory)) == NULL)
-		return -1;
-	memset(ntable, 0, table_memory);
-
-	/* FIXME: insert data in sorted order in the new list. */
-	for (i = 0; i < table->size; i++) {
-		for (node = table->table[i]; node; node = next) {
-			next = node->next;
-			hash = table->hash_func(node->key) % size;
-			node->next = ntable[hash];
-			node->prev = NULL;
-			if (ntable[hash])
-				ntable[hash]->prev = node;
-			ntable[hash] = node;
-		}
-	}
-
-	FREE(table->table);
-	table->table = ntable;
-	table->size = size;
-
+    if (table->size == size)
 	return 0;
-}
 
-#define RETVALID(itor)	return itor->node != NULL
+    /* TODO: use REALLOC instead of MALLOC. */
+    const size_t table_memory = size * sizeof(hash_node *);
+    hash_node **ntable = MALLOC(table_memory);
+    if (!ntable)
+	return false;
+    memset(ntable, 0, table_memory);
+
+    /* FIXME: insert data in sorted order in the new list. */
+    for (unsigned i = 0; i < table->size; i++) {
+	hash_node *node = table->table[i];
+	while (node) {
+	    hash_node *next = node->next;
+	    unsigned hash = table->hash_func(node->key) % size;
+	    node->next = ntable[hash];
+	    node->prev = NULL;
+	    if (ntable[hash])
+		ntable[hash]->prev = node;
+	    ntable[hash] = node;
+	    node = next;
+	}
+    }
+
+    FREE(table->table);
+    table->table = ntable;
+    table->size = size;
+
+    return 0;
+}
 
 hashtable_itor *
 hashtable_itor_new(hashtable *table)
 {
-	hashtable_itor *itor;
+    ASSERT(table != NULL);
 
-	ASSERT(table != NULL);
-
-	if ((itor = MALLOC(sizeof(*itor))) == NULL)
-		return NULL;
-
+    hashtable_itor *itor = MALLOC(sizeof(*itor));
+    if (itor) {
 	itor->table = table;
 	itor->node = NULL;
 	itor->slot = 0;
-
 	hashtable_itor_first(itor);
-	return itor;
+    }
+    return itor;
 }
 
 dict_itor *
 hashtable_dict_itor_new(hashtable *table)
 {
-	dict_itor *itor;
+    ASSERT(table != NULL);
 
-	ASSERT(table != NULL);
-
-	if ((itor = MALLOC(sizeof(*itor))) == NULL)
-		return NULL;
-	if ((itor->_itor = hashtable_itor_new(table)) == NULL) {
-		FREE(itor);
-		return NULL;
+    dict_itor *itor = MALLOC(sizeof(*itor));
+    if (itor) {
+	if (!(itor->_itor = hashtable_itor_new(table))) {
+	    FREE(itor);
+	    return NULL;
 	}
 	itor->_vtable = &hashtable_itor_vtable;
-
-	return itor;
+    }
+    return itor;
 }
 
 void
 hashtable_itor_free(hashtable_itor *itor)
 {
-	ASSERT(itor != NULL);
+    ASSERT(itor != NULL);
 
-	FREE(itor);
+    FREE(itor);
 }
 
-int
+bool
 hashtable_itor_valid(const hashtable_itor *itor)
 {
-	ASSERT(itor != NULL);
+    ASSERT(itor != NULL);
 
-	RETVALID(itor);
+    return itor->node != NULL;
 }
 
 void
 hashtable_itor_invalidate(hashtable_itor *itor)
 {
-	ASSERT(itor != NULL);
+    ASSERT(itor != NULL);
 
-	itor->node = NULL;
-	itor->slot = 0;
+    itor->node = NULL;
+    itor->slot = 0;
 }
 
-int
+bool
 hashtable_itor_next(hashtable_itor *itor)
 {
-	unsigned slot;
-	hash_node *node;
+    ASSERT(itor != NULL);
 
-	ASSERT(itor != NULL);
+    if (!itor->node)
+	return hashtable_itor_first(itor);
 
-	if ((node = itor->node) == NULL)
-		return hashtable_itor_first(itor);
+    itor->node = itor->node->next;
+    if (itor->node)
+	return true;
 
-	slot = itor->slot;
-	node = node->next;
-	if (node) {
-		itor->node = node;
-		return 1;
+    unsigned slot = itor->slot;
+    while (++slot < itor->table->size) {
+	if (itor->table->table[slot]) {
+	    itor->node = itor->table->table[slot];
+	    itor->slot = slot;
+	    return true;
 	}
-
-	while (++slot < itor->table->size)
-		if ((node = itor->table->table[slot]) != NULL)
-			break;
-	itor->node = node;
-	itor->slot = node ? slot : 0;
-	RETVALID(itor);
+    }
+    itor->node = NULL;
+    itor->slot = 0;
+    return itor->node != NULL;
 }
 
-int
+bool
 hashtable_itor_prev(hashtable_itor *itor)
 {
-	unsigned slot;
-	hash_node *node;
+    ASSERT(itor != NULL);
 
-	ASSERT(itor != NULL);
+    if (!itor->node)
+	return hashtable_itor_last(itor);
 
-	if ((node = itor->node) == NULL)
-		return hashtable_itor_last(itor);
+    itor->node = itor->node->prev;
+    if (itor->node)
+	return true;
 
-	slot = itor->slot;
-	node = node->prev;
+    unsigned slot = itor->slot;
+    while (slot > 0) {
+	hash_node *node = itor->table->table[--slot];
 	if (node) {
-		itor->node = node;
-		return 1;
+	    while (node->next)
+		node = node->next;
+	    itor->node = node;
+	    itor->slot = slot;
+	    return true;
 	}
-
-	while (slot > 0)
-		if ((node = itor->table->table[--slot]) != NULL) {
-			for (; node->next; node = node->next)
-				/* void */;
-			break;
-		}
-	itor->node = node;
-	itor->slot = slot;
-
-	RETVALID(itor);
+    }
+    itor->node = NULL;
+    itor->slot = 0;
+    return false;
 }
 
-int
+bool
 hashtable_itor_nextn(hashtable_itor *itor, size_t count)
 {
-	ASSERT(itor != NULL);
+    ASSERT(itor != NULL);
 
-	if (!count)
-		RETVALID(itor);
-
-	while (count) {
-		if (!hashtable_itor_next(itor))
-			break;
-		count--;
-	}
-	return count == 0;
+    while (count--)
+	if (!hashtable_itor_next(itor))
+	    return false;
+    return itor->node != NULL;
 }
 
-int
+bool
 hashtable_itor_prevn(hashtable_itor *itor, size_t count)
 {
-	ASSERT(itor != NULL);
+    ASSERT(itor != NULL);
 
-	if (!count)
-		RETVALID(itor);
-
-	while (count) {
-		if (!hashtable_itor_prev(itor))
-			break;
-		count--;
-	}
-	return count == 0;
+    while (count--)
+	if (!hashtable_itor_prev(itor))
+	    return false;
+    return itor->node != NULL;
 }
 
-int
+bool
 hashtable_itor_first(hashtable_itor *itor)
 {
-	unsigned slot;
+    ASSERT(itor != NULL);
 
-	ASSERT(itor != NULL);
-
-	for (slot = 0; slot < itor->table->size; slot++)
-		if (itor->table->table[slot]) {
-			itor->node = itor->table->table[slot];
-			itor->slot = slot;
-			return true;
-		}
-	itor->node = NULL;
-	itor->slot = 0;
-	return false;
+    for (unsigned slot = 0; slot < itor->table->size; ++slot)
+	if (itor->table->table[slot]) {
+	    itor->node = itor->table->table[slot];
+	    itor->slot = slot;
+	    return true;
+	}
+    itor->node = NULL;
+    itor->slot = 0;
+    return false;
 }
 
-int
+bool
 hashtable_itor_last(hashtable_itor *itor)
 {
-	unsigned slot;
+    ASSERT(itor != NULL);
 
-	ASSERT(itor != NULL);
-
-	for (slot = itor->table->size; slot > 0;)
-		if (itor->table->table[--slot]) {
-			hash_node *node;
-			for (node = itor->table->table[slot]; node->next; node = node->next)
-				/* void */;
-			itor->node = node;
-			itor->slot = slot;
-			return true;
-		}
-	itor->node = NULL;
-	itor->slot = 0;
-	return false;
+    for (unsigned slot = itor->table->size; slot > 0;)
+	if (itor->table->table[--slot]) {
+	    hash_node *node;
+	    for (node = itor->table->table[slot]; node->next; node = node->next)
+		/* void */;
+	    itor->node = node;
+	    itor->slot = slot;
+	    return true;
+	}
+    itor->node = NULL;
+    itor->slot = 0;
+    return false;
 }
 
-int
+bool
 hashtable_itor_search(hashtable_itor *itor, const void *key)
 {
-	hash_node *node;
-	unsigned hash, mhash;
-
-	mhash = (hash = itor->table->hash_func(key)) % itor->table->size;
-	for (node = itor->table->table[mhash]; node; node = node->next) {
-		if (hash < node->hash)
-			break;
-
-		if (hash == node->hash && itor->table->cmp_func(key, node->key) == 0) {
-			itor->node = node;
-			itor->slot = mhash;
-			return true;
-		}
+    const unsigned hash = itor->table->hash_func(key);
+    const unsigned mhash = hash % itor->table->size;
+    hash_node *node = itor->table->table[mhash];
+    while (node && hash >= node->hash) {
+	if (hash == node->hash && itor->table->cmp_func(key, node->key) == 0) {
+	    itor->node = node;
+	    itor->slot = mhash;
+	    return true;
 	}
-	itor->node = NULL;
-	itor->slot = 0;
-	return false;
+    }
+    itor->node = NULL;
+    itor->slot = 0;
+    return false;
 }
 
 const void *
 hashtable_itor_key(const hashtable_itor *itor)
 {
-	ASSERT(itor != NULL);
+    ASSERT(itor != NULL);
 
-	return itor->node ? itor->node->key : NULL;
+    return itor->node ? itor->node->key : NULL;
 }
 
 void *
 hashtable_itor_data(hashtable_itor *itor)
 {
-	ASSERT(itor != NULL);
+    ASSERT(itor != NULL);
 
-	return itor->node ? itor->node->datum : NULL;
+    return itor->node ? itor->node->datum : NULL;
 }
 
-int
+bool
 hashtable_itor_set_data(hashtable_itor *itor, void *datum, void **prev_datum)
 {
-	ASSERT(itor != NULL);
+    ASSERT(itor != NULL);
 
-	if (itor->node == NULL)
-		return -1;
+    if (!itor->node)
+	return false;
 
-	if (prev_datum)
-		*prev_datum = itor->node->datum;
-	itor->node->datum = datum;
-	return 0;
+    if (prev_datum)
+	*prev_datum = itor->node->datum;
+    itor->node->datum = datum;
+    return true;
 }

@@ -39,21 +39,23 @@ BEGIN_DECL
 
 typedef struct rb_tree rb_tree;
 
-rb_tree*	rb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
-dict*		rb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
+rb_tree*	rb_tree_new(dict_compare_func cmp_func,
+			    dict_delete_func del_func);
+dict*		rb_dict_new(dict_compare_func cmp_func,
+			    dict_delete_func del_func);
 size_t		rb_tree_free(rb_tree *tree);
 
-int			rb_tree_insert(rb_tree *tree, void *key, void *datum,
-						   bool overwrite);
-int			rb_tree_probe(rb_tree *tree, void *key, void **datum);
+int		rb_tree_insert(rb_tree *tree, void *key, void *datum,
+			       bool overwrite);
+int		rb_tree_probe(rb_tree *tree, void *key, void **datum);
 void*		rb_tree_search(rb_tree *tree, const void *key);
-int			rb_tree_remove(rb_tree *tree, const void *key);
+bool		rb_tree_remove(rb_tree *tree, const void *key);
 size_t		rb_tree_clear(rb_tree *tree);
 size_t		rb_tree_traverse(rb_tree *tree, dict_visit_func visit);
 size_t		rb_tree_count(const rb_tree *tree);
 size_t		rb_tree_height(const rb_tree *tree);
 size_t		rb_tree_mheight(const rb_tree *tree);
-uint64_t	rb_tree_pathlen(const rb_tree *tree);
+size_t		rb_tree_pathlen(const rb_tree *tree);
 const void*	rb_tree_min(const rb_tree *tree);
 const void*	rb_tree_max(const rb_tree *tree);
 
@@ -63,20 +65,19 @@ rb_itor*	rb_itor_new(rb_tree *tree);
 dict_itor*	rb_dict_itor_new(rb_tree *tree);
 void		rb_itor_free(rb_itor *tree);
 
-int			rb_itor_valid(const rb_itor *itor);
+bool		rb_itor_valid(const rb_itor *itor);
 void		rb_itor_invalidate(rb_itor *itor);
-int			rb_itor_next(rb_itor *itor);
-int			rb_itor_prev(rb_itor *itor);
-int			rb_itor_nextn(rb_itor *itor, size_t count);
-int			rb_itor_prevn(rb_itor *itor, size_t count);
-int			rb_itor_first(rb_itor *itor);
-int			rb_itor_last(rb_itor *itor);
-int			rb_itor_search(rb_itor *itor, const void *key);
+bool		rb_itor_next(rb_itor *itor);
+bool		rb_itor_prev(rb_itor *itor);
+bool		rb_itor_nextn(rb_itor *itor, size_t count);
+bool		rb_itor_prevn(rb_itor *itor, size_t count);
+bool		rb_itor_first(rb_itor *itor);
+bool		rb_itor_last(rb_itor *itor);
+bool		rb_itor_search(rb_itor *itor, const void *key);
 const void*	rb_itor_key(const rb_itor *itor);
 void*		rb_itor_data(rb_itor *itor);
-const void*	rb_itor_cdata(const rb_itor *itor);
-int			rb_itor_set_data(rb_itor *itor, void *datum, void **old_datum);
-int			rb_itor_remove(rb_itor *itor);
+bool		rb_itor_set_data(rb_itor *itor, void *datum, void **old_datum);
+bool		rb_itor_remove(rb_itor *itor);
 
 END_DECL
 

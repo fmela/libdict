@@ -54,7 +54,7 @@ BEGIN_DECL
 /* A pointer to a function that compares two keys. It needs to return a
  * negative value if k1<k2, a positive value if k1>k2, and zero if the keys are
  * equal. The comparison should be reflexive (k1>k2 implies k1<k2, etc.),
- * symmetric (k1=k1) and transitive (k1>k2 and k2>k3 -> k1>k3). */
+ * symmetric (k1=k1) and transitive (k1>k2 and k2>k3 implies k1>k3). */
 typedef int	    (*dict_compare_func)(const void *, const void *);
 /* A pointer to a function that is called when a key-value pair gets removed
  * from a dictionary. */
@@ -99,19 +99,19 @@ typedef struct {
 } dict_vtable;
 
 typedef void	    (*dict_ifree_func)(void *itor);
-typedef int	    (*dict_valid_func)(const void *itor);
+typedef bool	    (*dict_valid_func)(const void *itor);
 typedef void	    (*dict_invalidate_func)(void *itor);
-typedef int	    (*dict_next_func)(void *itor);
-typedef int	    (*dict_prev_func)(void *itor);
-typedef int	    (*dict_nextn_func)(void *itor, size_t count);
-typedef int	    (*dict_prevn_func)(void *itor, size_t count);
-typedef int	    (*dict_first_func)(void *itor);
-typedef int	    (*dict_last_func)(void *itor);
+typedef bool	    (*dict_next_func)(void *itor);
+typedef bool	    (*dict_prev_func)(void *itor);
+typedef bool	    (*dict_nextn_func)(void *itor, size_t count);
+typedef bool	    (*dict_prevn_func)(void *itor, size_t count);
+typedef bool	    (*dict_first_func)(void *itor);
+typedef bool	    (*dict_last_func)(void *itor);
 typedef void*	    (*dict_key_func)(void *itor);
 typedef void*	    (*dict_data_func)(void *itor);
-typedef int	    (*dict_dataset_func)(void *itor, void *datum,
+typedef bool	    (*dict_dataset_func)(void *itor, void *datum,
 					 void **old_datum);
-typedef int	    (*dict_iremove_func)(void *itor);
+typedef bool	    (*dict_iremove_func)(void *itor);
 typedef int	    (*dict_icompare_func)(void *itor1, void *itor2);
 
 typedef struct {
