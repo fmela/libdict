@@ -64,11 +64,11 @@ $(OUTPUT_DIR)/%.po: $(SOURCE_DIR)/%.c $(HEADER)
 $(OUTPUT_DIR)/%.So: $(SOURCE_DIR)/%.c $(HEADER)
 	$(CC) $(CFLAGS) -fPIC -DPIC -c -o $(@) $(<)
 
-$(OUTPUT_DIR)/unit_tests: unit_tests.c $(STATIC_OBJ)
-	$(CC) $(CFLAGS) -I$(CUNIT_PREFIX)/include -o $(@) $(<) $(STATIC_OBJ) -L$(CUNIT_PREFIX)/lib $(LDFLAGS) -lcunit
+$(OUTPUT_DIR)/unit_tests: unit_tests.c $(STATIC_LIB)
+	$(CC) $(CFLAGS) -I$(CUNIT_PREFIX)/include -o $(@) $(<) $(STATIC_LIB) -L$(CUNIT_PREFIX)/lib $(LDFLAGS) -lcunit
 
-$(OUTPUT_DIR)/%: %.c $(STATIC_OBJ)
-	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_OBJ) $(LDFLAGS)
+$(OUTPUT_DIR)/%: %.c $(STATIC_LIB)
+	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_LIB) $(LDFLAGS)
 
 .PHONY: clean
 clean:
