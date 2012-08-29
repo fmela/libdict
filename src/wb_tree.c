@@ -228,7 +228,7 @@ wb_tree_insert(wb_tree *tree, void *key, void *datum, bool overwrite)
 	    wbal = WEIGHT(node->rlink->llink) / (float)node->rlink->weight;
 	    if (wbal < ALPHA_3) {		/* LL */
 		rot_left(tree, node);
-	    } else {					/* RL */
+	    } else {				/* RL */
 		rot_right(tree, node->rlink);
 		rot_left(tree, node);
 	    }
@@ -237,7 +237,7 @@ wb_tree_insert(wb_tree *tree, void *key, void *datum, bool overwrite)
 	    wbal = WEIGHT(node->llink->llink) / (float)node->llink->weight;
 	    if (wbal > ALPHA_2) {		/* RR */
 		rot_right(tree, node);
-	    } else {					/* LR */
+	    } else {				/* LR */
 		rot_left(tree, node->llink);
 		rot_right(tree, node);
 	    }
