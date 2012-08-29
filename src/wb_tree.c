@@ -56,6 +56,8 @@
  * These are the parameters for alpha = 1 - sqrt(2)/2 == .292893, as
  * recommended in [Gonnet 1984]. */
 
+/* TODO: approximate these constants with integer fractions and eliminate
+ * floating point arithmetic throughout.  */
 #define ALPHA_0		.292893f	/* 1 - sqrt(2)/2		*/
 #define ALPHA_1		.707106f	/* sqrt(2)/2			*/
 #define ALPHA_2		.414213f	/* sqrt(2) - 1			*/
@@ -221,7 +223,7 @@ wb_tree_insert(wb_tree *tree, void *key, void *datum, bool overwrite)
 
     while ((node = parent) != NULL) {
 	parent = node->parent;
-	node->weight++;
+	++node->weight;
 	float wbal = WEIGHT(node->llink) / (float)node->weight;
 	if (wbal < ALPHA_0) {
 	    ASSERT(node->rlink != NULL);
@@ -243,7 +245,7 @@ wb_tree_insert(wb_tree *tree, void *key, void *datum, bool overwrite)
 	    }
 	}
     }
-    tree->count++;
+    ++tree->count;
     return 0;
 }
 
@@ -281,7 +283,7 @@ wb_tree_probe(wb_tree *tree, void *key, void **datum)
 
     while ((node = parent) != NULL) {
 	parent = node->parent;
-	node->weight++;
+	++node->weight;
 	float wbal = WEIGHT(node->llink) / (float)node->weight;
 	if (wbal < ALPHA_0) {
 	    ASSERT(node->rlink != NULL);
@@ -303,7 +305,7 @@ wb_tree_probe(wb_tree *tree, void *key, void **datum)
 	    }
 	}
     }
-    tree->count++;
+    ++tree->count;
     return 1;
 }
 
@@ -349,14 +351,18 @@ wb_tree_remove(wb_tree *tree, const void *key)
 	/* If we get here, both llink and rlink are not NULL. */
 	if (node->llink->weight > node->rlink->weight) {
 	    wb_node *llink = node->llink;
-	    if (WEIGHT(llink->llink) < WEIGHT(llink->rlink))
+	    if (WEIGHT(llink->llink) < WEIGHT(llink->rlink)) {
 		rot_left(tree, llink);
+		llink = node->llink;
+	    }
 	    rot_right(tree, node);
 	    node = llink->rlink;
 	} else {
 	    wb_node *rlink = node->rlink;
-	    if (WEIGHT(rlink->rlink) < WEIGHT(rlink->llink))
+	    if (WEIGHT(rlink->rlink) < WEIGHT(rlink->llink)) {
 		rot_right(tree, rlink);
+		rlink = node->rlink;
+	    }
 	    rot_left(tree, node);
 	    node = rlink->llink;
 	}
@@ -839,12 +845,15 @@ wb_itor_set_data(wb_itor *itor, void *datum, void **old_datum)
 }
 
 static void
-wb_node_verify(wb_node *node, wb_node *parent)
+wb_node_verify(const wb_tree *tree, wb_node *node, wb_node *parent)
 {
+    if (!parent) {
+	ASSERT(tree->root == node);
+    }
     if (node) {
 	ASSERT(node->parent == parent);
-	wb_node_verify(node->llink, node);
-	wb_node_verify(node->rlink, node);
+	wb_node_verify(tree, node->llink, node);
+	wb_node_verify(tree, node->rlink, node);
     }
 }
 
@@ -853,5 +862,5 @@ wb_tree_verify(const wb_tree *tree)
 {
     ASSERT(tree != NULL);
 
-    wb_node_verify(tree->root, NULL);
+    wb_node_verify(tree, tree->root, NULL);
 }
