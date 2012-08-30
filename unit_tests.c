@@ -57,6 +57,15 @@ main()
     return 0;
 }
 
+void
+shuffle(char **p, unsigned size)
+{
+    for (unsigned i = 0; i < size - 1; i++) {
+	unsigned n = rand() % (size - i);
+	char *t = p[i+n]; p[i+n] = p[i]; p[i] = t;
+    }
+}
+
 static struct {
     char *key;
     char *value;
@@ -72,6 +81,15 @@ static struct {
     { "y", "Y", "y" },
     { "z", "Z", "z" },
     { "x", "X", "x" },
+    { "j", "J", "j" },
+    { "r", "R", "r" },
+    { "q", "Q", "q" },
+    { "p", "P", "p" },
+    { "l", "L", "l" },
+    { "m", "M", "m" },
+    { "s", "S", "s" },
+    { "t", "T", "t" },
+    { "u", "U", "u" },
 };
 #define NKEYS (sizeof(keys) / sizeof(keys[0]))
 
@@ -158,7 +176,7 @@ void test_basic_hashtable_1()
 
 void test_basic_hashtable_n()
 {
-    test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 37));
+    test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 7));
 }
 
 void test_basic_hb()
