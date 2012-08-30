@@ -52,19 +52,6 @@ static size_t malloced = 0;
 int
 main(int argc, char **argv)
 {
-    unsigned i, nwords;
-    char buf[512], *p;
-    char **words;
-    FILE *fp;
-    int rv;
-    dict *dct;
-    dict_itor *itor;
-    struct rusage start, end;
-    struct timeval total = { 0, 0 };
-    int total_comp, total_hash;
-    dict_compare_func cmp_func;
-    dict_hash_func hash_func;
-
     if (argc != 3) {
 	fprintf(stderr, "usage: %s [type] [input]\n", appname);
 	fprintf(stderr, "type must be one of h, p, r, t, s, w or H\n");
@@ -75,10 +62,11 @@ main(int argc, char **argv)
 
     dict_malloc_func = xmalloc;
 
-    cmp_func = my_strcmp;
-    hash_func = str_hash;
+    dict_compare_func cmp_func = my_strcmp;
+    dict_hash_func hash_func = str_hash;
 
     ++argv;
+    dict *dct = NULL;
     switch (argv[0][0]) {
 	case 'h':
 	    dct = hb_dict_new(cmp_func, key_str_free);
@@ -113,23 +101,25 @@ main(int argc, char **argv)
 
     printf("Container uses %.02fkB memory.\n", malloced/1024.);
 
-    fp = fopen(argv[1], "r");
+    FILE *fp = fopen(argv[1], "r");
     if (fp == NULL)
 	quit("cant open file '%s': %s", argv[1], strerror(errno));
 
-    for (nwords = 0; fgets(buf, sizeof(buf), fp); nwords++)
-	;
+    unsigned nwords = 0;
+    char buf[512];
+    while (fgets(buf, sizeof(buf), fp))
+	++nwords;
 
-    if (nwords == 0)
+    if (!nwords)
 	quit("nothing read from file");
 
     printf("Processing %u words\n", nwords);
-    words = malloc(sizeof(*words) * nwords);
+    char **words = malloc(sizeof(*words) * nwords);
     if (!words)
 	quit("out of memory");
 
     rewind(fp);
-    for (i = 0; i < nwords && fgets(buf, sizeof(buf), fp); i++) {
+    for (unsigned i = 0; i < nwords && fgets(buf, sizeof(buf), fp); i++) {
 	strtok(buf, "\n");
 	words[i] = my_strdup(buf);
 	if (!words[i])
@@ -137,12 +127,15 @@ main(int argc, char **argv)
     }
     fclose(fp);
 
-    total_comp = total_hash = 0;
+    int total_comp = 0, total_hash = 0;
 
-    comp_count = hash_count = 0;
+    struct rusage start, end;
+    struct timeval total = { 0, 0 };
+
     timer_start(&start);
-    for (i = 0; i < nwords; i++) {
-	if ((rv = dict_insert(dct, words[i], words[i], 0)) != 0)
+    for (unsigned i = 0; i < nwords; i++) {
+	int rv = dict_insert(dct, words[i], words[i], false);
+	if (rv != 0)
 	    quit("insert #%d failed with %d for '%s'", i, rv, words[i]);
     }
     timer_end(&start, &end, &total);
@@ -153,50 +146,52 @@ main(int argc, char **argv)
     total_hash += hash_count; hash_count = 0;
     printf("memory used = %zukB bytes\n", (malloced+1023)>>10);
 
-    if ((i = dict_count(dct)) != nwords)
-	quit("bad count (%u - should be %u)!", i, nwords);
+    unsigned n = dict_count(dct);
+    if (n != nwords)
+	quit("bad count (%u - should be %u)!", n, nwords);
 
-    itor = dict_itor_new(dct);
+    dict_itor *itor = dict_itor_new(dct);
 
     timer_start(&start);
-    i = 0;
+    n = 0;
     dict_itor_first(itor);
     while (dict_itor_valid(itor)) {
 	dict_itor_key(itor);
 	dict_itor_data(itor);
-	i++;
+	n++;
 
 	dict_itor_next(itor);
     }
     timer_end(&start, &end, &total);
     printf("  fwd iterate %02f s\n",
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
-    if (i != nwords)
-	warn("Fwd iteration returned %u items - should be %u", i, nwords);
+    if (n != nwords)
+	warn("Fwd iteration returned %u items - should be %u", n, nwords);
 
     timer_start(&start);
-    i = 0;
+    n = 0;
     dict_itor_last(itor);
     while (dict_itor_valid(itor)) {
 	dict_itor_key(itor);
 	dict_itor_data(itor);
-	i++;
+	n++;
 
 	dict_itor_prev(itor);
     }
     timer_end(&start, &end, &total);
     printf("  rev iterate %02f s\n",
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
-    if (i != nwords)
-	warn("Rev iteration returned %u items - should be %u", i, nwords);
+    if (n != nwords)
+	warn("Rev iteration returned %u items - should be %u", n, nwords);
 
     dict_itor_free(itor);
 
     /* shuffle(words, nwords); */
 
     timer_start(&start);
-    for (i = 0; i < nwords; i++) {
-	if ((p = dict_search(dct, words[i])) == NULL)
+    for (unsigned i = 0; i < nwords; i++) {
+	char *p = dict_search(dct, words[i]);
+	if (!p)
 	    quit("lookup failed for '%s'", buf);
 	if (p != words[i])
 	    quit("bad data for '%s', got '%s' instead", words[i], p);
@@ -209,8 +204,8 @@ main(int argc, char **argv)
     total_hash += hash_count; hash_count = 0;
 
     timer_start(&start);
-    for (i = 0; i < nwords; i++) {
-	rv = rand() % strlen(words[i]);
+    for (unsigned i = 0; i < nwords; i++) {
+	int rv = rand() % strlen(words[i]);
 	words[i][rv]++;
 	dict_search(dct, words[i]);
 	words[i][rv]--;
@@ -225,7 +220,7 @@ main(int argc, char **argv)
     /* shuffle(words, nwords); */
 
     timer_start(&start);
-    for (i = 0; i < nwords; i++) {
+    for (unsigned i = 0; i < nwords; i++) {
 	if (!dict_remove(dct, words[i]))
 	    quit("removing #%d '%s' failed!\n", i, words[i]);
     }
@@ -236,8 +231,8 @@ main(int argc, char **argv)
     total_comp += comp_count; comp_count = 0;
     total_hash += hash_count; hash_count = 0;
 
-    if ((i = dict_count(dct)) != 0)
-	quit("error - count not zero (%u)!", i);
+    if ((n = dict_count(dct)) != 0)
+	quit("error - count not zero (%u)!", n);
 
     dict_free(dct);
 
