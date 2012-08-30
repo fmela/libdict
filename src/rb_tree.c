@@ -151,9 +151,12 @@ rb_tree_search(rb_tree *tree, const void *key)
     rb_node *node = tree->root;
     while (node != RB_NULL) {
 	int cmp = tree->cmp_func(key, node->key);
-	if (!cmp)
+	if (cmp < 0)
+	    node = node->llink;
+	else if (cmp)
+	    node = node->rlink;
+	else
 	    return node->datum;
-	node = (cmp < 0) ? node->llink : node->rlink;
     }
     return NULL;
 }
@@ -169,7 +172,7 @@ rb_tree_insert(rb_tree *tree, void *key, void *datum, bool overwrite)
 	cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    parent = node, node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
 	    if (!overwrite)
@@ -213,7 +216,7 @@ rb_tree_probe(rb_tree *tree, void *key, void **datum)
 	cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    parent = node, node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
 	    *datum = node->datum;
@@ -302,7 +305,7 @@ rb_tree_remove(rb_tree *tree, const void *key)
 	int cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    node = node->rlink;
 	else
 	    break;
@@ -805,7 +808,7 @@ rb_itor_search(rb_itor *itor, const void *key)
 	int cmp = itor->tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    node = node->rlink;
 	else {
 	    itor->node = node;

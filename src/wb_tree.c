@@ -175,7 +175,7 @@ wb_tree_search(wb_tree *tree, const void *key)
 	int cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    node = node->rlink;
 	else
 	    return node->datum;
@@ -195,7 +195,7 @@ wb_tree_insert(wb_tree *tree, void *key, void *datum, bool overwrite)
 	cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    parent = node, node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
 	    if (!overwrite)
@@ -260,7 +260,7 @@ wb_tree_probe(wb_tree *tree, void *key, void **datum)
 	cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    parent = node, node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
 	    *datum = node->datum;
@@ -318,8 +318,11 @@ wb_tree_remove(wb_tree *tree, const void *key)
     wb_node *node = tree->root;
     while (node) {
 	int cmp = tree->cmp_func(key, node->key);
-	if (cmp) {
-	    node = (cmp < 0) ? node->llink : node->rlink;
+	if (cmp < 0) {
+	    node = node->llink;
+	    continue;
+	} else if (cmp) {
+	    node = node->rlink;
 	    continue;
 	}
 	if (!node->llink || !node->rlink) {
@@ -803,7 +806,7 @@ wb_itor_search(wb_itor *itor, const void *key)
 	int cmp = itor->tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    node = node->rlink;
 	else {
 	    itor->node = node;

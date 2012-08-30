@@ -186,7 +186,7 @@ hb_tree_search(hb_tree *tree, const void *key)
 	int cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    node = node->rlink;
 	else
 	    return node->datum;
@@ -206,7 +206,7 @@ hb_tree_insert(hb_tree *tree, void *key, void *datum, bool overwrite)
 	cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    parent = node, node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
 	    if (!overwrite)
@@ -269,7 +269,7 @@ hb_tree_probe(hb_tree *tree, void *key, void **datum)
 	cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    parent = node, node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
 	    *datum = node->datum;
@@ -324,10 +324,12 @@ hb_tree_remove(hb_tree *tree, const void *key)
     hb_node *node = tree->root, *parent = NULL;
     while (node) {
 	int cmp = tree->cmp_func(key, node->key);
-	if (cmp == 0)
+	if (cmp < 0)
+	    parent = node, node = node->llink;
+	else if (cmp)
+	    parent = node, node = node->rlink;
+	else
 	    break;
-	parent = node;
-	node = cmp < 0 ? node->llink : node->rlink;
     }
     if (!node)
 	return false;
@@ -799,12 +801,17 @@ hb_itor_search(hb_itor *itor, const void *key)
     hb_node *node = itor->tree->root;
     while (node) {
 	int cmp = itor->tree->cmp_func(key, node->key);
-	if (cmp == 0)
-	    break;
-	node = cmp < 0 ? node->llink : node->rlink;
+	if (cmp < 0)
+	    node = node->llink;
+	else if (cmp)
+	    node = node->rlink;
+	else {
+	    itor->node = node;
+	    return true;
+	}
     }
-    itor->node = node;
-    return itor->node != NULL;
+    itor->node = NULL;
+    return false;
 }
 
 const void *

@@ -149,7 +149,7 @@ pr_tree_search(pr_tree *tree, const void *key)
 	int cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    node = node->rlink;
 	else
 	    return node->datum;
@@ -236,7 +236,7 @@ pr_tree_insert(pr_tree *tree, void *key, void *datum, bool overwrite)
 	cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    parent = node, node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
 	    if (!overwrite)
@@ -281,7 +281,11 @@ pr_tree_probe(pr_tree *tree, void *key, void **datum)
     pr_node *node = tree->root, *parent = NULL;
     while (node) {
 	cmp = tree->cmp_func(key, node->key);
-	if (!cmp) {
+	if (cmp < 0)
+	    parent = node, node = node->llink;
+	else if (cmp)
+	    parent = node, node = node->rlink;
+	else {
 	    *datum = node->datum;
 	    return 0;
 	}
@@ -322,8 +326,11 @@ pr_tree_remove(pr_tree *tree, const void *key)
     pr_node *node = tree->root, *temp, *out = NULL;
     while (node) {
 	int cmp = tree->cmp_func(key, node->key);
-	if (cmp) {
-	    node = cmp < 0 ? node->llink : node->rlink;
+	if (cmp < 0) {
+	    node = node->llink;
+	    continue;
+	} else if (cmp) {
+	    node = node->rlink;
 	    continue;
 	}
 	if (!node->llink) {
@@ -815,13 +822,15 @@ pr_itor_search(pr_itor *itor, const void *key)
 	int cmp = itor->tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    node = node->llink;
-	else if (cmp > 0)
+	else if (cmp)
 	    node = node->rlink;
-	else
-	    break;
+	else {
+	    itor->node = node;
+	    return true;
+	}
     }
-    itor->node = node;
-    return itor->node != NULL;
+    itor->node = NULL;
+    return false;
 }
 
 const void *
