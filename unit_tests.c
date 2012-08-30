@@ -87,6 +87,38 @@ void test_basic(dict *dct) {
 	CU_ASSERT_EQUAL(dict_insert(dct, keys[i].key, keys[i].alt, false), 1);
     CU_ASSERT_EQUAL(dict_count(dct), NKEYS);
 
+    dict_itor *itor = dict_itor_new(dct);
+    CU_ASSERT_PTR_NOT_NULL(itor);
+    char *last_key = NULL;
+    unsigned n = 0;
+    for (dict_itor_first(itor); dict_itor_valid(itor); dict_itor_next(itor)) {
+	CU_ASSERT_PTR_NOT_NULL(dict_itor_key(itor));
+	CU_ASSERT_PTR_NOT_NULL(dict_itor_data(itor));
+	++n;
+	if (dct->_vtable->insert != (dict_insert_func)hashtable_insert) {
+	    if (last_key) {
+		CU_ASSERT_TRUE(strcmp(last_key, dict_itor_key(itor)) < 0);
+	    }
+	    last_key = dict_itor_key(itor);
+	}
+    }
+    CU_ASSERT_EQUAL(n, NKEYS);
+    last_key = NULL;
+    n = 0;
+    for (dict_itor_last(itor); dict_itor_valid(itor); dict_itor_prev(itor)) {
+	CU_ASSERT_PTR_NOT_NULL(dict_itor_key(itor));
+	CU_ASSERT_PTR_NOT_NULL(dict_itor_data(itor));
+	++n;
+	if (dct->_vtable->insert != (dict_insert_func)hashtable_insert) {
+	    if (last_key) {
+		CU_ASSERT_TRUE(strcmp(last_key, dict_itor_key(itor)) > 0);
+	    }
+	    last_key = dict_itor_key(itor);
+	}
+    }
+    CU_ASSERT_EQUAL(n, NKEYS);
+    dict_itor_free(itor);
+
     for (unsigned i = 0; i < NKEYS; ++i)
 	CU_ASSERT_EQUAL(dict_insert(dct, keys[i].key, keys[i].alt, true), 0);
     CU_ASSERT_EQUAL(dict_count(dct), NKEYS);
