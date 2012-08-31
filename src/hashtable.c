@@ -31,10 +31,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-#include <string.h> /* For memset() */
-
 #include "hashtable.h"
+
+#include <string.h> /* For memset() */
 #include "dict_private.h"
 
 typedef struct hash_node hash_node;
