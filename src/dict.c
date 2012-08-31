@@ -30,9 +30,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-
-#include "dict.h"
 #include "dict_private.h"
 
 void* (*dict_malloc_func)(size_t) = malloc;
