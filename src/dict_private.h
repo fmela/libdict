@@ -12,19 +12,26 @@
 
 #ifndef NDEBUG
 # include <stdio.h>
+# include <stdlib.h>
 # undef ASSERT
 # if defined(__GNUC__)
 #  define ASSERT(expr) \
-    if (!(expr)) \
-	fprintf(stderr, "\n%s:%d (%s) assertion failed: `%s'\n", \
-		__FILE__, __LINE__, __PRETTY_FUNCTION__, #expr), \
-	abort()
+    do { \
+	if (!(expr)) { \
+	    fprintf(stderr, "\n%s:%d (%s) assertion failed: `%s'\n", \
+		    __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
+	    abort(); \
+	} \
+    } while (0)
 # else
 #  define ASSERT(expr) \
-    if (!(expr)) \
-	fprintf(stderr, "\n%s:%d assertion failed: `%s'\n", \
-		__FILE__, __LINE__, #expr), \
-	abort()
+    do { \
+	if (!(expr)) { \
+	    fprintf(stderr, "\n%s:%d assertion failed: `%s'\n", \
+		    __FILE__, __LINE__, #expr); \
+	    abort(); \
+	} \
+    } while (0)
 # endif
 #else
 # define ASSERT(expr)
