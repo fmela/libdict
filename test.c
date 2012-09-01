@@ -154,14 +154,13 @@ main(int argc, char **argv)
 
     timer_start(&start);
     n = 0;
-    dict_itor_first(itor);
-    while (dict_itor_valid(itor)) {
+    assert(dict_itor_first(itor));
+    do {
+	assert(dict_itor_valid(itor));
 	dict_itor_key(itor);
 	dict_itor_data(itor);
-	n++;
-
-	dict_itor_next(itor);
-    }
+	++n;
+    } while (dict_itor_next(itor));
     timer_end(&start, &end, &total);
     printf("  fwd iterate %02f s\n",
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
@@ -170,14 +169,13 @@ main(int argc, char **argv)
 
     timer_start(&start);
     n = 0;
-    dict_itor_last(itor);
-    while (dict_itor_valid(itor)) {
+    assert(dict_itor_last(itor));
+    do {
+	assert(dict_itor_valid(itor));
 	dict_itor_key(itor);
 	dict_itor_data(itor);
-	n++;
-
-	dict_itor_prev(itor);
-    }
+	++n;
+    } while (dict_itor_prev(itor));
     timer_end(&start, &end, &total);
     printf("  rev iterate %02f s\n",
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
