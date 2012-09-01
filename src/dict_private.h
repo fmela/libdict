@@ -8,11 +8,12 @@
 #ifndef _DICT_PRIVATE_H_
 #define _DICT_PRIVATE_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "dict.h"
 
 #ifndef NDEBUG
-# include <stdio.h>
-# include <stdlib.h>
 # undef ASSERT
 # if defined(__GNUC__)
 #  define ASSERT(expr) \
