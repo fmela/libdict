@@ -386,7 +386,6 @@ hashtable_itor_new(hashtable *table)
 	itor->table = table;
 	itor->node = NULL;
 	itor->slot = 0;
-	hashtable_itor_first(itor);
     }
     return itor;
 }
