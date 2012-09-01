@@ -35,7 +35,7 @@
     } while (0)
 # endif
 #else
-# define ASSERT(expr)
+# define ASSERT(expr)	(void)(expr)
 #endif
 
 #define MALLOC(n)	(*dict_malloc_func)(n)
