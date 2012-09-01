@@ -336,7 +336,6 @@ skiplist_itor_new(skiplist *list)
     if (itor) {
 	itor->list = list;
 	itor->node = NULL;
-	skiplist_itor_first(itor);
     }
     return itor;
 }
