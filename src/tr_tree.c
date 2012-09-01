@@ -81,7 +81,7 @@ static dict_vtable tr_tree_vtable = {
     (dict_remove_func)	    tr_tree_remove,
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
-    (dict_count_func)	    tr_tree_count
+    (dict_count_func)	    tree_count,
 };
 
 static itor_vtable tr_tree_itor_vtable = {
@@ -326,7 +326,7 @@ tr_tree_count(const tr_tree *tree)
 {
     ASSERT(tree != NULL);
 
-    return tree->count;
+    return tree_count(tree);
 }
 
 size_t

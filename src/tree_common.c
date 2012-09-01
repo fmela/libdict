@@ -213,6 +213,14 @@ tree_node_free(tree *tree, tree_node *node)
 }
 
 size_t
+tree_count(const void *Tree)
+{
+    const tree *tree = Tree;
+    ASSERT(tree != NULL);
+    return tree->count;
+}
+
+size_t
 tree_clear(void *Tree)
 {
     tree *tree = Tree;

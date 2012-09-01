@@ -82,7 +82,7 @@ static dict_vtable sp_tree_vtable = {
     (dict_remove_func)	    sp_tree_remove,
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
-    (dict_count_func)	    sp_tree_count
+    (dict_count_func)	    tree_count,
 };
 
 static itor_vtable sp_tree_itor_vtable = {
@@ -450,7 +450,7 @@ sp_tree_count(const sp_tree *tree)
 {
     ASSERT(tree != NULL);
 
-    return tree->count;
+    return tree_count(tree);
 }
 
 size_t

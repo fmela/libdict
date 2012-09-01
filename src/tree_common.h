@@ -55,6 +55,8 @@ const void* tree_max(const void *tree);
  * stopping if |visit| returns false. Returns the number of times |visit| was
  * called. */
 size_t	    tree_traverse(void *tree, dict_visit_func visit);
+/* Return a count of the elements in |tree|. */
+size_t	    tree_count(const void *tree);
 /* Remove all elements from |tree|. */
 size_t	    tree_clear(void *tree);
 /* Remove all elements from |tree| and free its memory. */
