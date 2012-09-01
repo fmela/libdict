@@ -31,29 +31,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-
 #include "pr_tree.h"
+
 #include "dict_private.h"
+#include "tree_common.h"
 
 typedef struct pr_node pr_node;
 struct pr_node {
-    void*			key;
-    void*			datum;
-    pr_node*			parent;
-    pr_node*			llink;
-    pr_node*			rlink;
+    TREE_NODE_FIELDS(pr_node);
     unsigned			weight;
 };
 
 #define WEIGHT(n)	((n) ? (n)->weight : 1)
-#define REWEIGH(n)	(n)->weight = WEIGHT((n)->llink) + WEIGHT((n)->rlink)
 
 struct pr_tree {
-    pr_node*			root;
-    size_t			count;
-    dict_compare_func		cmp_func;
-    dict_delete_func		del_func;
+    TREE_FIELDS(pr_node);
 };
 
 struct pr_itor {
@@ -63,29 +55,29 @@ struct pr_itor {
 
 static dict_vtable pr_tree_vtable = {
     (dict_inew_func)		pr_dict_itor_new,
-    (dict_dfree_func)		pr_tree_free,
+    (dict_dfree_func)		tree_free,
     (dict_insert_func)		pr_tree_insert,
     (dict_probe_func)		pr_tree_probe,
-    (dict_search_func)		pr_tree_search,
+    (dict_search_func)		tree_search,
     (dict_remove_func)		pr_tree_remove,
-    (dict_clear_func)		pr_tree_clear,
-    (dict_traverse_func)	pr_tree_traverse,
+    (dict_clear_func)		tree_clear,
+    (dict_traverse_func)	tree_traverse,
     (dict_count_func)		pr_tree_count
 };
 
 static itor_vtable pr_tree_itor_vtable = {
-    (dict_ifree_func)		pr_itor_free,
-    (dict_valid_func)		pr_itor_valid,
-    (dict_invalidate_func)	pr_itor_invalidate,
-    (dict_next_func)		pr_itor_next,
-    (dict_prev_func)		pr_itor_prev,
-    (dict_nextn_func)		pr_itor_nextn,
-    (dict_prevn_func)		pr_itor_prevn,
-    (dict_first_func)		pr_itor_first,
-    (dict_last_func)		pr_itor_last,
-    (dict_key_func)		pr_itor_key,
-    (dict_data_func)		pr_itor_data,
-    (dict_dataset_func)		pr_itor_set_data,
+    (dict_ifree_func)		tree_iterator_free,
+    (dict_valid_func)		tree_iterator_valid,
+    (dict_invalidate_func)	tree_iterator_invalidate,
+    (dict_next_func)		tree_iterator_next,
+    (dict_prev_func)		tree_iterator_prev,
+    (dict_nextn_func)		tree_iterator_next_n,
+    (dict_prevn_func)		tree_iterator_prev_n,
+    (dict_first_func)		tree_iterator_first,
+    (dict_last_func)		tree_iterator_last,
+    (dict_key_func)		tree_iterator_key,
+    (dict_data_func)		tree_iterator_data,
+    (dict_dataset_func)		tree_iterator_set_data,
     (dict_iremove_func)		NULL,/* pr_itor_remove not implemented yet */
     (dict_icompare_func)	NULL /* pr_itor_compare not implemented yet */
 };
@@ -97,10 +89,6 @@ static size_t	node_height(const pr_node *node);
 static size_t	node_mheight(const pr_node *node);
 static size_t	node_pathlen(const pr_node *node, size_t level);
 static pr_node*	node_new(void *key, void *datum);
-static pr_node*	node_min(pr_node *node);
-static pr_node*	node_max(pr_node *node);
-static pr_node*	node_next(pr_node *node);
-static pr_node*	node_prev(pr_node *node);
 
 pr_tree *
 pr_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
@@ -459,15 +447,7 @@ pr_tree_traverse(pr_tree *tree, dict_visit_func visit)
 {
     ASSERT(tree != NULL);
 
-    if (!tree->root)
-	return 0;
-    size_t count = 0;
-    for (pr_node *node = node_min(tree->root); node; node = node_next(node)) {
-	++count;
-	if (!visit(node->key, node->datum))
-	    break;
-    }
-    return count;
+    return tree_traverse(tree, visit);
 }
 
 size_t
@@ -517,62 +497,6 @@ node_new(void *key, void *datum)
     return node;
 }
 
-static pr_node *
-node_min(pr_node *node)
-{
-    ASSERT(node != NULL);
-
-    while (node->llink)
-	node = node->llink;
-    return node;
-}
-
-static pr_node *
-node_max(pr_node *node)
-{
-    ASSERT(node != NULL);
-
-    while (node->rlink)
-	node = node->rlink;
-    return node;
-}
-
-static pr_node *
-node_next(pr_node *node)
-{
-    ASSERT(node != NULL);
-
-    if (node->rlink) {
-	for (node = node->rlink; node->llink; node = node->llink)
-	    /* void */;
-	return node;
-    }
-    pr_node *temp = node->parent;
-    while (temp && temp->rlink == node) {
-	node = temp;
-	temp = temp->parent;
-    }
-    return temp;
-}
-
-static pr_node *
-node_prev(pr_node *node)
-{
-    ASSERT(node != NULL);
-
-    if (node->llink) {
-	for (node = node->llink; node->rlink; node = node->rlink)
-	    /* void */;
-	return node;
-    }
-    pr_node *temp = node->parent;
-    while (temp && temp->llink == node) {
-	node = temp;
-	temp = temp->parent;
-    }
-    return temp;
-}
-
 static size_t
 node_height(const pr_node *node)
 {
@@ -616,8 +540,7 @@ node_pathlen(const pr_node *node, size_t level)
  *     / \       / \
  *    C   E     A   C
  *
- * Only the weights of B and B->rlink need to be readjusted, because upper
- * level nodes' weights haven't changed.
+ * Only the weights of B and B's right child to be readjusted.
  */
 static void
 rot_left(pr_tree *tree, pr_node	*node)
@@ -627,24 +550,10 @@ rot_left(pr_tree *tree, pr_node	*node)
     ASSERT(node->rlink != NULL);
 
     pr_node *rlink = node->rlink;
-    node->rlink = rlink->llink;
-    if (rlink->llink)
-	rlink->llink->parent = node;
-    pr_node *parent = node->parent;
-    rlink->parent = parent;
-    if (parent) {
-	if (parent->llink == node)
-	    parent->llink = rlink;
-	else
-	    parent->rlink = rlink;
-    } else {
-	tree->root = rlink;
-    }
-    rlink->llink = node;
-    node->parent = rlink;
+    tree_node_rot_left(tree, node);
 
-    REWEIGH(node);
-    REWEIGH(rlink);
+    node->weight = WEIGHT(node->llink) + WEIGHT(node->rlink);
+    rlink->weight = node->weight + WEIGHT(rlink->rlink);
 }
 
 /*
@@ -657,8 +566,7 @@ rot_left(pr_tree *tree, pr_node	*node)
  *   / \             / \
  *  A   C           C   E
  *
- * Only the weights of D and D->llink need to be readjusted, because upper level
- * nodes' weights haven't changed.
+ * Only the weights of D and D's left child need to be readjusted.
  */
 static void
 rot_right(pr_tree *tree, pr_node *node)
@@ -668,24 +576,10 @@ rot_right(pr_tree *tree, pr_node *node)
     ASSERT(node->llink != NULL);
 
     pr_node *llink = node->llink;
-    node->llink = llink->rlink;
-    if (llink->rlink)
-	llink->rlink->parent = node;
-    pr_node *parent = node->parent;
-    llink->parent = parent;
-    if (parent) {
-	if (parent->llink == node)
-	    parent->llink = llink;
-	else
-	    parent->rlink = llink;
-    } else {
-	tree->root = llink;
-    }
-    llink->rlink = node;
-    node->parent = llink;
+    tree_node_rot_right(tree, node);
 
-    REWEIGH(node);
-    REWEIGH(llink);
+    node->weight = WEIGHT(node->llink) + WEIGHT(node->rlink);
+    llink->weight = WEIGHT(llink->llink) + node->weight;
 }
 
 pr_itor *
@@ -696,7 +590,7 @@ pr_itor_new(pr_tree *tree)
     pr_itor *itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->tree = tree;
-	pr_itor_first(itor);
+	itor->node = NULL;
     }
     return itor;
 }
@@ -750,7 +644,7 @@ pr_itor_next(pr_itor *itor)
     if (!itor->node)
 	pr_itor_first(itor);
     else
-	itor->node = node_next(itor->node);
+	itor->node = tree_node_next(itor->node);
     return itor->node != NULL;
 }
 
@@ -762,7 +656,7 @@ pr_itor_prev(pr_itor *itor)
     if (!itor->node)
 	pr_itor_last(itor);
     else
-	itor->node = node_prev(itor->node);
+	itor->node = tree_node_prev(itor->node);
     return itor->node != NULL;
 }
 
@@ -796,7 +690,7 @@ pr_itor_first(pr_itor *itor)
     if (!itor->tree->root)
 	itor->node = NULL;
     else
-	itor->node = node_min(itor->tree->root);
+	itor->node = tree_node_min(itor->tree->root);
     return itor->node != NULL;
 }
 
@@ -808,7 +702,7 @@ pr_itor_last(pr_itor *itor)
     if (!itor->tree->root)
 	itor->node = NULL;
     else
-	itor->node = node_max(itor->tree->root);
+	itor->node = tree_node_max(itor->tree->root);
     return itor->node != NULL;
 }
 

@@ -30,27 +30,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-
 #include "hb_tree.h"
+
 #include "dict_private.h"
+#include "tree_common.h"
 
 typedef struct hb_node hb_node;
 
 struct hb_node {
-    void*		    key;
-    void*		    datum;
-    hb_node*		    llink;
-    hb_node*		    rlink;
-    hb_node*		    parent;
+    TREE_NODE_FIELDS(hb_node);
     signed char		    bal;    /* TODO: store in unused low bits. */
 };
 
 struct hb_tree {
-    hb_node*		    root;
-    size_t		    count;
-    dict_compare_func	    cmp_func;
-    dict_delete_func	    del_func;
+    TREE_FIELDS(hb_node);
 };
 
 struct hb_itor {
@@ -60,29 +53,29 @@ struct hb_itor {
 
 static dict_vtable hb_tree_vtable = {
     (dict_inew_func)	    hb_dict_itor_new,
-    (dict_dfree_func)	    hb_tree_free,
+    (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    hb_tree_insert,
     (dict_probe_func)	    hb_tree_probe,
-    (dict_search_func)	    hb_tree_search,
+    (dict_search_func)	    tree_search,
     (dict_remove_func)	    hb_tree_remove,
-    (dict_clear_func)	    hb_tree_clear,
-    (dict_traverse_func)    hb_tree_traverse,
+    (dict_clear_func)	    tree_clear,
+    (dict_traverse_func)    tree_traverse,
     (dict_count_func)	    hb_tree_count
 };
 
 static itor_vtable hb_tree_itor_vtable = {
-    (dict_ifree_func)	    hb_itor_free,
-    (dict_valid_func)	    hb_itor_valid,
-    (dict_invalidate_func)  hb_itor_invalidate,
-    (dict_next_func)	    hb_itor_next,
-    (dict_prev_func)	    hb_itor_prev,
-    (dict_nextn_func)	    hb_itor_nextn,
-    (dict_prevn_func)	    hb_itor_prevn,
-    (dict_first_func)	    hb_itor_first,
-    (dict_last_func)	    hb_itor_last,
-    (dict_key_func)	    hb_itor_key,
-    (dict_data_func)	    hb_itor_data,
-    (dict_dataset_func)	    hb_itor_set_data,
+    (dict_ifree_func)	    tree_iterator_free,
+    (dict_valid_func)	    tree_iterator_valid,
+    (dict_invalidate_func)  tree_iterator_invalidate,
+    (dict_next_func)	    tree_iterator_next,
+    (dict_prev_func)	    tree_iterator_prev,
+    (dict_nextn_func)	    tree_iterator_next_n,
+    (dict_prevn_func)	    tree_iterator_prev_n,
+    (dict_first_func)	    tree_iterator_first,
+    (dict_last_func)	    tree_iterator_last,
+    (dict_key_func)	    tree_iterator_key,
+    (dict_data_func)	    tree_iterator_data,
+    (dict_dataset_func)	    tree_iterator_set_data,
     (dict_iremove_func)	    NULL,/* hb_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* hb_itor_compare not implemented yet */
 };
@@ -93,10 +86,6 @@ static size_t	node_height(const hb_node *node);
 static size_t	node_mheight(const hb_node *node);
 static size_t	node_pathlen(const hb_node *node, size_t level);
 static hb_node*	node_new(void *key, void *datum);
-static hb_node*	node_min(hb_node *node);
-static hb_node*	node_max(hb_node *node);
-static hb_node*	node_next(hb_node *node);
-static hb_node*	node_prev(hb_node *node);
 
 hb_tree *
 hb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
@@ -179,20 +168,7 @@ hb_tree_clear(hb_tree *tree)
 void *
 hb_tree_search(hb_tree *tree, const void *key)
 {
-    ASSERT(tree != NULL);
-
-    hb_node *node = tree->root;
-    while (node) {
-	int cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    node = node->llink;
-	else if (cmp)
-	    node = node->rlink;
-	else
-	    return node->datum;
-    }
-
-    return NULL;
+    return tree_search(tree, key);
 }
 
 int
@@ -376,7 +352,7 @@ hb_tree_remove(hb_tree *tree, const void *key)
 		    rot_left(tree, parent);
 		} else {
 		    ASSERT(parent->rlink->rlink != NULL);
-		    if (rot_left(tree, parent) == 0)
+		    if (!rot_left(tree, parent))
 			break;
 		}
 	    } else {
@@ -394,7 +370,7 @@ hb_tree_remove(hb_tree *tree, const void *key)
 		    rot_right(tree, parent);
 		} else {
 		    ASSERT(parent->llink->llink != NULL);
-		    if (rot_right(tree, parent) == 0)
+		    if (!rot_right(tree, parent))
 			break;
 		}
 	    } else {
@@ -446,16 +422,7 @@ hb_tree_traverse(hb_tree *tree, dict_visit_func visit)
 {
     ASSERT(tree != NULL);
 
-    if (!tree->root)
-	return 0;
-
-    size_t count = 0;
-    for (hb_node *node = node_min(tree->root); node; node = node_next(node)) {
-	++count;
-	if (!visit(node->key, node->datum))
-	    break;
-    }
-    return count;
+    return tree_traverse(tree, visit);
 }
 
 size_t
@@ -503,62 +470,6 @@ node_new(void *key, void *datum)
 	node->bal = 0;
     }
     return node;
-}
-
-static hb_node *
-node_min(hb_node *node)
-{
-    ASSERT(node != NULL);
-
-    while (node->llink)
-	node = node->llink;
-    return node;
-}
-
-static hb_node *
-node_max(hb_node *node)
-{
-    ASSERT(node != NULL);
-
-    while (node->rlink)
-	node = node->rlink;
-    return node;
-}
-
-static hb_node *
-node_next(hb_node *node)
-{
-    ASSERT(node != NULL);
-
-    if (node->rlink) {
-	for (node = node->rlink; node->llink; node = node->llink)
-	    /* void */;
-	return node;
-    }
-    hb_node *temp = node->parent;
-    while (temp && temp->rlink == node) {
-	node = temp;
-	temp = temp->parent;
-    }
-    return temp;
-}
-
-static hb_node *
-node_prev(hb_node *node)
-{
-    ASSERT(node != NULL);
-
-    if (node->llink) {
-	for (node = node->llink; node->rlink; node = node->rlink)
-	    /* void */;
-	return node;
-    }
-    hb_node *temp = node->parent;
-    while (temp && temp->llink == node) {
-	node = temp;
-	temp = temp->parent;
-    }
-    return temp;
 }
 
 static size_t
@@ -613,21 +524,7 @@ rot_left(hb_tree *restrict tree, hb_node *restrict node)
     ASSERT(node->rlink != NULL);
 
     hb_node *rlink = node->rlink;
-    node->rlink = rlink->llink;
-    if (rlink->llink)
-	rlink->llink->parent = node;
-    hb_node *parent = node->parent;
-    rlink->parent = parent;
-    if (parent) {
-	if (parent->llink == node)
-	    parent->llink = rlink;
-	else
-	    parent->rlink = rlink;
-    } else {
-	tree->root = rlink;
-    }
-    rlink->llink = node;
-    node->parent = rlink;
+    tree_node_rot_left(tree, node);
 
     bool hc = (rlink->bal != 0);
     node->bal  -= 1 + MAX(rlink->bal, 0);
@@ -654,21 +551,7 @@ rot_right(hb_tree *restrict tree, hb_node *restrict node)
     ASSERT(node->llink != NULL);
 
     hb_node *llink = node->llink;
-    node->llink = llink->rlink;
-    if (llink->rlink)
-	llink->rlink->parent = node;
-    hb_node *parent = node->parent;
-    llink->parent = parent;
-    if (parent) {
-	if (parent->llink == node)
-	    parent->llink = llink;
-	else
-	    parent->rlink = llink;
-    } else {
-	tree->root = llink;
-    }
-    llink->rlink = node;
-    node->parent = llink;
+    tree_node_rot_right(tree, node);
 
     bool hc = (llink->bal != 0);
     node->bal  += 1 - MIN(llink->bal, 0);
@@ -684,7 +567,7 @@ hb_itor_new(hb_tree *tree)
     hb_itor *itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->tree = tree;
-	hb_itor_first(itor);
+	itor->node = NULL;
     }
     return itor;
 }
@@ -737,7 +620,7 @@ hb_itor_next(hb_itor *itor)
     if (!itor->node)
 	hb_itor_first(itor);
     else
-	itor->node = node_next(itor->node);
+	itor->node = tree_node_next(itor->node);
     return itor->node != NULL;
 }
 
@@ -749,7 +632,7 @@ hb_itor_prev(hb_itor *itor)
     if (!itor->node)
 	hb_itor_last(itor);
     else
-	itor->node = node_prev(itor->node);
+	itor->node = tree_node_prev(itor->node);
     return itor->node != NULL;
 }
 
@@ -780,7 +663,7 @@ hb_itor_first(hb_itor *itor)
 {
     ASSERT(itor != NULL);
 
-    itor->node = itor->tree->root ? node_min(itor->tree->root) : NULL;
+    itor->node = itor->tree->root ? tree_node_min(itor->tree->root) : NULL;
     return itor->node != NULL;
 }
 
@@ -789,7 +672,7 @@ hb_itor_last(hb_itor *itor)
 {
     ASSERT(itor != NULL);
 
-    itor->node = itor->tree->root ? node_max(itor->tree->root) : NULL;
+    itor->node = itor->tree->root ? tree_node_max(itor->tree->root) : NULL;
     return itor->node != NULL;
 }
 

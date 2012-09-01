@@ -48,68 +48,61 @@
 /* TODO: rather than splay after the fact, use the splay operation to traverse
  * the tree during insert, search, delete, etc. */
 
-#include <stdlib.h>
-
 #include "sp_tree.h"
+
 #include "dict_private.h"
+#include "tree_common.h"
 
 typedef struct sp_node sp_node;
 struct sp_node {
-    void*		key;
-    void*		datum;
-    sp_node*		parent;
-    sp_node*		llink;
-    sp_node*		rlink;
+    void*		    key;
+    void*		    datum;
+    sp_node*		    parent;
+    sp_node*		    llink;
+    sp_node*		    rlink;
 };
 
 struct sp_tree {
-    sp_node*		root;
-    size_t		count;
-    dict_compare_func	cmp_func;
-    dict_delete_func	del_func;
+    sp_node*		    root;
+    size_t		    count;
+    dict_compare_func	    cmp_func;
+    dict_delete_func	    del_func;
 };
 
 struct sp_itor {
-    sp_tree*		tree;
-    sp_node*		node;
+    TREE_ITERATOR_FIELDS(sp_tree, sp_node);
 };
 
 static dict_vtable sp_tree_vtable = {
-    (dict_inew_func)	sp_dict_itor_new,
-    (dict_dfree_func)	sp_tree_free,
-    (dict_insert_func)	sp_tree_insert,
-    (dict_probe_func)	sp_tree_probe,
-    (dict_search_func)	sp_tree_search,
-    (dict_remove_func)	sp_tree_remove,
-    (dict_clear_func)	sp_tree_clear,
-    (dict_traverse_func)	sp_tree_traverse,
-    (dict_count_func)	sp_tree_count
+    (dict_inew_func)	    sp_dict_itor_new,
+    (dict_dfree_func)	    tree_free,
+    (dict_insert_func)	    sp_tree_insert,
+    (dict_probe_func)	    sp_tree_probe,
+    (dict_search_func)	    sp_tree_search,
+    (dict_remove_func)	    sp_tree_remove,
+    (dict_clear_func)	    tree_clear,
+    (dict_traverse_func)    tree_traverse,
+    (dict_count_func)	    sp_tree_count
 };
 
 static itor_vtable sp_tree_itor_vtable = {
-    (dict_ifree_func)	sp_itor_free,
-    (dict_valid_func)	sp_itor_valid,
-    (dict_invalidate_func)	sp_itor_invalidate,
-    (dict_next_func)	sp_itor_next,
-    (dict_prev_func)	sp_itor_prev,
-    (dict_nextn_func)	sp_itor_nextn,
-    (dict_prevn_func)	sp_itor_prevn,
-    (dict_first_func)	sp_itor_first,
-    (dict_last_func)	sp_itor_last,
-    (dict_key_func)	sp_itor_key,
-    (dict_data_func)	sp_itor_data,
-    (dict_dataset_func)	sp_itor_set_data,
-    (dict_iremove_func)	NULL,/* sp_itor_remove not implemented yet */
-    (dict_icompare_func)	NULL /* sp_itor_compare not implemented yet */
+    (dict_ifree_func)	    tree_iterator_free,
+    (dict_valid_func)	    tree_iterator_valid,
+    (dict_invalidate_func)  tree_iterator_invalidate,
+    (dict_next_func)	    tree_iterator_next,
+    (dict_prev_func)	    tree_iterator_prev,
+    (dict_nextn_func)	    tree_iterator_next_n,
+    (dict_prevn_func)	    tree_iterator_prev_n,
+    (dict_first_func)	    tree_iterator_first,
+    (dict_last_func)	    tree_iterator_last,
+    (dict_key_func)	    tree_iterator_key,
+    (dict_data_func)	    tree_iterator_data,
+    (dict_dataset_func)	    tree_iterator_set_data,
+    (dict_iremove_func)	    NULL,/* sp_itor_remove not implemented yet */
+    (dict_icompare_func)    NULL /* sp_itor_compare not implemented yet */
 };
 
-static void	rot_left(sp_tree *tree, sp_node *node);
-static void	rot_right(sp_tree *tree, sp_node *node);
 static sp_node*	node_new(void *key, void *datum);
-static sp_node*	node_next(sp_node *node);
-static sp_node*	node_prev(sp_node *node);
-static sp_node*	node_max(sp_node *node);
-static sp_node*	node_min(sp_node *node);
 static size_t	node_height(const sp_node *node);
 static size_t	node_mheight(const sp_node *node);
 static size_t	node_pathlen(const sp_node *node, size_t level);
@@ -230,29 +223,29 @@ sp_tree_clear(sp_tree *tree)
 	sp_node *p = (n)->parent; \
 	if (!p->parent) { \
 	    if (p->llink == (n))		/* zig right */ \
-		rot_right((t), p); \
+		tree_node_rot_right((t), p); \
 	    else				/* zig left */ \
-		rot_left((t), p); \
+		tree_node_rot_left((t), p); \
 	} else { \
 	    if (p->llink == (n)) { \
 		if (p->parent->llink == p) {	/* zig zig right */ \
-		    rot_right((t), p->parent); \
-		    rot_right((t), (n)->parent); \
+		    tree_node_rot_right((t), p->parent); \
+		    tree_node_rot_right((t), (n)->parent); \
 		} else {			/* zig zag right */ \
-		    rot_right((t), p); \
-		    rot_left((t), (n)->parent); \
+		    tree_node_rot_right((t), p); \
+		    tree_node_rot_left((t), (n)->parent); \
 		} \
 	    } else { \
 		if (p->parent->rlink == p) {	/* zig zig left */ \
-		    rot_left((t), p->parent); \
-		    rot_left((t), (n)->parent); \
+		    tree_node_rot_left((t), p->parent); \
+		    tree_node_rot_left((t), (n)->parent); \
 		} else {			/* zig zag left */ \
-		    rot_left((t), p); \
-		    rot_right((t), (n)->parent); \
+		    tree_node_rot_left((t), p); \
+		    tree_node_rot_right((t), (n)->parent); \
 		} \
 	    } \
 	} \
-    } while(0)
+    } while (0)
 
 int
 sp_tree_insert(sp_tree *tree, void *key, void *datum, bool overwrite)
@@ -439,14 +432,15 @@ sp_tree_traverse(sp_tree *tree, dict_visit_func visit)
     ASSERT(tree != NULL);
     ASSERT(visit != NULL);
 
-    if (!tree->root)
-	return 0;
-
     size_t count = 0;
-    for (sp_node *node = node_min(tree->root); node; node = node_next(node)) {
-	++count;
-	if (!visit(node->key, node->datum))
-	    break;
+    if (tree->root) {
+	sp_node *node = tree_node_min(tree->root);
+	do {
+	    ++count;
+	    if (!visit(node->key, node->datum))
+		break;
+	    node = tree_node_next(node);
+	} while (node);
     }
     return count;
 }
@@ -511,56 +505,6 @@ sp_tree_max(const sp_tree *tree)
     return node->key;
 }
 
-static void
-rot_left(sp_tree *tree, sp_node *node)
-{
-    ASSERT(tree != NULL);
-    ASSERT(node != NULL);
-    ASSERT(node->rlink != NULL);
-
-    sp_node *rlink = node->rlink;
-    node->rlink = rlink->llink;
-    if (rlink->llink)
-	rlink->llink->parent = node;
-    sp_node *parent = node->parent;
-    rlink->parent = parent;
-    if (parent) {
-	if (parent->llink == node)
-	    parent->llink = rlink;
-	else
-	    parent->rlink = rlink;
-    } else {
-	tree->root = rlink;
-    }
-    rlink->llink = node;
-    node->parent = rlink;
-}
-
-static void
-rot_right(sp_tree *tree, sp_node *node)
-{
-    ASSERT(tree != NULL);
-    ASSERT(node != NULL);
-    ASSERT(node->llink != NULL);
-
-    sp_node *llink = node->llink;
-    node->llink = llink->rlink;
-    if (llink->rlink)
-	llink->rlink->parent = node;
-    sp_node *parent = node->parent;
-    llink->parent = parent;
-    if (parent) {
-	if (parent->llink == node)
-	    parent->llink = llink;
-	else
-	    parent->rlink = llink;
-    } else {
-	tree->root = llink;
-    }
-    llink->rlink = node;
-    node->parent = llink;
-}
-
 static sp_node *
 node_new(void *key, void *datum)
 {
@@ -572,62 +516,6 @@ node_new(void *key, void *datum)
 	node->llink = NULL;
 	node->rlink = NULL;
     }
-    return node;
-}
-
-static sp_node *
-node_next(sp_node *node)
-{
-    ASSERT(node != NULL);
-
-    if (node->rlink) {
-	for (node = node->rlink; node->llink; node = node->llink)
-	    /* void */;
-	return node;
-    }
-    sp_node *temp = node->parent;
-    while (temp && temp->rlink == node) {
-	node = temp;
-	temp = temp->parent;
-    }
-    return temp;
-}
-
-static sp_node *
-node_prev(sp_node *node)
-{
-    ASSERT(node != NULL);
-
-    if (node->llink) {
-	for (node = node->llink; node->rlink; node = node->rlink)
-	    /* void */;
-	return node;
-    }
-    sp_node *temp = node->parent;
-    while (temp && temp->llink == node) {
-	node = temp;
-	temp = temp->parent;
-    }
-    return temp;
-}
-
-static sp_node *
-node_max(sp_node *node)
-{
-    ASSERT(node != NULL);
-
-    while (node->rlink)
-	node = node->rlink;
-    return node;
-}
-
-static sp_node *
-node_min(sp_node *node)
-{
-    ASSERT(node != NULL);
-
-    while (node->llink)
-	node = node->llink;
     return node;
 }
 
@@ -669,7 +557,7 @@ sp_itor_new(sp_tree *tree)
     sp_itor *itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->tree = tree;
-	sp_itor_first(itor);
+	itor->node = NULL;
     }
     return itor;
 }
@@ -695,7 +583,7 @@ sp_itor_free(sp_itor *itor)
 {
     ASSERT(itor != NULL);
 
-    FREE(itor);
+    tree_iterator_free(itor);
 }
 
 bool
@@ -703,7 +591,7 @@ sp_itor_valid(const sp_itor *itor)
 {
     ASSERT(itor != NULL);
 
-    return itor->node != NULL;
+    return tree_iterator_valid(itor);
 }
 
 void
@@ -711,7 +599,7 @@ sp_itor_invalidate(sp_itor *itor)
 {
     ASSERT(itor != NULL);
 
-    itor->node = NULL;
+    tree_iterator_invalidate(itor);
 }
 
 bool
@@ -719,11 +607,7 @@ sp_itor_next(sp_itor *itor)
 {
     ASSERT(itor != NULL);
 
-    if (!itor->node)
-	sp_itor_first(itor);
-    else
-	itor->node = node_next(itor->node);
-    return itor->node != NULL;
+    return tree_iterator_next(itor);
 }
 
 bool
@@ -731,11 +615,7 @@ sp_itor_prev(sp_itor *itor)
 {
     ASSERT(itor != NULL);
 
-    if (!itor->node)
-	sp_itor_last(itor);
-    else
-	itor->node = node_prev(itor->node);
-    return itor->node != NULL;
+    return tree_iterator_prev(itor);
 }
 
 bool
@@ -743,10 +623,7 @@ sp_itor_nextn(sp_itor *itor, size_t count)
 {
     ASSERT(itor != NULL);
 
-    while (count--)
-	if (!sp_itor_next(itor))
-	    return false;
-    return itor->node != NULL;
+    return tree_iterator_next_n(itor, count);
 }
 
 bool
@@ -754,10 +631,7 @@ sp_itor_prevn(sp_itor *itor, size_t count)
 {
     ASSERT(itor != NULL);
 
-    while (count--)
-	if (!sp_itor_prev(itor))
-	    return false;
-    return itor->node != NULL;
+    return tree_iterator_prev_n(itor, count);
 }
 
 bool
@@ -765,8 +639,7 @@ sp_itor_first(sp_itor *itor)
 {
     ASSERT(itor != NULL);
 
-    itor->node = itor->tree->root ? node_min(itor->tree->root) : NULL;
-    return itor->node != NULL;
+    return tree_iterator_first(itor);
 }
 
 bool
@@ -774,8 +647,7 @@ sp_itor_last(sp_itor *itor)
 {
     ASSERT(itor != NULL);
 
-    itor->node = itor->tree->root ? node_max(itor->tree->root) : NULL;
-    return itor->node != NULL;
+    return tree_iterator_last(itor);
 }
 
 bool
@@ -783,35 +655,23 @@ sp_itor_search(sp_itor *itor, const void *key)
 {
     ASSERT(itor != NULL);
 
-    for (sp_node *node = itor->tree->root; node;) {
-	int cmp = itor->tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    node = node->llink;
-	else if (cmp)
-	    node = node->rlink;
-	else {
-	    itor->node = node;
-	    return true;
-	}
-    }
-    itor->node = NULL;
-    return false;
+    return tree_iterator_search(itor, key);
 }
 
 const void *
 sp_itor_key(const sp_itor *itor)
 {
-	ASSERT(itor != NULL);
+    ASSERT(itor != NULL);
 
-	return itor->node ? itor->node->key : NULL;
+    return tree_iterator_key(itor);
 }
 
 void *
 sp_itor_data(sp_itor *itor)
 {
-	ASSERT(itor != NULL);
+    ASSERT(itor != NULL);
 
-	return itor->node ? itor->node->datum : NULL;
+    return tree_iterator_data(itor);
 }
 
 bool
@@ -819,11 +679,5 @@ sp_itor_set_data(sp_itor *itor, void *datum, void **old_datum)
 {
     ASSERT(itor != NULL);
 
-    if (!itor->node)
-	return false;
-
-    if (old_datum)
-	*old_datum = itor->node->datum;
-    itor->node->datum = datum;
-    return true;
+    return tree_iterator_set_data(itor, datum, old_datum);
 }

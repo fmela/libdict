@@ -31,18 +31,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-
 #include "rb_tree.h"
+
 #include "dict_private.h"
+#include "tree_common.h"
 
 typedef struct rb_node rb_node;
 struct rb_node {
-    void*		    key;
-    void*		    datum;
-    rb_node*		    parent;
-    rb_node*		    llink;
-    rb_node*		    rlink;
+    TREE_NODE_FIELDS(rb_node);
     unsigned		    color:1; /* TODO: store in unused low bits. */
 };
 
@@ -50,10 +46,7 @@ struct rb_node {
 #define RB_BLK		    1
 
 struct rb_tree {
-    rb_node*		    root;
-    size_t		    count;
-    dict_compare_func	    cmp_func;
-    dict_delete_func	    del_func;
+    TREE_FIELDS(rb_node);
 };
 
 struct rb_itor {
@@ -245,7 +238,7 @@ rb_tree_probe(rb_tree *tree, void *key, void **datum)
 }
 
 static void
-insert_fixup(rb_tree *tree, rb_node	*node)
+insert_fixup(rb_tree *tree, rb_node *node)
 {
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
@@ -683,7 +676,7 @@ rb_itor_new(rb_tree *tree)
     rb_itor *itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->tree = tree;
-	rb_itor_first(itor);
+	itor->node = RB_NULL;
     }
     return itor;
 }

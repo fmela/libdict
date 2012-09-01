@@ -31,12 +31,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-#include <stdint.h>
-#include <limits.h>
-
 #include "wb_tree.h"
+
+#include <limits.h>
 #include "dict_private.h"
+#include "tree_common.h"
 
 /* A tree BB[alpha] is said to be of weighted balance alpha if every node in
  * the tree has a balance p(n) such that alpha <= p(n) <= 1 - alpha. The
@@ -65,54 +64,46 @@
 
 typedef struct wb_node wb_node;
 struct wb_node {
-    void*			key;
-    void*			datum;
-    wb_node*			parent;
-    wb_node*			llink;
-    wb_node*			rlink;
+    TREE_NODE_FIELDS(wb_node);
     uint32_t			weight;
 };
 
 #define WEIGHT(n)	((n) ? (n)->weight : 1)
-#define REWEIGH(n)	(n)->weight = WEIGHT((n)->llink) + WEIGHT((n)->rlink)
 
 struct wb_tree {
-    wb_node*			root;
-    size_t			count;
-    dict_compare_func		cmp_func;
-    dict_delete_func		del_func;
+    TREE_FIELDS(wb_node);
 };
 
 struct wb_itor {
-	wb_tree*		tree;
-	wb_node*		node;
+    wb_tree*			tree;
+    wb_node*			node;
 };
 
 static dict_vtable wb_tree_vtable = {
     (dict_inew_func)		wb_dict_itor_new,
-    (dict_dfree_func)		wb_tree_free,
+    (dict_dfree_func)		tree_free,
     (dict_insert_func)		wb_tree_insert,
     (dict_probe_func)		wb_tree_probe,
-    (dict_search_func)		wb_tree_search,
+    (dict_search_func)		tree_search,
     (dict_remove_func)		wb_tree_remove,
-    (dict_clear_func)		wb_tree_clear,
-    (dict_traverse_func)	wb_tree_traverse,
+    (dict_clear_func)		tree_clear,
+    (dict_traverse_func)	tree_traverse,
     (dict_count_func)		wb_tree_count
 };
 
 static itor_vtable wb_tree_itor_vtable = {
-    (dict_ifree_func)		wb_itor_free,
-    (dict_valid_func)		wb_itor_valid,
-    (dict_invalidate_func)	wb_itor_invalidate,
-    (dict_next_func)		wb_itor_next,
-    (dict_prev_func)		wb_itor_prev,
-    (dict_nextn_func)		wb_itor_nextn,
-    (dict_prevn_func)		wb_itor_prevn,
-    (dict_first_func)		wb_itor_first,
-    (dict_last_func)		wb_itor_last,
-    (dict_key_func)		wb_itor_key,
-    (dict_data_func)		wb_itor_data,
-    (dict_dataset_func)		wb_itor_set_data,
+    (dict_ifree_func)		tree_iterator_free,
+    (dict_valid_func)		tree_iterator_valid,
+    (dict_invalidate_func)	tree_iterator_invalidate,
+    (dict_next_func)		tree_iterator_next,
+    (dict_prev_func)		tree_iterator_prev,
+    (dict_nextn_func)		tree_iterator_next_n,
+    (dict_prevn_func)		tree_iterator_prev_n,
+    (dict_first_func)		tree_iterator_first,
+    (dict_last_func)		tree_iterator_last,
+    (dict_key_func)		tree_iterator_key,
+    (dict_data_func)		tree_iterator_data,
+    (dict_dataset_func)		tree_iterator_set_data,
     (dict_iremove_func)		NULL,/* wb_itor_remove not implemented yet */
     (dict_icompare_func)	NULL /* wb_itor_compare not implemented yet */
 };
@@ -123,10 +114,6 @@ static size_t	node_height(const wb_node *node);
 static size_t	node_mheight(const wb_node *node);
 static size_t	node_pathlen(const wb_node *node, size_t level);
 static wb_node*	node_new(void *key, void *datum);
-static wb_node*	node_min(wb_node *node);
-static wb_node*	node_max(wb_node *node);
-static wb_node*	node_next(wb_node *node);
-static wb_node*	node_prev(wb_node *node);
 
 wb_tree *
 wb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
@@ -160,7 +147,7 @@ wb_tree_free(wb_tree *tree)
 {
     ASSERT(tree != NULL);
 
-    size_t count = wb_tree_clear(tree);
+    size_t count = tree_clear(tree);
     FREE(tree);
     return count;
 }
@@ -170,17 +157,7 @@ wb_tree_search(wb_tree *tree, const void *key)
 {
     ASSERT(tree != NULL);
 
-    wb_node *node = tree->root;
-    while (node) {
-	int cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    node = node->llink;
-	else if (cmp)
-	    node = node->rlink;
-	else
-	    return node->datum;
-    }
-    return NULL;
+    return tree_search(tree, key);
 }
 
 int
@@ -378,31 +355,7 @@ wb_tree_clear(wb_tree *tree)
 {
     ASSERT(tree != NULL);
 
-    const size_t count = tree->count;
-    wb_node *node = tree->root;
-    while (node) {
-	if (node->llink || node->rlink) {
-	    node = node->llink ? node->llink : node->rlink;
-	    continue;
-	}
-
-	if (tree->del_func)
-	    tree->del_func(node->key, node->datum);
-
-	wb_node *parent = node->parent;
-	FREE(node);
-	if (parent) {
-	    if (parent->llink == node)
-		parent->llink = NULL;
-	    else
-		parent->rlink = NULL;
-	}
-	node = parent;
-    }
-
-    tree->root = NULL;
-    tree->count = 0;
-    return count;
+    return tree_clear(tree);
 }
 
 const void *
@@ -440,12 +393,13 @@ wb_tree_traverse(wb_tree *tree, dict_visit_func visit)
 
     if (!tree->root)
 	return 0;
-
     size_t count = 0;
-    for (wb_node *node = node_min(tree->root); node; node = node_next(node)) {
+    wb_node *node = tree_node_min(tree->root);
+    while (node) {
 	++count;
 	if (!visit(node->key, node->datum))
 	    break;
+	node = tree_node_next(node);
     }
     return count;
 }
@@ -497,62 +451,6 @@ node_new(void *key, void *datum)
     return node;
 }
 
-static wb_node *
-node_min(wb_node *node)
-{
-    ASSERT(node != NULL);
-
-    while (node->llink)
-	node = node->llink;
-    return node;
-}
-
-static wb_node *
-node_max(wb_node *node)
-{
-    ASSERT(node != NULL);
-
-    while (node->rlink)
-	node = node->rlink;
-    return node;
-}
-
-static wb_node *
-node_next(wb_node *node)
-{
-    ASSERT(node != NULL);
-
-    if (node->rlink) {
-	for (node = node->rlink; node->llink; node = node->llink)
-	    /* void */;
-	return node;
-    }
-    wb_node *temp = node->parent;
-    while (temp && temp->rlink == node) {
-	node = temp;
-	temp = temp->parent;
-    }
-    return temp;
-}
-
-static wb_node *
-node_prev(wb_node *node)
-{
-    ASSERT(node != NULL);
-
-    if (node->llink) {
-	for (node = node->llink; node->rlink; node = node->rlink)
-	    /* void */;
-	return node;
-    }
-    wb_node *temp = node->parent;
-    while (temp && temp->llink == node) {
-	node = temp;
-	temp = temp->parent;
-    }
-    return temp;
-}
-
 static size_t
 node_height(const wb_node *node)
 {
@@ -597,8 +495,7 @@ node_pathlen(const wb_node *node, size_t level)
  *     / \       / \
  *    C   E     A   C
  *
- * Only the weights of B and RIGHT(B) need to be readjusted, because upper
- * level nodes' weights haven't changed.
+ * Only the weights of B and B's right child need to be readjusted.
  */
 static void
 rot_left(wb_tree *tree, wb_node *node)
@@ -608,24 +505,10 @@ rot_left(wb_tree *tree, wb_node *node)
     ASSERT(node->rlink != NULL);
 
     wb_node *rlink = node->rlink;
-    node->rlink = rlink->llink;
-    if (rlink->llink)
-	rlink->llink->parent = node;
-    wb_node *parent = node->parent;
-    rlink->parent = parent;
-    if (parent) {
-	if (parent->llink == node)
-	    parent->llink = rlink;
-	else
-	    parent->rlink = rlink;
-    } else {
-	tree->root = rlink;
-    }
-    rlink->llink = node;
-    node->parent = rlink;
+    tree_node_rot_left(tree, node);
 
-    REWEIGH(node);
-    REWEIGH(rlink);
+    node->weight = WEIGHT(node->llink) + WEIGHT(node->rlink);
+    rlink->weight = node->weight + WEIGHT(rlink->rlink);
 }
 
 /*
@@ -638,8 +521,7 @@ rot_left(wb_tree *tree, wb_node *node)
  *   / \             / \
  *  A   C           C   E
  *
- * Only the weights of D and LEFT(D) need to be readjusted, because upper level
- * nodes' weights haven't changed.
+ * Only the weights of D and D's left child need to be readjusted.
  */
 static void
 rot_right(wb_tree *tree, wb_node *node)
@@ -649,24 +531,10 @@ rot_right(wb_tree *tree, wb_node *node)
     ASSERT(node->llink != NULL);
 
     wb_node *llink = node->llink;
-    node->llink = llink->rlink;
-    if (llink->rlink)
-	llink->rlink->parent = node;
-    wb_node *parent = node->parent;
-    llink->parent = parent;
-    if (parent) {
-	if (parent->llink == node)
-	    parent->llink = llink;
-	else
-	    parent->rlink = llink;
-    } else {
-	tree->root = llink;
-    }
-    llink->rlink = node;
-    node->parent = llink;
+    tree_node_rot_right(tree, node);
 
-    REWEIGH(node);
-    REWEIGH(llink);
+    node->weight = WEIGHT(node->llink) + WEIGHT(node->rlink);
+    llink->weight = WEIGHT(llink->llink) + node->weight;
 }
 
 wb_itor *
@@ -677,7 +545,7 @@ wb_itor_new(wb_tree *tree)
     wb_itor *itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->tree = tree;
-	wb_itor_first(itor);
+	itor->node = NULL;
     }
     return itor;
 }
@@ -729,7 +597,7 @@ wb_itor_next(wb_itor *itor)
     if (!itor->node) {
 	return wb_itor_first(itor);
     } else {
-	itor->node = node_next(itor->node);
+	itor->node = tree_node_next(itor->node);
 	return itor->node != NULL;
     }
 }
@@ -742,7 +610,7 @@ wb_itor_prev(wb_itor *itor)
     if (!itor->node)
 	return wb_itor_last(itor);
     else {
-	itor->node = node_prev(itor->node);
+	itor->node = tree_node_prev(itor->node);
 	return itor->node != NULL;
     }
 }
@@ -775,7 +643,7 @@ wb_itor_first(wb_itor *itor)
     ASSERT(itor != NULL);
 
     if (itor->tree->root) {
-	itor->node = node_min(itor->tree->root);
+	itor->node = tree_node_min(itor->tree->root);
 	return true;
     } else {
 	itor->node = NULL;
@@ -789,7 +657,7 @@ wb_itor_last(wb_itor *itor)
     ASSERT(itor != NULL);
 
     if (itor->tree->root) {
-	itor->node = node_max(itor->tree->root);
+	itor->node = tree_node_max(itor->tree->root);
 	return true;
     } else {
 	itor->node = NULL;

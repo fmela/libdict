@@ -19,6 +19,11 @@ struct tree {
     TREE_FIELDS(tree_node);
 };
 
+typedef struct tree_iterator tree_iterator;
+struct tree_iterator {
+    TREE_ITERATOR_FIELDS(tree, tree_node);
+};
+
 void
 tree_node_rot_left(void *Tree, void *Node)
 {
@@ -81,10 +86,7 @@ tree_node_prev(void *Node)
     tree_node *node = Node;
     ASSERT(node != NULL);
     if (node->llink) {
-	node = node->llink;
-	while (node->rlink)
-	    node = node->rlink;
-	return node;
+	return tree_node_max(node->llink);
     }
     tree_node *parent = node->parent;
     while (parent && parent->llink == node) {
@@ -100,10 +102,7 @@ tree_node_next(void *Node)
     tree_node *node = Node;
     ASSERT(node != NULL);
     if (node->rlink) {
-	node = node->rlink;
-	while (node->llink)
-	    node = node->llink;
-	return node;
+	return tree_node_min(node->rlink);
     }
     tree_node *parent = node->parent;
     while (parent && parent->rlink == node) {
@@ -159,8 +158,8 @@ tree_min(const void *Tree)
     if (!tree->root)
 	return NULL;
     const tree_node *node = tree->root;
-    for (; node->llink; node = node->llink)
-	/* void */;
+    while (node->llink)
+	node = node->llink;
     return node->key;
 }
 
@@ -172,8 +171,8 @@ tree_max(const void *Tree)
     if (!tree->root)
 	return NULL;
     const tree_node *node = tree->root;
-    for (; node->rlink; node = node->rlink)
-	/* void */;
+    while (node->rlink)
+	node = node->rlink;
     return node->key;
 }
 
@@ -197,6 +196,22 @@ tree_traverse(void *Tree, dict_visit_func visit)
     return count;
 }
 
+static void
+tree_node_free(tree *tree, tree_node *node)
+{
+    ASSERT(node != NULL);
+
+    tree_node *llink = node->llink;
+    tree_node *rlink = node->rlink;
+    if (tree->del_func)
+	tree->del_func(node->key, node->datum);
+    FREE(node);
+    if (llink)
+	tree_node_free(tree, llink);
+    if (rlink)
+	tree_node_free(tree, rlink);
+}
+
 size_t
 tree_clear(void *Tree)
 {
@@ -204,55 +219,211 @@ tree_clear(void *Tree)
     ASSERT(tree != NULL);
 
     const size_t count = tree->count;
-    tree_node *node = tree->root;
-    while (node) {
-	if (node->llink || node->rlink) {
-	    node = node->llink ? node->llink : node->rlink;
-	    continue;
-	}
-
-	if (tree->del_func)
-	    tree->del_func(node->key, node->datum);
-
-	tree_node *parent = node->parent;
-	FREE(node);
-	if (parent) {
-	    if (parent->llink == node)
-		parent->llink = NULL;
-	    else
-		parent->rlink = NULL;
-	}
-	node = parent;
+    if (tree->root) {
+	tree_node_free(tree, tree->root);
+	tree->root = NULL;
+	tree->count = 0;
     }
-
-    tree->root = NULL;
-    tree->count = 0;
     return count;
 }
 
-void
-tree_node_height(void *Node, size_t *minheight, size_t *maxheight)
-{
-    ASSERT(minheight != NULL);
-    ASSERT(maxheight != NULL);
-    tree_node *node = Node;
-    if (node) {
-	size_t lmin, lmax, rmin, rmax;
-	tree_node_height(node->llink, &lmin, &lmax);
-	tree_node_height(node->rlink, &rmin, &rmax);
-	*minheight = MIN(lmin, rmin) + 1;
-	*maxheight = MAX(lmax, rmax) + 1;
-    } else {
-	*minheight = *maxheight = 0;
-    }
-}
-
-void
-tree_height(void *Tree, size_t *minheight, size_t *maxheight)
+size_t
+tree_free(void *Tree)
 {
     tree *tree = Tree;
     ASSERT(tree != NULL);
-    ASSERT(minheight != NULL);
-    ASSERT(maxheight != NULL);
-    tree_node_height(tree->root, minheight, maxheight);
+
+    const size_t count = tree_clear(tree);
+    FREE(tree);
+    return count;
+}
+
+static size_t
+node_min_leaf_depth(const tree_node* node, size_t depth)
+{
+    ASSERT(node != NULL);
+    if (node->llink && node->rlink) {
+	size_t l_height = node_min_leaf_depth(node->llink, depth + 1);
+	size_t r_height = node_min_leaf_depth(node->rlink, depth + 1);
+	return MIN(l_height, r_height);
+    } else if (node->llink) {
+	return node_min_leaf_depth(node->llink, depth + 1);
+    } else if (node->rlink) {
+	return node_min_leaf_depth(node->rlink, depth + 1);
+    } else {
+	return depth;
+    }
+}
+
+size_t
+tree_min_leaf_depth(const void *Tree)
+{
+    const tree *tree = Tree;
+    ASSERT(tree != NULL);
+    return tree->root ? node_min_leaf_depth(tree->root, 1) : 0;
+}
+
+static size_t
+node_max_leaf_depth(const tree_node* node, size_t depth)
+{
+    ASSERT(node != NULL);
+    if (node->llink && node->rlink) {
+	size_t l_height = node_max_leaf_depth(node->llink, depth + 1);
+	size_t r_height = node_max_leaf_depth(node->rlink, depth + 1);
+	return MAX(l_height, r_height);
+    } else if (node->llink) {
+	return node_max_leaf_depth(node->llink, depth + 1);
+    } else if (node->rlink) {
+	return node_max_leaf_depth(node->rlink, depth + 1);
+    } else {
+	return depth;
+    }
+}
+
+size_t
+tree_max_leaf_depth(const void *Tree)
+{
+    const tree *tree = Tree;
+    ASSERT(tree != NULL);
+    return tree->root ? node_max_leaf_depth(tree->root, 1) : 0;
+}
+
+bool
+tree_iterator_valid(const void *Iterator)
+{
+    const tree_iterator *iterator = Iterator;
+    ASSERT(iterator != NULL);
+    ASSERT(iterator->tree != NULL);
+    return iterator->node != NULL;
+}
+
+void
+tree_iterator_invalidate(void *Iterator)
+{
+    tree_iterator *iterator = Iterator;
+    ASSERT(iterator != NULL);
+    ASSERT(iterator->tree != NULL);
+    iterator->node = NULL;
+}
+
+void
+tree_iterator_free(void *Iterator)
+{
+    tree_iterator *iterator = Iterator;
+    ASSERT(iterator != NULL);
+    ASSERT(iterator->tree != NULL);
+    tree_iterator_invalidate(iterator);
+    FREE(iterator);
+}
+
+bool
+tree_iterator_next(void *Iterator)
+{
+    tree_iterator *iterator = Iterator;
+    ASSERT(iterator != NULL);
+    ASSERT(iterator->tree != NULL);
+    if (iterator->node)
+	return (iterator->node = tree_node_next(iterator->node)) != NULL;
+    return false;
+}
+
+bool
+tree_iterator_prev(void *Iterator)
+{
+    tree_iterator *iterator = Iterator;
+    ASSERT(iterator != NULL);
+    ASSERT(iterator->tree != NULL);
+    if (iterator->node)
+	return (iterator->node = tree_node_prev(iterator->node)) != NULL;
+    return false;
+}
+
+bool
+tree_iterator_next_n(void *Iterator, size_t count)
+{
+    tree_iterator *iterator = Iterator;
+    ASSERT(iterator != NULL);
+    ASSERT(iterator->tree != NULL);
+    while (iterator->node && count--)
+	iterator->node = tree_node_next(iterator->node);
+    return iterator->node != NULL;
+}
+
+bool
+tree_iterator_prev_n(void *Iterator, size_t count)
+{
+    tree_iterator *iterator = Iterator;
+    ASSERT(iterator != NULL);
+    ASSERT(iterator->tree != NULL);
+    while (iterator->node && count--)
+	iterator->node = tree_node_prev(iterator->node);
+    return iterator->node != NULL;
+}
+
+bool
+tree_iterator_first(void *Iterator)
+{
+    tree_iterator *iterator = Iterator;
+    ASSERT(iterator != NULL);
+    ASSERT(iterator->tree != NULL);
+    if (iterator->tree->root) {
+	iterator->node = tree_node_min(iterator->tree->root);
+	return true;
+    }
+    return false;
+}
+
+bool
+tree_iterator_last(void *Iterator)
+{
+    tree_iterator *iterator = Iterator;
+    ASSERT(iterator != NULL);
+    ASSERT(iterator->tree != NULL);
+    if (iterator->tree->root) {
+	iterator->node = tree_node_max(iterator->tree->root);
+	return true;
+    }
+    return false;
+}
+
+bool
+tree_iterator_search(void *Iterator, const void *key)
+{
+    tree_iterator *iterator = Iterator;
+    ASSERT(iterator != NULL);
+    ASSERT(iterator->tree != NULL);
+    return (iterator->node = tree_search(iterator->tree, key)) != NULL;
+}
+
+const void*
+tree_iterator_key(const void *Iterator)
+{
+    const tree_iterator *iterator = Iterator;
+    ASSERT(iterator != NULL);
+    ASSERT(iterator->tree != NULL);
+    return iterator->node ? iterator->node->key : NULL;
+}
+
+void*
+tree_iterator_data(void *Iterator)
+{
+    tree_iterator *iterator = Iterator;
+    ASSERT(iterator != NULL);
+    ASSERT(iterator->tree != NULL);
+    return iterator->node ? iterator->node->datum : NULL;
+}
+
+bool
+tree_iterator_set_data(void *Iterator, void *datum, void **old_datum)
+{
+    const tree_iterator *iterator = Iterator;
+    ASSERT(iterator != NULL);
+    ASSERT(iterator->tree != NULL);
+    if (iterator->node) {
+	if (old_datum)
+	    *old_datum = iterator->node->datum;
+	iterator->node->datum = datum;
+	return true;
+    }
+    return false;
 }
