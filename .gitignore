@@ -1,5 +1,4 @@
-words-random
-words-sorted
+words-*
 shuffle.pl
 bin/*
 algorithms/*.log
