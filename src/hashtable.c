@@ -86,7 +86,7 @@ static itor_vtable hashtable_itor_vtable = {
     (dict_last_func)	    hashtable_itor_last,
     (dict_key_func)	    hashtable_itor_key,
     (dict_data_func)	    hashtable_itor_data,
-    (dict_dataset_func)	    hashtable_itor_set_data,
+    (dict_set_data_func)    hashtable_itor_set_data,
     (dict_iremove_func)	    NULL,/* hashtable_itor_remove not implemented yet */
     (dict_icompare_func)    NULL/* hashtable_itor_compare not implemented yet */
 };

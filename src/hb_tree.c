@@ -75,7 +75,7 @@ static itor_vtable hb_tree_itor_vtable = {
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
     (dict_data_func)	    tree_iterator_data,
-    (dict_dataset_func)	    tree_iterator_set_data,
+    (dict_set_data_func)    tree_iterator_set_data,
     (dict_iremove_func)	    NULL,/* hb_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* hb_itor_compare not implemented yet */
 };

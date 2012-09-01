@@ -39,7 +39,7 @@
 typedef struct pr_node pr_node;
 struct pr_node {
     TREE_NODE_FIELDS(pr_node);
-    unsigned			weight;
+    unsigned		    weight;
 };
 
 #define WEIGHT(n)	((n) ? (n)->weight : 1)
@@ -49,37 +49,37 @@ struct pr_tree {
 };
 
 struct pr_itor {
-    pr_tree*			tree;
-    pr_node*			node;
+    pr_tree*		    tree;
+    pr_node*		    node;
 };
 
 static dict_vtable pr_tree_vtable = {
-    (dict_inew_func)		pr_dict_itor_new,
-    (dict_dfree_func)		tree_free,
-    (dict_insert_func)		pr_tree_insert,
-    (dict_probe_func)		pr_tree_probe,
-    (dict_search_func)		tree_search,
-    (dict_remove_func)		pr_tree_remove,
-    (dict_clear_func)		tree_clear,
-    (dict_traverse_func)	tree_traverse,
-    (dict_count_func)		tree_count,
+    (dict_inew_func)	    pr_dict_itor_new,
+    (dict_dfree_func)	    tree_free,
+    (dict_insert_func)	    pr_tree_insert,
+    (dict_probe_func)	    pr_tree_probe,
+    (dict_search_func)	    tree_search,
+    (dict_remove_func)	    pr_tree_remove,
+    (dict_clear_func)	    tree_clear,
+    (dict_traverse_func)    tree_traverse,
+    (dict_count_func)	    tree_count,
 };
 
 static itor_vtable pr_tree_itor_vtable = {
-    (dict_ifree_func)		tree_iterator_free,
-    (dict_valid_func)		tree_iterator_valid,
-    (dict_invalidate_func)	tree_iterator_invalidate,
-    (dict_next_func)		tree_iterator_next,
-    (dict_prev_func)		tree_iterator_prev,
-    (dict_nextn_func)		tree_iterator_next_n,
-    (dict_prevn_func)		tree_iterator_prev_n,
-    (dict_first_func)		tree_iterator_first,
-    (dict_last_func)		tree_iterator_last,
-    (dict_key_func)		tree_iterator_key,
-    (dict_data_func)		tree_iterator_data,
-    (dict_dataset_func)		tree_iterator_set_data,
-    (dict_iremove_func)		NULL,/* pr_itor_remove not implemented yet */
-    (dict_icompare_func)	NULL /* pr_itor_compare not implemented yet */
+    (dict_ifree_func)	    tree_iterator_free,
+    (dict_valid_func)	    tree_iterator_valid,
+    (dict_invalidate_func)  tree_iterator_invalidate,
+    (dict_next_func)	    tree_iterator_next,
+    (dict_prev_func)	    tree_iterator_prev,
+    (dict_nextn_func)	    tree_iterator_next_n,
+    (dict_prevn_func)	    tree_iterator_prev_n,
+    (dict_first_func)	    tree_iterator_first,
+    (dict_last_func)	    tree_iterator_last,
+    (dict_key_func)	    tree_iterator_key,
+    (dict_data_func)	    tree_iterator_data,
+    (dict_set_data_func)    tree_iterator_set_data,
+    (dict_iremove_func)	    NULL,/* pr_itor_remove not implemented yet */
+    (dict_icompare_func)    NULL /* pr_itor_compare not implemented yet */
 };
 
 static void	fixup(pr_tree *tree, pr_node *node);
