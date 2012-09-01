@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdarg.h>
-#include <assert.h>
 #include <errno.h>
 #include <time.h>
 
@@ -17,6 +16,7 @@
 #include <sys/resource.h>
 
 #include "dict.h"
+#include "dict_private.h"
 
 const char appname[] = "test";
 
@@ -154,11 +154,10 @@ main(int argc, char **argv)
 
     timer_start(&start);
     n = 0;
-    assert(dict_itor_first(itor));
+    ASSERT(dict_itor_first(itor));
     do {
-	assert(dict_itor_valid(itor));
-	dict_itor_key(itor);
-	dict_itor_data(itor);
+	ASSERT(dict_itor_valid(itor));
+	ASSERT(dict_itor_key(itor) == dict_itor_data(itor));
 	++n;
     } while (dict_itor_next(itor));
     timer_end(&start, &end, &total);
@@ -169,11 +168,10 @@ main(int argc, char **argv)
 
     timer_start(&start);
     n = 0;
-    assert(dict_itor_last(itor));
+    ASSERT(dict_itor_last(itor));
     do {
-	assert(dict_itor_valid(itor));
-	dict_itor_key(itor);
-	dict_itor_data(itor);
+	ASSERT(dict_itor_valid(itor));
+	ASSERT(dict_itor_key(itor) == dict_itor_data(itor));
 	++n;
     } while (dict_itor_prev(itor));
     timer_end(&start, &end, &total);
@@ -333,7 +331,7 @@ my_ptrcmp(const void *k1, const void *k2)
 void
 key_str_free(void *key, void *datum)
 {
-    assert(key == datum);
+    ASSERT(key == datum);
     free(key);
 }
 
