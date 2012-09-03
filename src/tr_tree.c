@@ -76,7 +76,6 @@ static dict_vtable tr_tree_vtable = {
     (dict_inew_func)	    tr_dict_itor_new,
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    tr_tree_insert,
-    (dict_probe_func)	    tr_tree_probe,
     (dict_search_func)	    tree_search,
     (dict_remove_func)	    tr_tree_remove,
     (dict_clear_func)	    tree_clear,
@@ -104,7 +103,7 @@ static itor_vtable tr_tree_itor_vtable = {
 static size_t	node_height(const tr_node *node);
 static size_t	node_mheight(const tr_node *node);
 static size_t	node_pathlen(const tr_node *node, size_t level);
-static tr_node*	node_new(void *key, void *datum);
+static tr_node*	node_new(void *key);
 
 tr_tree *
 tr_tree_new(dict_compare_func cmp_func, dict_prio_func prio_func,
@@ -155,8 +154,8 @@ tr_tree_clear(tr_tree *tree)
     return tree_clear(tree);
 }
 
-int
-tr_tree_insert(tr_tree *tree, void *key, void *datum, bool overwrite)
+bool
+tr_tree_insert(tr_tree *tree, void *key, void ***datum_location)
 {
     ASSERT(tree != NULL);
 
@@ -169,95 +168,42 @@ tr_tree_insert(tr_tree *tree, void *key, void *datum, bool overwrite)
 	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
-	    if (!overwrite)
-		return 1;
-	    if (tree->del_func)
-		tree->del_func(node->key, node->datum);
-	    node->key = key;
-	    node->datum = datum;
-	    return 0;
+	    if (datum_location)
+		*datum_location = &node->datum;
+	    return false;
 	}
     }
 
-    if (!(node = node_new(key, datum)))
-	return -1;
-    if (tree->prio_func)
-	node->prio = tree->prio_func(key, datum);
-    else
-	node->prio = tree->randgen = tree->randgen * RGEN_A + RGEN_M;
+    if (!(node = node_new(key))) {
+	if (datum_location)
+	    *datum_location = NULL;
+	return false;
+    }
+    if (datum_location)
+	*datum_location = &node->datum;
+    node->prio = tree->prio_func ? tree->prio_func(key) :
+	(tree->randgen = tree->randgen * RGEN_A + RGEN_M);
 
     if (!(node->parent = parent)) {
 	ASSERT(tree->count == 0);
 	tree->root = node;
-	tree->count = 1;
-	return 0;
-    }
-    if (cmp < 0)
-	parent->llink = node;
-    else
-	parent->rlink = node;
-
-    while (parent->prio < node->prio) {
-	if (parent->llink == node)
-	    tree_node_rot_right(tree, parent);
-	else
-	    tree_node_rot_left(tree, parent);
-	if (!(parent = node->parent))
-	    break;
-    }
-
-    ++tree->count;
-    return 0;
-}
-
-int
-tr_tree_probe(tr_tree *tree, void *key, void **datum)
-{
-    ASSERT(tree != NULL);
-
-    int cmp = 0;
-    tr_node *node = tree->root, *parent = NULL;
-    while (node) {
-	cmp = tree->cmp_func(key, node->key);
+    } else {
 	if (cmp < 0)
-	    parent = node, node = node->llink;
-	else if (cmp)
-	    parent = node, node = node->rlink;
-	else {
-	    *datum = node->datum;
-	    return 0;
+	    parent->llink = node;
+	else
+	    parent->rlink = node;
+
+	while (parent->prio < node->prio) {
+	    if (parent->llink == node)
+		tree_node_rot_right(tree, parent);
+	    else
+		tree_node_rot_left(tree, parent);
+	    if (!(parent = node->parent))
+		break;
 	}
     }
-
-    if (!(node = node_new(key, *datum)))
-	return -1;
-    if (tree->prio_func)
-	node->prio = tree->prio_func(key, *datum);
-    else
-	node->prio = tree->randgen = tree->randgen * RGEN_A + RGEN_M;
-
-    if (!(node->parent = parent)) {
-	ASSERT(tree->count == 0);
-	tree->root = node;
-	tree->count = 1;
-	return 0;
-    }
-    if (cmp < 0)
-	parent->llink = node;
-    else
-	parent->rlink = node;
-
-    while (parent->prio > node->prio) {
-	if (parent->llink == node)
-	    tree_node_rot_right(tree, parent);
-	else
-	    tree_node_rot_left(tree, parent);
-	if (!(parent = node->parent))
-	    break;
-    }
-
     ++tree->count;
-    return 0;
+    return true;
 }
 
 bool
@@ -370,12 +316,12 @@ tr_tree_max(const tr_tree *tree)
 }
 
 static tr_node *
-node_new(void *key, void *datum)
+node_new(void *key)
 {
     tr_node *node = MALLOC(sizeof(*node));
     if (node) {
 	node->key = key;
-	node->datum = datum;
+	node->datum = NULL;
 	node->parent = NULL;
 	node->llink = NULL;
 	node->rlink = NULL;

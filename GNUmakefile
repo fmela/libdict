@@ -24,7 +24,7 @@ SHARED_LIB := $(OUTPUT_DIR)/$(SHARED_LIB_NAME)
 
 # Plug in your favorite compiler here:
 CC := $(shell which clang || which gcc)
-CFLAGS = -Wall -Wextra -Wshadow -W -std=c99 -O2 -I$(HEADER_DIR) -I$(SOURCE_DIR)
+CFLAGS = -Wall -Wextra -Wshadow -W -std=c99 -O2 -DNDEBUG -I$(HEADER_DIR) -I$(SOURCE_DIR)
 LDFLAGS =
 
 AR = ar

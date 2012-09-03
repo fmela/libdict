@@ -19,7 +19,7 @@
 #  define ASSERT(expr) \
     do { \
 	if (!(expr)) { \
-	    fprintf(stderr, "\n%s:%d (%s) assertion failed: `%s'\n", \
+	    fprintf(stderr, "\n%s:%d (%s) assertion failed: %s\n", \
 		    __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
 	    abort(); \
 	} \
@@ -28,7 +28,7 @@
 #  define ASSERT(expr) \
     do { \
 	if (!(expr)) { \
-	    fprintf(stderr, "\n%s:%d assertion failed: `%s'\n", \
+	    fprintf(stderr, "\n%s:%d assertion failed: %s\n", \
 		    __FILE__, __LINE__, #expr); \
 	    abort(); \
 	} \

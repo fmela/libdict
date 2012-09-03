@@ -77,7 +77,6 @@ static dict_vtable sp_tree_vtable = {
     (dict_inew_func)	    sp_dict_itor_new,
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    sp_tree_insert,
-    (dict_probe_func)	    sp_tree_probe,
     (dict_search_func)	    sp_tree_search,
     (dict_remove_func)	    sp_tree_remove,
     (dict_clear_func)	    tree_clear,
@@ -102,7 +101,7 @@ static itor_vtable sp_tree_itor_vtable = {
     (dict_icompare_func)    NULL /* sp_itor_compare not implemented yet */
 };
 
-static sp_node*	node_new(void *key, void *datum);
+static sp_node*	node_new(void *key);
 static size_t	node_height(const sp_node *node);
 static size_t	node_mheight(const sp_node *node);
 static size_t	node_pathlen(const sp_node *node, size_t level);
@@ -247,62 +246,13 @@ sp_tree_clear(sp_tree *tree)
 	} \
     } while (0)
 
-int
-sp_tree_insert(sp_tree *tree, void *key, void *datum, bool overwrite)
+bool
+sp_tree_insert(sp_tree *tree, void *key, void ***datum_location)
 {
-    int cmp = 0; /* shut up GCC */
-    sp_node *node, *parent = NULL;
-
     ASSERT(tree != NULL);
 
-    node = tree->root;
-    while (node) {
-	cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    parent = node, node = node->llink;
-	else if (cmp)
-	    parent = node, node = node->rlink;
-	else {
-	    if (!overwrite)
-		return 1;
-	    if (tree->del_func)
-		tree->del_func(node->key, node->datum);
-	    node->key = key;
-	    node->datum = datum;
-	    return 0;
-	}
-    }
-
-    if (!(node = node_new(key, datum)))
-	return -1;
-
-    if (!(node->parent = parent)) {
-	ASSERT(tree->count == 0);
-	tree->root = node;
-	tree->count = 1;
-	return 0;
-    }
-    if (cmp < 0)
-	parent->llink = node;
-    else
-	parent->rlink = node;
-    tree->count++;
-
-    while (node->parent)
-	SPLAY(tree, node);
-
-    return 0;
-}
-
-int
-sp_tree_probe(sp_tree *tree, void *key, void **datum)
-{
     int cmp = 0;
-    sp_node *node, *parent = NULL;
-
-    ASSERT(tree != NULL);
-
-    node = tree->root;
+    sp_node *node = tree->root, *parent = NULL;
     while (node) {
 	cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
@@ -310,32 +260,34 @@ sp_tree_probe(sp_tree *tree, void *key, void **datum)
 	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
-	    while (node->parent)
-		SPLAY(tree, node);
-	    *datum = node->datum;
-	    return 0;
+	    if (datum_location)
+		*datum_location = &node->datum;
+	    return false;
 	}
     }
 
-    if (!(node = node_new(key, *datum)))
-	return -1;
-
+    if (!(node = node_new(key))) {
+	if (datum_location)
+	    *datum_location = NULL;
+	return false;
+    }
+    if (datum_location)
+	*datum_location = &node->datum;
     if (!(node->parent = parent)) {
 	ASSERT(tree->count == 0);
+	ASSERT(tree->root == NULL);
 	tree->root = node;
 	tree->count = 1;
-	return 1;
+    } else {
+	if (cmp < 0)
+	    parent->llink = node;
+	else
+	    parent->rlink = node;
+	while (node->parent)
+	    SPLAY(tree, node);
+	++tree->count;
     }
-    if (cmp < 0)
-	parent->llink = node;
-    else
-	parent->rlink = node;
-    tree->count++;
-
-    while (node->parent)
-	SPLAY(tree, node);
-
-    return 1;
+    return true;
 }
 
 void *
@@ -506,12 +458,12 @@ sp_tree_max(const sp_tree *tree)
 }
 
 static sp_node *
-node_new(void *key, void *datum)
+node_new(void *key)
 {
     sp_node *node = MALLOC(sizeof(*node));
     if (node) {
 	node->key = key;
-	node->datum = datum;
+	node->datum = NULL;
 	node->parent = NULL;
 	node->llink = NULL;
 	node->rlink = NULL;

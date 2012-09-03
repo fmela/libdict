@@ -83,6 +83,17 @@ dict_str_cmp(const void *k1, const void *k2)
 	return (p > q) - (p < q);
 }
 
+unsigned
+dict_str_hash(const void *k)
+{
+    /* FNV 1-a string hash. */
+    unsigned hash = 2166136261U;
+    for (const uint8_t *ptr = k; *ptr;) {
+	hash = (hash ^ *ptr++) * 16777619U;
+    }
+    return hash;
+}
+
 void
 dict_free(dict *dct)
 {

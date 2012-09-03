@@ -43,9 +43,8 @@ hb_tree*	hb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
 dict*		hb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
 size_t		hb_tree_free(hb_tree *tree);
 
-int		hb_tree_insert(hb_tree *tree, void *key, void *datum,
-			       bool overwrite);
-int		hb_tree_probe(hb_tree *tree, void *key, void **datum);
+bool		hb_tree_insert(hb_tree *tree, void *key,
+			       void ***datum_location);
 void*		hb_tree_search(hb_tree *tree, const void *key);
 bool		hb_tree_remove(hb_tree *tree, const void *key);
 size_t		hb_tree_clear(hb_tree *tree);

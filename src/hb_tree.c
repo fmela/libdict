@@ -55,7 +55,6 @@ static dict_vtable hb_tree_vtable = {
     (dict_inew_func)	    hb_dict_itor_new,
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    hb_tree_insert,
-    (dict_probe_func)	    hb_tree_probe,
     (dict_search_func)	    tree_search,
     (dict_remove_func)	    hb_tree_remove,
     (dict_clear_func)	    tree_clear,
@@ -85,7 +84,7 @@ static bool	rot_right(hb_tree *restrict tree, hb_node *restrict node);
 static size_t	node_height(const hb_node *node);
 static size_t	node_mheight(const hb_node *node);
 static size_t	node_pathlen(const hb_node *node, size_t level);
-static hb_node*	node_new(void *key, void *datum);
+static hb_node*	node_new(void *key);
 
 hb_tree *
 hb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
@@ -171,8 +170,8 @@ hb_tree_search(hb_tree *tree, const void *key)
     return tree_search(tree, key);
 }
 
-int
-hb_tree_insert(hb_tree *tree, void *key, void *datum, bool overwrite)
+bool
+hb_tree_insert(hb_tree *tree, void *key, void ***datum_location)
 {
     ASSERT(tree != NULL);
 
@@ -185,111 +184,53 @@ hb_tree_insert(hb_tree *tree, void *key, void *datum, bool overwrite)
 	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
-	    if (!overwrite)
-		return 1;
-	    if (tree->del_func)
-		tree->del_func(node->key, node->datum);
-	    node->key = key;
-	    node->datum = datum;
-	    return 0;
+	    if (datum_location)
+		*datum_location = &node->datum;
+	    return false;
 	}
 	if (parent->bal)
 	    q = parent;
     }
 
-    if (!(node = node_new(key, datum)))
-	return -1;
+    if (!(node = node_new(key))) {
+	if (datum_location)
+	    *datum_location = NULL;
+	return false;
+    }
+    if (datum_location)
+	*datum_location = &node->datum;
     if (!(node->parent = parent)) {
 	tree->root = node;
 	ASSERT(tree->count == 0);
-	tree->count = 1;
-	return 0;
-    }
-    if (cmp < 0)
-	parent->llink = node;
-    else
-	parent->rlink = node;
-
-    while (parent != q) {
-	parent->bal = (parent->rlink == node) * 2 - 1;
-	node = parent;
-	parent = node->parent;
-    }
-    if (q) {
-	if (q->llink == node) {
-	    if (--q->bal == -2) {
-		if (q->llink->bal > 0)
-		    rot_left(tree, q->llink);
-		rot_right(tree, q);
-	    }
-	} else {
-	    if (++q->bal == +2) {
-		if (q->rlink->bal < 0)
-		    rot_right(tree, q->rlink);
-		rot_left(tree, q);
-	    }
-	}
-    }
-    tree->count++;
-    return 0;
-}
-
-int
-hb_tree_probe(hb_tree *tree, void *key, void **datum)
-{
-    ASSERT(tree != NULL);
-
-    int cmp = 0;
-    hb_node *node = tree->root, *parent = NULL, *q = NULL;
-    while (node) {
-	cmp = tree->cmp_func(key, node->key);
+    } else {
 	if (cmp < 0)
-	    parent = node, node = node->llink;
-	else if (cmp)
-	    parent = node, node = node->rlink;
-	else {
-	    *datum = node->datum;
-	    return 0;
+	    parent->llink = node;
+	else
+	    parent->rlink = node;
+
+	while (parent != q) {
+	    parent->bal = (parent->rlink == node) * 2 - 1;
+	    node = parent;
+	    parent = node->parent;
 	}
-	if (parent->bal)
-	    q = parent;
-    }
-
-    if (!(node = node_new(key, *datum)))
-	return -1;
-    if (!(node->parent = parent)) {
-	tree->root = node;
-	ASSERT(tree->count == 0);
-	tree->count = 1;
-	return 1;
-    }
-    if (cmp < 0)
-	parent->llink = node;
-    else
-	parent->rlink = node;
-
-    while (parent != q) {
-	parent->bal = (parent->rlink == node) * 2 - 1;
-	node = parent;
-	parent = parent->parent;
-    }
-    if (q) {
-	if (q->llink == node) {
-	    if (--q->bal == -2) {
-		if (q->llink->bal > 0)
-		    rot_left(tree, q->llink);
-		rot_right(tree, q);
-	    }
-	} else {
-	    if (++q->bal == +2) {
-		if (q->rlink->bal < 0)
-		    rot_right(tree, q->rlink);
-		rot_left(tree, q);
+	if (q) {
+	    if (q->llink == node) {
+		if (--q->bal == -2) {
+		    if (q->llink->bal > 0)
+			rot_left(tree, q->llink);
+		    rot_right(tree, q);
+		}
+	    } else {
+		if (++q->bal == +2) {
+		    if (q->rlink->bal < 0)
+			rot_right(tree, q->rlink);
+		    rot_left(tree, q);
+		}
 	    }
 	}
     }
-    tree->count++;
-    return 1;
+    ++tree->count;
+    return true;
 }
 
 bool
@@ -458,12 +399,12 @@ hb_tree_pathlen(const hb_tree *tree)
 }
 
 static hb_node *
-node_new(void *key, void *datum)
+node_new(void *key)
 {
     hb_node *node = MALLOC(sizeof(*node));
     if (node) {
 	node->key = key;
-	node->datum = datum;
+	node->datum = NULL;
 	node->parent = NULL;
 	node->llink = NULL;
 	node->rlink = NULL;

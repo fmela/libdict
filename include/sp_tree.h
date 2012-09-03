@@ -45,9 +45,8 @@ dict*		sp_dict_new(dict_compare_func cmp_func,
 			    dict_delete_func del_func);
 size_t		sp_tree_free(sp_tree *tree);
 
-int		sp_tree_insert(sp_tree *tree, void *key, void *datum,
-			       bool overwrite);
-int		sp_tree_probe(sp_tree *tree, void *key, void **datum);
+bool		sp_tree_insert(sp_tree *tree, void *key,
+			       void ***datum_location);
 void*		sp_tree_search(sp_tree *tree, const void *key);
 bool		sp_tree_remove(sp_tree *tree, const void *key);
 size_t		sp_tree_clear(sp_tree *tree);

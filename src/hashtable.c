@@ -66,7 +66,6 @@ static dict_vtable hashtable_vtable = {
     (dict_inew_func)	    hashtable_dict_itor_new,
     (dict_dfree_func)	    hashtable_free,
     (dict_insert_func)	    hashtable_insert,
-    (dict_probe_func)	    hashtable_probe,
     (dict_search_func)	    hashtable_search,
     (dict_remove_func)	    hashtable_remove,
     (dict_clear_func)	    hashtable_clear,
@@ -145,8 +144,8 @@ hashtable_free(hashtable *table)
     return count;
 }
 
-int
-hashtable_insert(hashtable *table, void *key, void *datum, bool overwrite)
+bool
+hashtable_insert(hashtable *table, void *key, void ***datum_location)
 {
     ASSERT(table != NULL);
 
@@ -155,24 +154,25 @@ hashtable_insert(hashtable *table, void *key, void *datum, bool overwrite)
     hash_node *node = table->table[mhash], *prev = NULL;
     while (node && hash >= node->hash) {
 	if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
-	    if (!overwrite)
-		return 1;
-	    if (table->del_func)
-		table->del_func(node->key, node->datum);
-	    node->key = key;
-	    node->datum = datum;
-	    return 0;
+	    if (datum_location)
+		*datum_location = &node->datum;
+	    return false;
 	}
 	prev = node;
 	node = node->next;
     }
 
     hash_node *add = MALLOC(sizeof(*add));
-    if (!add)
-	return -1;
+    if (!add) {
+	if (datum_location)
+	    *datum_location = NULL;
+	return false;
+    }
 
     add->key = key;
-    add->datum = datum;
+    add->datum = NULL;
+    if (datum_location)
+	*datum_location = &add->datum;
     add->hash = hash;
     add->prev = prev;
     if (prev)
@@ -184,45 +184,7 @@ hashtable_insert(hashtable *table, void *key, void *datum, bool overwrite)
 	node->prev = add;
 
     table->count++;
-    return 0;
-}
-
-int
-hashtable_probe(hashtable *table, void *key, void **datum)
-{
-    ASSERT(table != NULL);
-    ASSERT(datum != NULL);
-
-    const unsigned hash = table->hash_func(key);
-    const unsigned mhash = hash % table->size;
-    hash_node *node = table->table[mhash], *prev = NULL;
-    while (node && hash >= node->hash) {
-	if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
-	    *datum = node->datum;
-	    return 0;
-	}
-	prev = node;
-	node = node->next;
-    }
-
-    hash_node *add = MALLOC(sizeof(*add));
-    if (!add)
-	return -1;
-
-    add->key = key;
-    add->datum = *datum;
-    add->hash = hash;
-    add->prev = prev;
-    if (prev)
-	prev->next = add;
-    else
-	table->table[mhash] = add;
-    add->next = node;
-    if (node)
-	node->prev = add;
-
-    table->count++;
-    return 1;
+    return true;
 }
 
 void *

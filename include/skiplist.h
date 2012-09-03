@@ -47,9 +47,8 @@ dict*		skiplist_dict_new(dict_compare_func cmp_func,
 				  unsigned max_link);
 size_t		skiplist_free(skiplist *list);
 
-int		skiplist_insert(skiplist *list, void *key, void *datum,
-				bool overwrite);
-int		skiplist_probe(skiplist *list, void *key, void **datum);
+bool		skiplist_insert(skiplist *list, void *key,
+				void ***datum_location);
 void*		skiplist_search(skiplist *list, const void *key);
 bool		skiplist_remove(skiplist *list, const void *key);
 size_t		skiplist_clear(skiplist *list);

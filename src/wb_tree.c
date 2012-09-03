@@ -83,7 +83,6 @@ static dict_vtable wb_tree_vtable = {
     (dict_inew_func)		wb_dict_itor_new,
     (dict_dfree_func)		tree_free,
     (dict_insert_func)		wb_tree_insert,
-    (dict_probe_func)		wb_tree_probe,
     (dict_search_func)		tree_search,
     (dict_remove_func)		wb_tree_remove,
     (dict_clear_func)		tree_clear,
@@ -113,7 +112,7 @@ static void	rot_right(wb_tree *tree, wb_node *node);
 static size_t	node_height(const wb_node *node);
 static size_t	node_mheight(const wb_node *node);
 static size_t	node_pathlen(const wb_node *node, size_t level);
-static wb_node*	node_new(void *key, void *datum);
+static wb_node*	node_new(void *key);
 
 wb_tree *
 wb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
@@ -160,8 +159,8 @@ wb_tree_search(wb_tree *tree, const void *key)
     return tree_search(tree, key);
 }
 
-int
-wb_tree_insert(wb_tree *tree, void *key, void *datum, bool overwrite)
+bool
+wb_tree_insert(wb_tree *tree, void *key, void ***datum_location)
 {
     int cmp = 0;
 
@@ -175,115 +174,55 @@ wb_tree_insert(wb_tree *tree, void *key, void *datum, bool overwrite)
 	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
-	    if (!overwrite)
-		return 1;
-	    if (tree->del_func)
-		tree->del_func(node->key, node->datum);
-	    node->key = key;
-	    node->datum = datum;
-	    return 0;
+	    if (datum_location)
+		*datum_location = &node->datum;
+	    return false;
 	}
     }
 
-    if (!(node = node_new(key, datum)))
-	return -1;
+    if (!(node = node_new(key))) {
+	if (datum_location)
+	    *datum_location = NULL;
+	return false;
+    }
+    if (datum_location)
+	*datum_location = &node->datum;
     if (!(node->parent = parent)) {
 	ASSERT(tree->count == 0);
 	tree->root = node;
-	tree->count = 1;
-	return 0;
-    }
-    if (cmp < 0)
-	parent->llink = node;
-    else
-	parent->rlink = node;
-
-    while ((node = parent) != NULL) {
-	parent = node->parent;
-	++node->weight;
-	float wbal = WEIGHT(node->llink) / (float)node->weight;
-	if (wbal < ALPHA_0) {
-	    ASSERT(node->rlink != NULL);
-	    wbal = WEIGHT(node->rlink->llink) / (float)node->rlink->weight;
-	    if (wbal < ALPHA_3) {		/* LL */
-		rot_left(tree, node);
-	    } else {				/* RL */
-		rot_right(tree, node->rlink);
-		rot_left(tree, node);
-	    }
-	} else if (wbal > ALPHA_1) {
-	    ASSERT(node->llink != NULL);
-	    wbal = WEIGHT(node->llink->llink) / (float)node->llink->weight;
-	    if (wbal > ALPHA_2) {		/* RR */
-		rot_right(tree, node);
-	    } else {				/* LR */
-		rot_left(tree, node->llink);
-		rot_right(tree, node);
-	    }
-	}
-    }
-    ++tree->count;
-    return 0;
-}
-
-int
-wb_tree_probe(wb_tree *tree, void *key, void **datum)
-{
-    ASSERT(tree != NULL);
-
-    int cmp = 0;
-    wb_node *node = tree->root, *parent = NULL;
-    while (node) {
-	cmp = tree->cmp_func(key, node->key);
+    } else {
 	if (cmp < 0)
-	    parent = node, node = node->llink;
-	else if (cmp)
-	    parent = node, node = node->rlink;
-	else {
-	    *datum = node->datum;
-	    return 0;
-	}
-    }
+	    parent->llink = node;
+	else
+	    parent->rlink = node;
 
-    if (!(node = node_new(key, *datum)))
-	return -1;
-    if (!(node->parent = parent)) {
-	ASSERT(tree->count == 0);
-	tree->root = node;
-	tree->count = 1;
-	return 0;
-    }
-    if (cmp < 0)
-	parent->llink = node;
-    else
-	parent->rlink = node;
-
-    while ((node = parent) != NULL) {
-	parent = node->parent;
-	++node->weight;
-	float wbal = WEIGHT(node->llink) / (float)node->weight;
-	if (wbal < ALPHA_0) {
-	    ASSERT(node->rlink != NULL);
-	    wbal = WEIGHT(node->rlink->llink) / (float)node->rlink->weight;
-	    if (wbal < ALPHA_3) {
-		rot_left(tree, node);
-	    } else {
-		rot_right(tree, node->rlink);
-		rot_left(tree, node);
-	    }
-	} else if (wbal > ALPHA_1) {
-	    ASSERT(node->llink != NULL);
-	    wbal = WEIGHT(node->llink->llink) / (float)node->llink->weight;
-	    if (wbal > ALPHA_2) {
-		rot_right(tree, node);
-	    } else {
-		rot_left(tree, node->llink);
-		rot_right(tree, node);
+	while ((node = parent) != NULL) {
+	    parent = node->parent;
+	    ++node->weight;
+	    float wbal = WEIGHT(node->llink) / (float)node->weight;
+	    if (wbal < ALPHA_0) {
+		ASSERT(node->rlink != NULL);
+		wbal = WEIGHT(node->rlink->llink) / (float)node->rlink->weight;
+		if (wbal < ALPHA_3) {		    /* LL */
+		    rot_left(tree, node);
+		} else {			    /* RL */
+		    rot_right(tree, node->rlink);
+		    rot_left(tree, node);
+		}
+	    } else if (wbal > ALPHA_1) {
+		ASSERT(node->llink != NULL);
+		wbal = WEIGHT(node->llink->llink) / (float)node->llink->weight;
+		if (wbal > ALPHA_2) {		    /* RR */
+		    rot_right(tree, node);
+		} else {			    /* LR */
+		    rot_left(tree, node->llink);
+		    rot_right(tree, node);
+		}
 	    }
 	}
     }
     ++tree->count;
-    return 1;
+    return true;
 }
 
 bool
@@ -437,12 +376,12 @@ wb_tree_pathlen(const wb_tree *tree)
 }
 
 static wb_node *
-node_new(void *key, void *datum)
+node_new(void *key)
 {
     wb_node *node = MALLOC(sizeof(*node));
     if (node) {
 	node->key = key;
-	node->datum = datum;
+	node->datum = NULL;
 	node->parent = NULL;
 	node->llink = NULL;
 	node->rlink = NULL;

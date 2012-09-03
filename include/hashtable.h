@@ -47,9 +47,8 @@ dict*		hashtable_dict_new(dict_compare_func cmp_func,
 				   dict_delete_func del_func, unsigned size);
 size_t		hashtable_free(hashtable *table);
 
-int		hashtable_insert(hashtable *table, void *key, void *datum,
-				 bool overwrite);
-int		hashtable_probe(hashtable *table, void *key, void **datum);
+bool		hashtable_insert(hashtable *table, void *key,
+				 void ***datum_location);
 void*		hashtable_search(hashtable *table, const void *key);
 bool		hashtable_remove(hashtable *table, const void *key);
 size_t		hashtable_clear(hashtable *table);

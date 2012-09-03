@@ -20,7 +20,7 @@
 
 const char appname[] = "test";
 
-char *my_strdup(const char *str);
+char *xstrdup(const char *str);
 
 #ifdef __GNUC__
 # define NORETURN	__attribute__((__noreturn__))
@@ -67,29 +67,38 @@ main(int argc, char **argv)
 
     ++argv;
     dict *dct = NULL;
+    const char *container_name = NULL;
     switch (argv[0][0]) {
 	case 'h':
+	    container_name = "hb";
 	    dct = hb_dict_new(cmp_func, key_str_free);
 	    break;
 	case 'p':
+	    container_name = "pr";
 	    dct = pr_dict_new(cmp_func, key_str_free);
 	    break;
 	case 'r':
+	    container_name = "rb";
 	    dct = rb_dict_new(cmp_func, key_str_free);
 	    break;
 	case 't':
+	    container_name = "tr";
 	    dct = tr_dict_new(cmp_func, NULL, key_str_free);
 	    break;
 	case 's':
+	    container_name = "sp";
 	    dct = sp_dict_new(cmp_func, key_str_free);
 	    break;
 	case 'S':
+	    container_name = "sk";
 	    dct = skiplist_dict_new(cmp_func, key_str_free, 12);
 	    break;
 	case 'w':
+	    container_name = "wb";
 	    dct = wb_dict_new(cmp_func, key_str_free);
 	    break;
 	case 'H':
+	    container_name = "ht";
 	    dct = hashtable_dict_new(cmp_func, hash_func, key_str_free, HSIZE);
 	    break;
 	default:
@@ -113,20 +122,15 @@ main(int argc, char **argv)
     if (!nwords)
 	quit("nothing read from file");
 
-    printf("Processing %u words\n", nwords);
-    char **words = malloc(sizeof(*words) * nwords);
-    if (!words)
-	quit("out of memory");
-
+    char **words = xmalloc(sizeof(*words) * nwords);
     rewind(fp);
     for (unsigned i = 0; i < nwords && fgets(buf, sizeof(buf), fp); i++) {
 	strtok(buf, "\n");
-	words[i] = my_strdup(buf);
-	if (!words[i])
-	    quit("out of memory");
+	words[i] = xstrdup(buf);
     }
     fclose(fp);
 
+    malloced = 0;
     int total_comp = 0, total_hash = 0;
 
     struct rusage start, end;
@@ -134,17 +138,22 @@ main(int argc, char **argv)
 
     timer_start(&start);
     for (unsigned i = 0; i < nwords; i++) {
-	int rv = dict_insert(dct, words[i], words[i], false);
-	if (rv != 0)
-	    quit("insert #%d failed with %d for '%s'", i, rv, words[i]);
+	void **datum_location = NULL;
+	if (!dict_insert(dct, words[i], &datum_location))
+	    quit("insert #%d failed for '%s'", i, words[i]);
+	ASSERT(datum_location != NULL);
+	ASSERT(*datum_location == NULL);
+	*datum_location = words[i];
     }
+    printf("After %u words, container uses %zukB\n",
+	   nwords, (malloced+1023)>>10);
     timer_end(&start, &end, &total);
-    printf("      inserts %02f s (%9d cmp, %9d hash)\n",
+    printf("      %s insert: %02f s (%9d cmp, %9d hash)\n",
+	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
     total_comp += comp_count; comp_count = 0;
     total_hash += hash_count; hash_count = 0;
-    printf("memory used = %zukB bytes\n", (malloced+1023)>>10);
 
     unsigned n = dict_count(dct);
     if (n != nwords)
@@ -161,7 +170,8 @@ main(int argc, char **argv)
 	++n;
     } while (dict_itor_next(itor));
     timer_end(&start, &end, &total);
-    printf("  fwd iterate %02f s\n",
+    printf("  %s fwd iterate: %02f s\n",
+	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
     if (n != nwords)
 	warn("Fwd iteration returned %u items - should be %u", n, nwords);
@@ -175,7 +185,8 @@ main(int argc, char **argv)
 	++n;
     } while (dict_itor_prev(itor));
     timer_end(&start, &end, &total);
-    printf("  rev iterate %02f s\n",
+    printf("  %s rev iterate: %02f s\n",
+	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
     if (n != nwords)
 	warn("Rev iteration returned %u items - should be %u", n, nwords);
@@ -193,7 +204,8 @@ main(int argc, char **argv)
 	    quit("bad data for '%s', got '%s' instead", words[i], p);
     }
     timer_end(&start, &end, &total);
-    printf("good searches %02f s (%9d cmp, %9d hash)\n",
+    printf("%s good searches: %02f s (%9d cmp, %9d hash)\n",
+	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
     total_comp += comp_count; comp_count = 0;
@@ -221,7 +233,8 @@ main(int argc, char **argv)
 	    quit("removing #%d '%s' failed!\n", i, words[i]);
     }
     timer_end(&start, &end, &total);
-    printf(" removes took %02f s (%9d cmp, %9d hash)\n",
+    printf(" %s remove: %02f s (%9d cmp, %9d hash)\n",
+	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
     total_comp += comp_count; comp_count = 0;
@@ -232,7 +245,8 @@ main(int argc, char **argv)
 
     dict_free(dct);
 
-    printf("       totals %02f s (%9d cmp, %9d hash)\n",
+    printf("       %s total: %02f s (%9d cmp, %9d hash)\n",
+	   container_name,
 	   (total.tv_sec * 1000000 + total.tv_usec) * 1e-6,
 	   total_comp, total_hash);
 
@@ -240,13 +254,10 @@ main(int argc, char **argv)
 }
 
 char *
-my_strdup(const char *str)
+xstrdup(const char *str)
 {
     size_t len = strlen(str) + 1;
-    char* dup = malloc(len);
-    if (dup)
-	memcpy(dup, str, len);
-    return dup;
+    return memcpy(xmalloc(len), str, len);
 }
 
 void
@@ -294,17 +305,11 @@ shuffle(char **p, unsigned size)
     }
 }
 
-/* FNV 1-a string hash. */
 unsigned
 str_hash(const void *p)
 {
     ++hash_count;
-
-    unsigned hash = 2166136261U;
-    for (const uint8_t *ptr = p; *ptr;) {
-	hash = (hash ^ *ptr++) * 16777619U;
-    }
-    return hash;
+    return dict_str_hash(p);
 }
 
 int

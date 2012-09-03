@@ -47,9 +47,8 @@ dict*		tr_dict_new(dict_compare_func compare_func,
 			    dict_delete_func del_func);
 size_t		tr_tree_free(tr_tree *tree);
 
-int		tr_tree_insert(tr_tree *tree, void *key, void *datum,
-			       bool overwrite);
-int		tr_tree_probe(tr_tree *tree, void *key, void **datum);
+bool		tr_tree_insert(tr_tree *tree, void *key,
+			       void ***datum_location);
 void*		tr_tree_search(tr_tree *tree, const void *key);
 bool		tr_tree_remove(tr_tree *tree, const void *key);
 size_t		tr_tree_clear(tr_tree *tree);

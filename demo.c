@@ -1,5 +1,5 @@
 /* demo.c
- * Demo capabilities of libdict
+ * Interactive demo of libdict.
  * Copyright (C) 2001-2011 Farooq Mela */
 
 #include <stdio.h>
@@ -27,25 +27,11 @@ void *xmalloc(size_t size);
 void *xrealloc(void *ptr, size_t size);
 void *xdup(const void *ptr, size_t size);
 
-unsigned s_hash(const unsigned char *p);
-
-unsigned
-s_hash(const unsigned char *p)
-{
-	unsigned hash = 0;
-
-	while (*p) {
-		hash *= 31;
-		hash ^= *p++;
-	}
-	return hash;
-}
-
 void
 key_val_free(void *key, void *datum)
 {
-	free(key);
-	free(datum);
+    free(key);
+    free(datum);
 }
 
 #define HSIZE		997
@@ -53,148 +39,151 @@ key_val_free(void *key, void *datum)
 int
 main(int argc, char **argv)
 {
-	char buf[512], *p, *ptr, *ptr2;
-	int rv;
-	dict *dct;
+    char buf[512], *p, *ptr, *ptr2;
+    int rv;
+    dict *dct;
 
-	if (argc != 2)
-		quit("usage: %s [type]", appname);
+    if (argc != 2)
+	quit("usage: %s [type]", appname);
 
-	srand((unsigned)time(NULL));
+    srand((unsigned)time(NULL));
 
-	dict_malloc_func = xmalloc;
+    dict_malloc_func = xmalloc;
 
-	++argv;
-	switch (argv[0][0]) {
+    ++argv;
+    switch (argv[0][0]) {
 	case 'h':
-		dct = hb_dict_new((dict_compare_func)strcmp, key_val_free);
-		break;
+	    dct = hb_dict_new((dict_compare_func)strcmp, key_val_free);
+	    break;
 	case 'p':
-		dct = pr_dict_new((dict_compare_func)strcmp, key_val_free);
-		break;
+	    dct = pr_dict_new((dict_compare_func)strcmp, key_val_free);
+	    break;
 	case 'r':
-		dct = rb_dict_new((dict_compare_func)strcmp, key_val_free);
-		break;
+	    dct = rb_dict_new((dict_compare_func)strcmp, key_val_free);
+	    break;
 	case 't':
-		dct = tr_dict_new((dict_compare_func)strcmp, NULL, key_val_free);
-		break;
+	    dct = tr_dict_new((dict_compare_func)strcmp, NULL, key_val_free);
+	    break;
 	case 's':
-		dct = sp_dict_new((dict_compare_func)strcmp, key_val_free);
-		break;
+	    dct = sp_dict_new((dict_compare_func)strcmp, key_val_free);
+	    break;
 	case 'w':
-		dct = wb_dict_new((dict_compare_func)strcmp, key_val_free);
-		break;
+	    dct = wb_dict_new((dict_compare_func)strcmp, key_val_free);
+	    break;
 	case 'H':
-		dct = hashtable_dict_new((dict_compare_func)strcmp, (dict_hash_func)s_hash,
-								 key_val_free, HSIZE);
-		break;
+	    dct = hashtable_dict_new((dict_compare_func)strcmp,
+				     dict_str_hash,
+				     key_val_free, HSIZE);
+	    break;
 	default:
-		quit("type must be one of h, p, r, t, s, w, or H");
+	    quit("type must be one of h, p, r, t, s, w, or H");
+    }
+
+    if (!dct)
+	quit("can't create container");
+
+    for (;;) {
+	printf("> ");
+	fflush(stdout);
+	if (fgets(buf, sizeof(buf), stdin) == NULL)
+	    break;
+	if ((p = strchr(buf, '\n')) != NULL)
+	    *p = 0;
+	for (p = buf; isspace(*p); p++)
+	    /* void */;
+	strcpy(buf, p);
+	ptr2 = (ptr = strtok(buf, " ") ? strtok(NULL, " ") : NULL) ?
+	    strtok(NULL, " ") : NULL;
+	if (*buf == 0)
+	    continue;
+	if (strcmp(buf, "insert") == 0) {
+	    if (!ptr2) {
+		printf("usage: insert <key> <data>\n");
+		continue;
+	    }
+	    void **datum_location;
+	    if (dict_insert(dct, xstrdup(ptr), &datum_location)) {
+		*datum_location = xstrdup(ptr2);
+		printf("inserted '%s': '%s'\n",
+		       ptr, *datum_location);
+	    } else {
+		printf("key '%s' already in dict: '%s'\n",
+		       ptr, *datum_location);
+	    }
+	} else if (strcmp(buf, "search") == 0) {
+	    if (ptr2) {
+		printf("usage: search <key>\n");
+		continue;
+	    }
+	    ptr2 = dict_search(dct, ptr);
+	    if (ptr2)
+		printf("found '%s': '%s'\n", ptr, ptr2);
+	    else
+		printf("key '%s' not in dict!\n", ptr);
+	} else if (strcmp(buf, "remove") == 0) {
+	    if (!ptr || ptr2) {
+		printf("usage: remove <key>\n");
+		continue;
+	    }
+	    rv = dict_remove(dct, ptr);
+	    if (rv == 0)
+		printf("removed '%s' from dict\n", ptr);
+	    else
+		printf("key '%s' not in dict!\n", ptr);
+	} else if (strcmp(buf, "show") == 0) {
+	    if (ptr) {
+		printf("usage: show\n");
+		continue;
+	    }
+	    dict_itor *itor = dict_itor_new(dct);
+	    for (dict_itor_first(itor); dict_itor_valid(itor); dict_itor_next(itor))
+		printf("'%s': '%s'\n",
+		       (char *)dict_itor_key(itor),
+		       (char *)dict_itor_data(itor));
+	    dict_itor_free(itor);
+	} else if (strcmp(buf, "reverse") == 0) {
+	    dict_itor *itor;
+
+	    if (ptr) {
+		printf("usage: reverse\n");
+		continue;
+	    }
+	    itor = dict_itor_new(dct);
+	    for (dict_itor_last(itor); dict_itor_valid(itor); dict_itor_prev(itor))
+		printf("'%s': '%s'\n",
+		       (char *)dict_itor_key(itor),
+		       (char *)dict_itor_data(itor));
+	    dict_itor_free(itor);
+	} else if (strcmp(buf, "clear") == 0) {
+	    if (ptr) {
+		printf("usage: clear\n");
+		continue;
+	    }
+	    dict_clear(dct);
+	} else if (strcmp(buf, "count") == 0) {
+	    if (ptr) {
+		printf("usage: count\n");
+		continue;
+	    }
+	    printf("count = %zu\n", dict_count(dct));
+	} else if (strcmp(buf, "quit") == 0) {
+	    break;
+	} else {
+	    printf("Usage summary:\n");
+	    printf("  insert <key> <data>\n");
+	    printf("  search <key>\n");
+	    printf("  remove <key>\n");
+	    printf("  clear\n");
+	    printf("  count\n");
+	    printf("  show\n");
+	    printf("  reverse\n");
+	    printf("  quit\n");
 	}
+    }
 
-	if (!dct)
-		quit("can't create container");
+    dict_free(dct);
 
-	for (;;) {
-		printf("> ");
-		fflush(stdout);
-		if (fgets(buf, sizeof(buf), stdin) == NULL)
-			break;
-		if ((p = strchr(buf, '\n')) != NULL)
-			*p = 0;
-		for (p = buf; isspace(*p); p++)
-			/* void */;
-		strcpy(buf, p);
-		ptr2 = (ptr = strtok(buf, " ") ? strtok(NULL, " ") : NULL) ?
-			strtok(NULL, " ") : NULL;
-		if (*buf == 0)
-			continue;
-		if (strcmp(buf, "insert") == 0) {
-			if (!ptr2) {
-				printf("usage: insert <key> <data>\n");
-				continue;
-			}
-			rv = dict_insert(dct, xstrdup(ptr), xstrdup(ptr2), false);
-			if (rv == 0)
-				printf("inserted `%s' ==> `%s'\n", ptr, ptr2);
-			else
-				printf("key `%s' already in dict!\n", ptr);
-		} else if (strcmp(buf, "search") == 0) {
-			if (ptr2) {
-				printf("usage: search <key>\n");
-				continue;
-			}
-			ptr2 = dict_search(dct, ptr);
-			if (ptr2)
-				printf("found `%s' ==> `%s'\n", ptr, ptr2);
-			else
-				printf("key `%s' not in dict!\n", ptr);
-		} else if (strcmp(buf, "remove") == 0) {
-			if (!ptr || ptr2) {
-				printf("usage: remove <key>\n");
-				continue;
-			}
-			rv = dict_remove(dct, ptr);
-			if (rv == 0)
-				printf("removed `%s' from dict\n", ptr);
-			else
-				printf("key `%s' not in dict!\n", ptr);
-		} else if (strcmp(buf, "display") == 0) {
-			dict_itor *itor;
-
-			if (ptr) {
-				printf("usage: display\n");
-				continue;
-			}
-			itor = dict_itor_new(dct);
-			for (; dict_itor_valid(itor); dict_itor_next(itor))
-				printf("`%s' ==> `%s'\n",
-					   (char *)dict_itor_key(itor),
-					   (char *)dict_itor_data(itor));
-			dict_itor_free(itor);
-		} else if (strcmp(buf, "reverse") == 0) {
-			dict_itor *itor;
-
-			if (ptr) {
-				printf("usage: reverse\n");
-				continue;
-			}
-			itor = dict_itor_new(dct);
-			for (dict_itor_last(itor); dict_itor_valid(itor); dict_itor_prev(itor))
-				printf("`%s' ==> `%s'\n",
-					   (char *)dict_itor_key(itor),
-					   (char *)dict_itor_data(itor));
-			dict_itor_free(itor);
-		} else if (strcmp(buf, "clear") == 0) {
-			if (ptr) {
-				printf("usage: clear\n");
-				continue;
-			}
-			dict_clear(dct);
-		} else if (strcmp(buf, "count") == 0) {
-			if (ptr) {
-				printf("usage: count\n");
-				continue;
-			}
-			printf("count = %zu\n", dict_count(dct));
-		} else if (strcmp(buf, "quit") == 0) {
-			break;
-		} else {
-			printf("Usage summary:\n");
-			printf("  insert <key> <data>\n");
-			printf("  search <key>\n");
-			printf("  remove <key>\n");
-			printf("  clear\n");
-			printf("  count\n");
-			printf("  display\n");
-			printf("  reverse\n");
-			printf("  quit\n");
-		}
-	}
-
-	dict_free(dct);
-
-	exit(0);
+    exit(0);
 }
 
 char *

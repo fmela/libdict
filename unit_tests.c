@@ -22,6 +22,7 @@ void test_basic_hashtable_n();
 void test_basic_hb();
 void test_basic_pr();
 void test_basic_rb();
+void test_basic_sl();
 void test_basic_sp();
 void test_basic_tr();
 void test_basic_wb();
@@ -32,6 +33,7 @@ CU_TestInfo basic_tests[] = {
     TEST_FUNC(test_basic_hb),
     TEST_FUNC(test_basic_pr),
     TEST_FUNC(test_basic_rb),
+    TEST_FUNC(test_basic_sl),
     TEST_FUNC(test_basic_sp),
     TEST_FUNC(test_basic_tr),
     TEST_FUNC(test_basic_wb),
@@ -94,15 +96,22 @@ static struct {
 #define NKEYS (sizeof(keys) / sizeof(keys[0]))
 
 void test_basic(dict *dct) {
-    for (unsigned i = 0; i < NKEYS; ++i)
-	CU_ASSERT_EQUAL(dict_insert(dct, keys[i].key, keys[i].value, false), 0);
+    for (unsigned i = 0; i < NKEYS; ++i) {
+	void **datum_location = NULL;
+	CU_ASSERT_TRUE(dict_insert(dct, keys[i].key, &datum_location));
+	CU_ASSERT_PTR_NOT_NULL(datum_location);
+	*datum_location = keys[i].value;
+    }
     CU_ASSERT_EQUAL(dict_count(dct), NKEYS);
 
     for (unsigned i = 0; i < NKEYS; ++i)
 	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), keys[i].value);
 
-    for (unsigned i = 0; i < NKEYS; ++i)
-	CU_ASSERT_EQUAL(dict_insert(dct, keys[i].key, keys[i].alt, false), 1);
+    for (unsigned i = 0; i < NKEYS; ++i) {
+	void **datum_location = NULL;
+	CU_ASSERT_FALSE(dict_insert(dct, keys[i].key, &datum_location));
+	CU_ASSERT_PTR_NOT_NULL(datum_location);
+    }
     CU_ASSERT_EQUAL(dict_count(dct), NKEYS);
 
     dict_itor *itor = dict_itor_new(dct);
@@ -137,8 +146,12 @@ void test_basic(dict *dct) {
     CU_ASSERT_EQUAL(n, NKEYS);
     dict_itor_free(itor);
 
-    for (unsigned i = 0; i < NKEYS; ++i)
-	CU_ASSERT_EQUAL(dict_insert(dct, keys[i].key, keys[i].alt, true), 0);
+    for (unsigned i = 0; i < NKEYS; ++i) {
+	void **datum_location = NULL;
+	CU_ASSERT_FALSE(dict_insert(dct, keys[i].key, &datum_location));
+	CU_ASSERT_PTR_NOT_NULL(datum_location);
+	*datum_location = keys[i].alt;
+    }
     CU_ASSERT_EQUAL(dict_count(dct), NKEYS);
 
     for (unsigned i = 0; i < NKEYS; ++i)
@@ -192,6 +205,11 @@ void test_basic_pr()
 void test_basic_rb()
 {
     test_basic(rb_dict_new(dict_str_cmp, NULL));
+}
+
+void test_basic_sl()
+{
+    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 12));
 }
 
 void test_basic_sp()

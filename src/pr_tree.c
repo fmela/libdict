@@ -57,7 +57,6 @@ static dict_vtable pr_tree_vtable = {
     (dict_inew_func)	    pr_dict_itor_new,
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    pr_tree_insert,
-    (dict_probe_func)	    pr_tree_probe,
     (dict_search_func)	    tree_search,
     (dict_remove_func)	    pr_tree_remove,
     (dict_clear_func)	    tree_clear,
@@ -88,7 +87,7 @@ static void	rot_right(pr_tree *tree, pr_node *node);
 static size_t	node_height(const pr_node *node);
 static size_t	node_mheight(const pr_node *node);
 static size_t	node_pathlen(const pr_node *node, size_t level);
-static pr_node*	node_new(void *key, void *datum);
+static pr_node*	node_new(void *key);
 
 pr_tree *
 pr_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
@@ -213,8 +212,8 @@ again:
     }
 }
 
-int
-pr_tree_insert(pr_tree *tree, void *key, void *datum, bool overwrite)
+bool
+pr_tree_insert(pr_tree *tree, void *key, void ***datum_location)
 {
     ASSERT(tree != NULL);
 
@@ -227,23 +226,24 @@ pr_tree_insert(pr_tree *tree, void *key, void *datum, bool overwrite)
 	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
-	    if (!overwrite)
-		return 1;
-	    if (tree->del_func)
-		tree->del_func(node->key, node->datum);
-	    node->key = key;
-	    node->datum = datum;
-	    return 0;
+	    if (datum_location)
+		*datum_location = &node->datum;
+	    return false;
 	}
     }
 
-    if (!(node = node_new(key, datum)))
+    if (!(node = node_new(key))) {
+	if (datum_location)
+	    *datum_location = NULL;
 	return -1;
+    }
+    if (datum_location)
+	*datum_location = &node->datum;
     if (!(node->parent = parent)) {
 	ASSERT(tree->count == 0);
 	tree->root = node;
 	tree->count = 1;
-	return 0;
+	return true;
     }
     if (cmp < 0)
 	parent->llink = node;
@@ -252,57 +252,12 @@ pr_tree_insert(pr_tree *tree, void *key, void *datum, bool overwrite)
 
     while ((node = parent) != NULL) {
 	parent = parent->parent;
-	node->weight++;
+	++node->weight;
 	fixup(tree, node);
     }
 
-    tree->count++;
-    return 0;
-}
-
-int
-pr_tree_probe(pr_tree *tree, void *key, void **datum)
-{
-    ASSERT(tree != NULL);
-
-    int cmp = 0;
-    pr_node *node = tree->root, *parent = NULL;
-    while (node) {
-	cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    parent = node, node = node->llink;
-	else if (cmp)
-	    parent = node, node = node->rlink;
-	else {
-	    *datum = node->datum;
-	    return 0;
-	}
-	parent = node;
-	node = (cmp < 0) ? node->llink : node->rlink;
-    }
-
-    if (!(node = node_new(key, *datum)))
-	return -1;
-    if (!(node->parent = parent)) {
-	ASSERT(tree->count == 0);
-	tree->root = node;
-	tree->count = 1;
-	return 1;
-    }
-
-    if (cmp < 0)
-	parent->llink = node;
-    else
-	parent->rlink = node;
-
-    while ((node = parent) != NULL) {
-	parent = parent->parent;
-	node->weight++;
-	fixup(tree, node);
-    }
-
-    tree->count++;
-    return 1;
+    ++tree->count;
+    return true;
 }
 
 bool
@@ -483,12 +438,12 @@ pr_tree_pathlen(const pr_tree *tree)
 }
 
 static pr_node *
-node_new(void *key, void *datum)
+node_new(void *key)
 {
     pr_node *node = MALLOC(sizeof(*node));
     if (node) {
 	node->key = key;
-	node->datum = datum;
+	node->datum = NULL;
 	node->parent = NULL;
 	node->llink = NULL;
 	node->rlink = NULL;

@@ -45,9 +45,8 @@ dict*		pr_dict_new(dict_compare_func cmp_func,
 			    dict_delete_func del_func);
 size_t		pr_tree_free(pr_tree *tree);
 
-int		pr_tree_insert(pr_tree *tree, void *key, void *datum,
-			       bool overwrite);
-int		pr_tree_probe(pr_tree *tree, void *key, void **datum);
+bool		pr_tree_insert(pr_tree *tree, void *key,
+			       void ***datum_location);
 void*		pr_tree_search(pr_tree *tree, const void *key);
 bool		pr_tree_remove(pr_tree *tree, const void *key);
 size_t		pr_tree_clear(pr_tree *tree);

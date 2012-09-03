@@ -63,8 +63,8 @@ typedef void	    (*dict_delete_func)(void *, void *);
 typedef bool	    (*dict_visit_func)(const void *, void *);
 /* A pointer to a function that returns the hash value of a key. */
 typedef unsigned    (*dict_hash_func)(const void *);
-/* A pointer to a function that returns the priority of a key/value pair. */
-typedef unsigned    (*dict_prio_func)(const void *, const void *);
+/* A pointer to a function that returns the priority of a key. */
+typedef unsigned    (*dict_prio_func)(const void *);
 
 /* A pointer to a function that libdict will use to allocate memory. */
 void*		    (*dict_malloc_func)(size_t);
@@ -77,9 +77,8 @@ typedef struct dict_itor dict_itor;
 
 typedef dict_itor*  (*dict_inew_func)(void *obj);
 typedef size_t      (*dict_dfree_func)(void *obj);
-typedef int	    (*dict_insert_func)(void *obj, void *key, void *datum,
-					bool overwrite);
-typedef int	    (*dict_probe_func)(void *obj, void *key, void **datum);
+typedef bool	    (*dict_insert_func)(void *obj, void *key,
+					void ***datum_location);
 typedef void*       (*dict_search_func)(void *obj, const void *key);
 typedef bool	    (*dict_remove_func)(void *obj, const void *key);
 typedef size_t      (*dict_clear_func)(void *obj);
@@ -90,7 +89,6 @@ typedef struct {
     dict_inew_func      inew;
     dict_dfree_func     dfree;
     dict_insert_func    insert;
-    dict_probe_func     probe;
     dict_search_func    search;
     dict_remove_func    remove;
     dict_clear_func     clear;
@@ -137,10 +135,7 @@ struct dict {
 };
 
 #define dict_private(dct)       ((dct)->_object)
-#define dict_insert(dct,k,d,o)  \
-    ((dct)->_vtable->insert((dct)->_object, (k), (d), (o)))
-#define dict_probe(dct,k,d)     \
-    ((dct)->_vtable->probe((dct)->_object, (k), (d)))
+#define dict_insert(dct,k,d)	((dct)->_vtable->insert((dct)->_object,(k),(d)))
 #define dict_search(dct,k)      ((dct)->_vtable->search((dct)->_object, (k)))
 #define dict_remove(dct,k)      ((dct)->_vtable->remove((dct)->_object, (k)))
 #define dict_traverse(dct,f)    ((dct)->_vtable->traverse((dct)->_object, (f)))
@@ -177,6 +172,7 @@ int dict_long_cmp(const void *k1, const void *k2);
 int dict_ulong_cmp(const void *k1, const void *k2);
 int dict_ptr_cmp(const void *k1, const void *k2);
 int dict_str_cmp(const void *k1, const void *k2);
+unsigned dict_str_hash(const void *str);
 
 END_DECL
 

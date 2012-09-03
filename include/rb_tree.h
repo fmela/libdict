@@ -45,9 +45,8 @@ dict*		rb_dict_new(dict_compare_func cmp_func,
 			    dict_delete_func del_func);
 size_t		rb_tree_free(rb_tree *tree);
 
-int		rb_tree_insert(rb_tree *tree, void *key, void *datum,
-			       bool overwrite);
-int		rb_tree_probe(rb_tree *tree, void *key, void **datum);
+bool		rb_tree_insert(rb_tree *tree, void *key,
+			       void ***datum_location);
 void*		rb_tree_search(rb_tree *tree, const void *key);
 bool		rb_tree_remove(rb_tree *tree, const void *key);
 size_t		rb_tree_clear(rb_tree *tree);
