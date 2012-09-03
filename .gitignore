@@ -4,3 +4,4 @@ bin/*
 algorithms/*.log
 algorithms/*.pdf
 algorithms/*.aux
+.*.swp
