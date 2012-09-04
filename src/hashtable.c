@@ -41,10 +41,10 @@ typedef struct hash_node hash_node;
 struct hash_node {
     void*		    key;
     void*		    datum;
-    unsigned		    hash;	/* Untruncated hash value. */
     hash_node*		    next;
     /* Only because iterators are bidirectional: */
     hash_node*		    prev;
+    unsigned		    hash;	/* Untruncated hash value. */
 };
 
 struct hashtable {
