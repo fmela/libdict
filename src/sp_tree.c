@@ -217,34 +217,35 @@ sp_tree_clear(sp_tree *tree)
  *  \        /        A   C
  *   B      A
  */
-#define SPLAY(t,n) \
-    do { \
-	sp_node *p = (n)->parent; \
-	if (!p->parent) { \
-	    if (p->llink == (n))		/* zig right */ \
-		tree_node_rot_right((t), p); \
-	    else				/* zig left */ \
-		tree_node_rot_left((t), p); \
-	} else { \
-	    if (p->llink == (n)) { \
-		if (p->parent->llink == p) {	/* zig zig right */ \
-		    tree_node_rot_right((t), p->parent); \
-		    tree_node_rot_right((t), (n)->parent); \
-		} else {			/* zig zag right */ \
-		    tree_node_rot_right((t), p); \
-		    tree_node_rot_left((t), (n)->parent); \
-		} \
-	    } else { \
-		if (p->parent->rlink == p) {	/* zig zig left */ \
-		    tree_node_rot_left((t), p->parent); \
-		    tree_node_rot_left((t), (n)->parent); \
-		} else {			/* zig zag left */ \
-		    tree_node_rot_left((t), p); \
-		    tree_node_rot_right((t), (n)->parent); \
-		} \
-	    } \
-	} \
-    } while (0)
+static void splay(sp_tree *t, sp_node *n) {
+    sp_node *p = n->parent;
+    ASSERT(p != NULL);
+    if (!p->parent) {
+	if (p->llink == n)		    /* zig right */
+	    tree_node_rot_right(t, p);
+	else				    /* zig left */
+	    tree_node_rot_left(t, p);
+	ASSERT(t->root == n);
+    } else {
+	if (p->llink == n) {
+	    if (p->parent->llink == p) {    /* zig zig right */
+		tree_node_rot_right(t, p->parent);
+		tree_node_rot_right(t, n->parent);
+	    } else {			    /* zig zag right */
+		tree_node_rot_right(t, p);
+		tree_node_rot_left(t, n->parent);
+	    }
+	} else {
+	    if (p->parent->rlink == p) {    /* zig zig left */
+		tree_node_rot_left(t, p->parent);
+		tree_node_rot_left(t, n->parent);
+	    } else {			    /* zig zag left */
+		tree_node_rot_left(t, p);
+		tree_node_rot_right(t, n->parent);
+	    }
+	}
+    }
+}
 
 bool
 sp_tree_insert(sp_tree *tree, void *key, void ***datum_location)
@@ -284,9 +285,10 @@ sp_tree_insert(sp_tree *tree, void *key, void ***datum_location)
 	else
 	    parent->rlink = node;
 	while (node->parent)
-	    SPLAY(tree, node);
+	    splay(tree, node);
 	++tree->count;
     }
+    ASSERT(tree->root == node);
     return true;
 }
 
@@ -304,14 +306,15 @@ sp_tree_search(sp_tree *tree, const void *key)
 	    parent = node, node = node->rlink;
 	else {
 	    while (node->parent)
-		SPLAY(tree, node);
+		splay(tree, node);
 	    return node->datum;
 	}
     }
     if (parent) {
 	/* XXX Splay last node seen until it becomes the new root. */
 	while (parent->parent)
-	    SPLAY(tree, parent);
+	    splay(tree, parent);
+	ASSERT(tree->root == parent);
     }
     return NULL;
 }
@@ -369,9 +372,11 @@ sp_tree_remove(sp_tree *tree, const void *key)
 	node->parent ? node->parent :
 	node->rlink ? node->rlink :
 	node->llink;
-    if (temp)
+    if (temp) {
 	while (temp->parent)
-	    SPLAY(tree, temp);
+	    splay(tree, temp);
+	ASSERT(tree->root == temp);
+    }
 
     FREE(out);
     --tree->count;
