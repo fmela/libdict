@@ -182,6 +182,7 @@ strhash(const void *p)
     }
     return hash;
 }
+
 void test_basic_hashtable_1()
 {
     test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 1));
