@@ -105,6 +105,7 @@ static sp_node*	node_new(void *key);
 static size_t	node_height(const sp_node *node);
 static size_t	node_mheight(const sp_node *node);
 static size_t	node_pathlen(const sp_node *node, size_t level);
+static void	splay(sp_tree *t, sp_node *n);
 
 sp_tree *
 sp_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
@@ -180,69 +181,98 @@ sp_tree_clear(sp_tree *tree)
     return count;
 }
 
-/*
- * XXX Each zig/zig and zig/zag operation can be optimized, but for now we just
- * use two rotations.
- */
-/*
- * zig_zig_right(T, A):
- *
- *     C               A
- *    /        B        \
- *   B   ==>  / \  ==>   B
- *  /        A   C        \
- * A                       C
- *
- * zig_zig_left(T, C):
- *
- * A                        C
- *  \           B          /
- *   B    ==>  / \  ==>   B
- *    \       A   C      /
- *     C                A
- *
- * zig_zag_right(T, B)
- *
- * A        A
- *  \        \          B
- *   C  ==>   B   ==>  / \
- *  /          \      A   C
- * B            C
- *
- * zig_zag_left(T, B)
- *
- *   C          C
- *  /          /        B
- * A    ==>   B   ==>  / \
- *  \        /        A   C
- *   B      A
- */
 static void splay(sp_tree *t, sp_node *n) {
-    sp_node *p = n->parent;
-    ASSERT(p != NULL);
-    if (!p->parent) {
-	if (p->llink == n)		    /* zig right */
-	    tree_node_rot_right(t, p);
-	else				    /* zig left */
-	    tree_node_rot_left(t, p);
-	ASSERT(t->root == n);
-    } else {
+    for (;;) {
+	sp_node *p = n->parent;
+	if (!p)
+	    break;
+
+	sp_node *pp = p->parent;
+	if (!pp) {
+	    /* Parent is the root; simply rotate root left or right so that |n|
+	     * becomes new root. */
+	    if (p->llink == n) {
+		if ((p->llink = n->rlink) != NULL)
+		    p->llink->parent = p;
+		n->rlink = p;
+	    } else {
+		if ((p->rlink = n->llink) != NULL)
+		    p->rlink->parent = p;
+		n->llink = p;
+	    }
+	    p->parent = n;
+	    t->root = n;
+	    n->parent = NULL;
+	    break;
+	}
+
+	sp_node *ppp = pp->parent;
 	if (p->llink == n) {
-	    if (p->parent->llink == p) {    /* zig zig right */
-		tree_node_rot_right(t, p->parent);
-		tree_node_rot_right(t, n->parent);
-	    } else {			    /* zig zag right */
-		tree_node_rot_right(t, p);
-		tree_node_rot_left(t, n->parent);
+	    if (pp->llink == p) {
+		/* Rotate parent right, then node right. */
+		sp_node *pr = p->rlink;
+		p->rlink = pp;
+		pp->parent = p;
+		if ((pp->llink = pr) != NULL)
+		    pr->parent = pp;
+
+		sp_node *nr = n->rlink;
+		n->rlink = p;
+		p->parent = n;
+		if ((p->llink = nr) != NULL)
+		    nr->parent = p;
+	    } else {
+		/* Rotate node right, then parent left. */
+		sp_node *nr = n->rlink;
+		n->rlink = p;
+		p->parent = n;
+		if ((p->llink = nr) != NULL)
+		    nr->parent = p;
+
+		sp_node *nl = n->llink;
+		n->llink = pp;
+		pp->parent = n;
+		if ((pp->rlink = nl) != NULL)
+		    nl->parent = pp;
 	    }
 	} else {
-	    if (p->parent->rlink == p) {    /* zig zig left */
-		tree_node_rot_left(t, p->parent);
-		tree_node_rot_left(t, n->parent);
-	    } else {			    /* zig zag left */
-		tree_node_rot_left(t, p);
-		tree_node_rot_right(t, n->parent);
+	    if (pp->rlink == p) {
+		/* Rotate parent left, then node left. */
+		sp_node *pl = p->llink;
+		p->llink = pp;
+		pp->parent = p;
+		if ((pp->rlink = pl) != NULL)
+		    pl->parent = pp;
+
+		sp_node *nl = n->llink;
+		n->llink = p;
+		p->parent = n;
+		if ((p->rlink = nl) != NULL)
+		    nl->parent = p;
+	    } else {
+		/* Rotate node left, then parent right. */
+		sp_node *nl = n->llink;
+		n->llink = p;
+		p->parent = n;
+		if ((p->rlink = nl) != NULL)
+		    nl->parent = p;
+
+		sp_node *nr = n->rlink;
+		n->rlink = pp;
+		pp->parent = n;
+		if ((pp->llink = nr) != NULL)
+		    nr->parent = pp;
 	    }
+	}
+	n->parent = ppp;
+	if (ppp) {
+	    if (ppp->llink == pp)
+		ppp->llink = n;
+	    else
+		ppp->rlink = n;
+	} else {
+	    t->root = n;
+	    break;
 	}
     }
 }
@@ -284,8 +314,7 @@ sp_tree_insert(sp_tree *tree, void *key, void ***datum_location)
 	    parent->llink = node;
 	else
 	    parent->rlink = node;
-	while (node->parent)
-	    splay(tree, node);
+	splay(tree, node);
 	++tree->count;
     }
     ASSERT(tree->root == node);
@@ -305,15 +334,14 @@ sp_tree_search(sp_tree *tree, const void *key)
 	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
-	    while (node->parent)
-		splay(tree, node);
+	    splay(tree, node);
+	    ASSERT(tree->root == node);
 	    return node->datum;
 	}
     }
     if (parent) {
 	/* XXX Splay last node seen until it becomes the new root. */
-	while (parent->parent)
-	    splay(tree, parent);
+	splay(tree, parent);
 	ASSERT(tree->root == parent);
     }
     return NULL;
@@ -342,10 +370,8 @@ sp_tree_remove(sp_tree *tree, const void *key)
 	out = node;
     } else {
 	void *tmp;
-	/*
-	 * This is sure to screw up iterators that were positioned at the node
-	 * "out".
-	 */
+	/* This is sure to screw up iterators that were positioned at the node
+	 * "out". */
 	for (out = node->rlink; out->llink; out = out->llink)
 	    /* void */;
 	SWAP(node->key, out->key, tmp);
@@ -373,8 +399,7 @@ sp_tree_remove(sp_tree *tree, const void *key)
 	node->rlink ? node->rlink :
 	node->llink;
     if (temp) {
-	while (temp->parent)
-	    splay(tree, temp);
+	splay(tree, temp);
 	ASSERT(tree->root == temp);
     }
 
