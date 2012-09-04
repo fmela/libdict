@@ -108,7 +108,7 @@ main(int argc, char **argv)
     if (!dct)
 	quit("can't create container");
 
-    printf("Container uses %.02fkB memory.\n", malloced/1024.);
+    const size_t malloced_save = malloced;
 
     FILE *fp = fopen(argv[1], "r");
     if (fp == NULL)
@@ -130,7 +130,7 @@ main(int argc, char **argv)
     }
     fclose(fp);
 
-    malloced = 0;
+    malloced = malloced_save;
     int total_comp = 0, total_hash = 0;
 
     struct rusage start, end;
@@ -145,8 +145,8 @@ main(int argc, char **argv)
 	ASSERT(*datum_location == NULL);
 	*datum_location = words[i];
     }
-    printf("After %u words, container uses %zukB\n",
-	   nwords, (malloced+1023)>>10);
+    printf("   %s container: %.02fkB\n", container_name, malloced_save * 1e-3);
+    printf("      %s memory: %.02fkB\n", container_name, malloced * 1e-3);
     timer_end(&start, &end, &total);
     printf("      %s insert: %02f s (%9d cmp, %9d hash)\n",
 	   container_name,
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 	++n;
     } while (dict_itor_next(itor));
     timer_end(&start, &end, &total);
-    printf("  %s fwd iterate: %02f s\n",
+    printf(" %s fwd iterate: %02f s\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
     if (n != nwords)
@@ -185,7 +185,7 @@ main(int argc, char **argv)
 	++n;
     } while (dict_itor_prev(itor));
     timer_end(&start, &end, &total);
-    printf("  %s rev iterate: %02f s\n",
+    printf(" %s rev iterate: %02f s\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
     if (n != nwords)
@@ -204,7 +204,7 @@ main(int argc, char **argv)
 	    quit("bad data for '%s', got '%s' instead", words[i], p);
     }
     timer_end(&start, &end, &total);
-    printf("%s good searches: %02f s (%9d cmp, %9d hash)\n",
+    printf(" %s good search: %02f s (%9d cmp, %9d hash)\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
@@ -219,7 +219,8 @@ main(int argc, char **argv)
 	words[i][rv]--;
     }
     timer_end(&start, &end, &total);
-    printf(" bad searches %02f s (%9d cmp, %9d hash)\n",
+    printf("  %s bad search: %02f s (%9d cmp, %9d hash)\n",
+	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
     total_comp += comp_count; comp_count = 0;
@@ -233,7 +234,7 @@ main(int argc, char **argv)
 	    quit("removing #%d '%s' failed!\n", i, words[i]);
     }
     timer_end(&start, &end, &total);
-    printf(" %s remove: %02f s (%9d cmp, %9d hash)\n",
+    printf("      %s remove: %02f s (%9d cmp, %9d hash)\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
