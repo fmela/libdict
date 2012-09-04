@@ -27,57 +27,55 @@ struct tree_iterator {
 void
 tree_node_rot_left(void *Tree, void *Node)
 {
-    tree *tree = Tree;
-    tree_node *node = Node;
+    tree *t = Tree;
+    tree_node *n = Node;
 
-    ASSERT(tree != NULL);
-    ASSERT(node != NULL);
-    ASSERT(node->rlink != NULL);
+    ASSERT(t != NULL);
+    ASSERT(n != NULL);
+    ASSERT(n->rlink != NULL);
 
-    tree_node *rlink = node->rlink;
-    node->rlink = rlink->llink;
-    if (rlink->llink)
-	rlink->llink->parent = node;
-    tree_node *parent = node->parent;
-    rlink->parent = parent;
-    if (parent) {
-	if (parent->llink == node)
-	    parent->llink = rlink;
+    tree_node *nr = n->rlink;
+    if ((n->rlink = nr->llink) != NULL)
+	n->rlink->parent = n;
+    nr->llink = n;
+
+    tree_node *p = n->parent;
+    n->parent = nr;
+    if ((nr->parent = p) != NULL) {
+	if (p->llink == n)
+	    p->llink = nr;
 	else
-	    parent->rlink = rlink;
+	    p->rlink = nr;
     } else {
-	tree->root = rlink;
+	t->root = nr;
     }
-    rlink->llink = node;
-    node->parent = rlink;
 }
 
 void
 tree_node_rot_right(void *Tree, void *Node)
 {
-    tree *tree = Tree;
-    tree_node *node = Node;
+    tree *t = Tree;
+    tree_node *n = Node;
 
-    ASSERT(tree != NULL);
-    ASSERT(node != NULL);
-    ASSERT(node->llink != NULL);
+    ASSERT(t != NULL);
+    ASSERT(n != NULL);
+    ASSERT(n->llink != NULL);
 
-    tree_node *llink = node->llink;
-    node->llink = llink->rlink;
-    if (llink->rlink)
-	llink->rlink->parent = node;
-    tree_node *parent = node->parent;
-    llink->parent = parent;
-    if (parent) {
-	if (parent->llink == node)
-	    parent->llink = llink;
+    tree_node *nl = n->llink;
+    if ((n->llink = nl->rlink) != NULL)
+	n->llink->parent = n;
+    nl->rlink = n;
+
+    tree_node *p = n->parent;
+    n->parent = nl;
+    if ((nl->parent = p) != NULL) {
+	if (p->llink == n)
+	    p->llink = nl;
 	else
-	    parent->rlink = llink;
+	    p->rlink = nl;
     } else {
-	tree->root = llink;
+	t->root = nl;
     }
-    llink->rlink = node;
-    node->parent = llink;
 }
 
 void*
