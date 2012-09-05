@@ -79,8 +79,8 @@ static itor_vtable hb_tree_itor_vtable = {
     (dict_icompare_func)    NULL /* hb_itor_compare not implemented yet */
 };
 
-static bool	rot_left(hb_tree *restrict tree, hb_node *restrict node);
-static bool	rot_right(hb_tree *restrict tree, hb_node *restrict node);
+static bool	rot_left(hb_tree *tree, hb_node *node);
+static bool	rot_right(hb_tree *tree, hb_node *node);
 static size_t	node_height(const hb_node *node);
 static size_t	node_mheight(const hb_node *node);
 static size_t	node_pathlen(const hb_node *node, size_t level);
@@ -458,7 +458,7 @@ node_pathlen(const hb_node *node, size_t level)
  *
  */
 static bool
-rot_left(hb_tree *restrict tree, hb_node *restrict node)
+rot_left(hb_tree *tree, hb_node *node)
 {
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
@@ -485,7 +485,7 @@ rot_left(hb_tree *restrict tree, hb_node *restrict node)
  *
  */
 static bool
-rot_right(hb_tree *restrict tree, hb_node *restrict node)
+rot_right(hb_tree *tree, hb_node *node)
 {
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
