@@ -32,6 +32,13 @@
 
 #include "dict_private.h"
 
+#define XSTRINGIFY(x)	STRINGIFY(x)
+#define STRINGIFY(x)	#x
+
+const char *const kDictVersionString = XSTRINGIFY(DICT_VERSION_MAJOR) "."
+				       XSTRINGIFY(DICT_VERSION_MINOR) "."
+				       XSTRINGIFY(DICT_VERSION_PATCH);
+
 void* (*dict_malloc_func)(size_t) = malloc;
 void (*dict_free_func)(void *) = free;
 

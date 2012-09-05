@@ -40,6 +40,7 @@
 #define DICT_VERSION_MAJOR	0
 #define DICT_VERSION_MINOR	3
 #define DICT_VERSION_PATCH	0
+extern const char *const kDictVersionString;
 
 #if defined(__cplusplus) || defined(c_plusplus)
 # define BEGIN_DECL     extern "C" {

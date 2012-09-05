@@ -26,6 +26,7 @@ void test_basic_sl();
 void test_basic_sp();
 void test_basic_tr();
 void test_basic_wb();
+void test_version_string();
 
 CU_TestInfo basic_tests[] = {
     TEST_FUNC(test_basic_hashtable_1),
@@ -37,6 +38,7 @@ CU_TestInfo basic_tests[] = {
     TEST_FUNC(test_basic_sp),
     TEST_FUNC(test_basic_tr),
     TEST_FUNC(test_basic_wb),
+    TEST_FUNC(test_version_string),
     CU_TEST_INFO_NULL
 };
 
@@ -226,4 +228,12 @@ void test_basic_tr()
 void test_basic_wb()
 {
     test_basic(wb_dict_new(dict_str_cmp, NULL));
+}
+
+void test_version_string()
+{
+    char version_string[32];
+    snprintf(version_string, sizeof(version_string), "%d.%d.%d",
+	     DICT_VERSION_MAJOR, DICT_VERSION_MINOR, DICT_VERSION_PATCH);
+    CU_ASSERT_STRING_EQUAL(kDictVersionString, version_string);
 }
