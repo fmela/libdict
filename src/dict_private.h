@@ -13,6 +13,9 @@
 
 #include "dict.h"
 
+/* A feature (or bug) of this macro is that the expression is always evaluated,
+ * regardless of whether NDEBUG is defined or not. This is intentional and
+ * sometimes useful. */
 #ifndef NDEBUG
 # undef ASSERT
 # if defined(__GNUC__)
