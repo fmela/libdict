@@ -75,8 +75,7 @@ struct wb_tree {
 };
 
 struct wb_itor {
-    wb_tree*			tree;
-    wb_node*			node;
+    TREE_ITERATOR_FIELDS(wb_tree, wb_node);
 };
 
 static dict_vtable wb_tree_vtable = {

@@ -50,8 +50,7 @@ struct rb_tree {
 };
 
 struct rb_itor {
-    rb_tree*		    tree;
-    rb_node*		    node;
+    TREE_ITERATOR_FIELDS(rb_tree, rb_node);
 };
 
 static dict_vtable rb_tree_vtable = {

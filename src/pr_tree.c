@@ -49,8 +49,7 @@ struct pr_tree {
 };
 
 struct pr_itor {
-    pr_tree*		    tree;
-    pr_node*		    node;
+    TREE_ITERATOR_FIELDS(pr_tree, pr_node);
 };
 
 static dict_vtable pr_tree_vtable = {

@@ -47,8 +47,7 @@ struct hb_tree {
 };
 
 struct hb_itor {
-    hb_tree*		    tree;
-    hb_node*		    node;
+    TREE_ITERATOR_FIELDS(hb_tree, hb_node);
 };
 
 static dict_vtable hb_tree_vtable = {

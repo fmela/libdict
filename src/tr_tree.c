@@ -68,8 +68,7 @@ struct tr_tree {
 };
 
 struct tr_itor {
-	tr_tree*	    tree;
-	tr_node*	    node;
+    TREE_ITERATOR_FIELDS(tr_tree, tr_node);
 };
 
 static dict_vtable tr_tree_vtable = {
