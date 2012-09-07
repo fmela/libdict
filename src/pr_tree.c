@@ -184,29 +184,85 @@ again:
     wl = WEIGHT(node->llink);
     wr = WEIGHT(node->rlink);
     if (wr > wl) {
-	ASSERT(node->rlink != NULL);
-	if (WEIGHT(node->rlink->rlink) > wl) {		/* LL */
+	pr_node *r = node->rlink;
+	if (WEIGHT(r->rlink) > wl) {		/* LL */
 	    rot_left(tree, node);
 	    goto again;
-	} else if (WEIGHT(node->rlink->llink) > wl) {	/* RL */
-	    pr_node *temp = node->rlink;
-	    rot_right(tree, temp);
-	    rot_left(tree, node);
-	    if (temp->rlink)
-		fixup(tree, temp->rlink);
+	} else if (WEIGHT(r->llink) > wl) {	/* RL */
+	    pr_node *rl = r->llink;
+	    /* Rotate |r| right, then |node| left, with |rl| taking the place
+	     * of |node| and having |node| and |r| as left and right children,
+	     * respectively. */
+	    pr_node *parent = node->parent;
+
+	    pr_node *a = rl->llink;
+	    rl->llink = node;
+	    node->parent = rl;
+	    if ((node->rlink = a) != NULL)
+		a->parent = node;
+
+	    pr_node *b = rl->rlink;
+	    rl->rlink = r;
+	    r->parent = rl;
+	    if ((r->llink = b) != NULL)
+		b->parent = r;
+
+	    if ((rl->parent = parent) != NULL) {
+		if (parent->llink == node)
+		    parent->llink = rl;
+		else
+		    parent->rlink = rl;
+	    } else {
+		tree->root = rl;
+	    }
+
+	    node->weight += WEIGHT(a) - r->weight;
+	    r->weight += WEIGHT(b) - rl->weight;
+	    rl->weight = node->weight + r->weight;
+
+	    if (r->rlink)
+		fixup(tree, r->rlink);
 	    goto again;
 	}
     } else if (wl > wr) {
-	ASSERT(node->llink != NULL);
-	if (WEIGHT(node->llink->llink) > wr) {		/* RR */
+	pr_node *l = node->llink;
+	if (WEIGHT(l->llink) > wr) {		/* RR */
 	    rot_right(tree, node);
 	    goto again;
-	} else if (WEIGHT(node->llink->rlink) > wr) {	/* LR */
-	    pr_node *temp = node->llink;
-	    rot_left(tree, temp);
-	    rot_right(tree, node);
-	    if (temp->llink)
-		fixup(tree, temp->llink);
+	} else if (WEIGHT(l->rlink) > wr) {	/* LR */
+	    pr_node *lr = l->rlink;
+	    /* Rotate |l| left, then |node| right, with |lr| taking the place of
+	     * |node| and having |l| and |node| as left and right children,
+	     * respectively. */
+	    pr_node *parent = node->parent;
+
+	    pr_node *a = lr->llink;
+	    lr->llink = l;
+	    l->parent = lr;
+	    if ((l->rlink = a) != NULL)
+		a->parent = l;
+
+	    pr_node *b = lr->rlink;
+	    lr->rlink = node;
+	    node->parent = lr;
+	    if ((node->llink = b) != NULL)
+		b->parent = node;
+
+	    if ((lr->parent = parent) != NULL) {
+		if (parent->llink == node)
+		    parent->llink = lr;
+		else
+		    parent->rlink = lr;
+	    } else {
+		tree->root = lr;
+	    }
+
+	    node->weight += WEIGHT(b) - l->weight;
+	    l->weight += WEIGHT(a) - lr->weight;
+	    lr->weight = node->weight + l->weight;
+
+	    if (l->llink)
+		fixup(tree, l->llink);
 	    goto again;
 	}
     }
