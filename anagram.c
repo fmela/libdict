@@ -18,29 +18,26 @@ struct WordList {
 int
 main(int argc, char *argv[])
 {
-    int i, freq[256];
-    char buf[512], name[1024];
-    FILE *fp;
-    rb_tree *tree;
-    rb_itor *itor;
-
     if (argc != 2) {
 	printf("Expected filename argument.\n");
 	exit(1);
     }
 
-    if ((fp = fopen(argv[1], "r")) == NULL) {
+    FILE *fp = fopen(argv[1], "r");
+    if (!fp) {
 	printf("Unable to open file '%s'.\n", argv[1]);
 	exit(1);
     }
 
-    tree = rb_tree_new(dict_str_cmp, NULL);
+    rb_tree *tree = rb_tree_new(dict_str_cmp, NULL);
 
+    char buf[512];
     while (fgets(buf, sizeof(buf), fp)) {
 	if (isupper(buf[0]))	/* Disregard proper nouns. */
 	    continue;
 
 	strtok(buf, "\r\n");
+	int freq[256] = { 0 };
 	memset(freq, 0, sizeof(freq));
 
 	ASSERT(buf[0] != '\0');
@@ -48,8 +45,9 @@ main(int argc, char *argv[])
 	for (char *p = buf; *p; p++)
 	    freq[tolower(*p)]++;
 
+	char name[1024];
 	char *p = name;
-	for (i=1; i<256; i++) {
+	for (int i=1; i<256; i++) {
 	    if (freq[i]) {
 		ASSERT(freq[i] < 10);
 
@@ -72,7 +70,7 @@ main(int argc, char *argv[])
 	*wordp = word;
     }
 
-    itor = rb_itor_new(tree);
+    rb_itor *itor = rb_itor_new(tree);
     rb_itor_first(itor);
     do {
 	WordList *word = rb_itor_data(itor);
