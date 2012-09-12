@@ -16,7 +16,11 @@
 
 #define TEST_FUNC(func) { #func, func }
 
-void test_basic(dict *dct);
+struct key_info {
+    char *key, *value, *alt;
+};
+
+void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys);
 void test_basic_hashtable_1();
 void test_basic_hashtable_n();
 void test_basic_hb();
@@ -70,11 +74,7 @@ shuffle(char **p, unsigned size)
     }
 }
 
-static struct {
-    char *key;
-    char *value;
-    char *alt;
-} keys[] = {
+static const struct key_info keys1[] = {
     { "d", "D", "d" },
     { "b", "B", "b" },
     { "a", "A", "a" },
@@ -94,13 +94,74 @@ static struct {
     { "s", "S", "s" },
     { "t", "T", "t" },
     { "u", "U", "u" },
+    { "da", "DA", "da" },
+    { "ba", "BA", "ba" },
+    { "aa", "AA", "aa" },
+    { "ca", "CA", "ca" },
+    { "ga", "GA", "ga" },
+    { "fa", "FA", "fa" },
+    { "ha", "HA", "ha" },
+    { "ya", "YA", "ya" },
+    { "za", "ZA", "za" },
+    { "xa", "XA", "xa" },
+    { "ja", "JA", "ja" },
+    { "ra", "RA", "ra" },
+    { "qa", "QA", "qa" },
+    { "pa", "PA", "pa" },
+    { "la", "LA", "la" },
+    { "ma", "MA", "ma" },
+    { "sa", "SA", "sa" },
+    { "ta", "TA", "ta" },
+    { "ua", "UA", "ua" },
 };
-#define NKEYS (sizeof(keys) / sizeof(keys[0]))
+#define NKEYS1 (sizeof(keys1) / sizeof(keys1[0]))
 
-void test_basic(dict *dct) {
+static const struct key_info keys2[] = {
+    { "a", "A", "a" },
+    { "aa", "AA", "aa" },
+    { "b", "B", "b" },
+    { "ba", "BA", "ba" },
+    { "c", "C", "c" },
+    { "ca", "CA", "ca" },
+    { "d", "D", "d" },
+    { "da", "DA", "da" },
+    { "f", "F", "f" },
+    { "fa", "FA", "fa" },
+    { "g", "G", "g" },
+    { "ga", "GA", "ga" },
+    { "h", "H", "h" },
+    { "ha", "HA", "ha" },
+    { "j", "J", "j" },
+    { "ja", "JA", "ja" },
+    { "l", "L", "l" },
+    { "la", "LA", "la" },
+    { "m", "M", "m" },
+    { "ma", "MA", "ma" },
+    { "p", "P", "p" },
+    { "pa", "PA", "pa" },
+    { "q", "Q", "q" },
+    { "qa", "QA", "qa" },
+    { "r", "R", "r" },
+    { "ra", "RA", "ra" },
+    { "s", "S", "s" },
+    { "sa", "SA", "sa" },
+    { "t", "T", "t" },
+    { "ta", "TA", "ta" },
+    { "u", "U", "u" },
+    { "ua", "UA", "ua" },
+    { "x", "X", "x" },
+    { "xa", "XA", "xa" },
+    { "y", "Y", "y" },
+    { "ya", "YA", "ya" },
+    { "z", "Z", "z" },
+    { "za", "ZA", "za" },
+};
+#define NKEYS2 (sizeof(keys2) / sizeof(keys2[0]))
+
+void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     dict_verify(dct);
 
-    for (unsigned i = 0; i < NKEYS; ++i) {
+    for (unsigned i = 0; i < nkeys; ++i) {
 	void **datum_location = NULL;
 	CU_ASSERT_TRUE(dict_insert(dct, keys[i].key, &datum_location));
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
@@ -108,19 +169,19 @@ void test_basic(dict *dct) {
 
 	dict_verify(dct);
     }
-    CU_ASSERT_EQUAL(dict_count(dct), NKEYS);
+    CU_ASSERT_EQUAL(dict_count(dct), nkeys);
 
-    for (unsigned i = 0; i < NKEYS; ++i)
+    for (unsigned i = 0; i < nkeys; ++i)
 	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), keys[i].value);
 
-    for (unsigned i = 0; i < NKEYS; ++i) {
+    for (unsigned i = 0; i < nkeys; ++i) {
 	void **datum_location = NULL;
 	CU_ASSERT_FALSE(dict_insert(dct, keys[i].key, &datum_location));
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
 
 	dict_verify(dct);
     }
-    CU_ASSERT_EQUAL(dict_count(dct), NKEYS);
+    CU_ASSERT_EQUAL(dict_count(dct), nkeys);
 
     dict_itor *itor = dict_itor_new(dct);
     CU_ASSERT_PTR_NOT_NULL(itor);
@@ -137,7 +198,7 @@ void test_basic(dict *dct) {
 	    last_key = dict_itor_key(itor);
 	}
     }
-    CU_ASSERT_EQUAL(n, NKEYS);
+    CU_ASSERT_EQUAL(n, nkeys);
     last_key = NULL;
     n = 0;
     for (dict_itor_last(itor); dict_itor_valid(itor); dict_itor_prev(itor)) {
@@ -151,10 +212,10 @@ void test_basic(dict *dct) {
 	    last_key = dict_itor_key(itor);
 	}
     }
-    CU_ASSERT_EQUAL(n, NKEYS);
+    CU_ASSERT_EQUAL(n, nkeys);
     dict_itor_free(itor);
 
-    for (unsigned i = 0; i < NKEYS; ++i) {
+    for (unsigned i = 0; i < nkeys; ++i) {
 	void **datum_location = NULL;
 	CU_ASSERT_FALSE(dict_insert(dct, keys[i].key, &datum_location));
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
@@ -162,26 +223,43 @@ void test_basic(dict *dct) {
 
 	dict_verify(dct);
     }
-    CU_ASSERT_EQUAL(dict_count(dct), NKEYS);
+    CU_ASSERT_EQUAL(dict_count(dct), nkeys);
 
-    for (unsigned i = 0; i < NKEYS; ++i)
+    for (unsigned i = 0; i < nkeys; ++i)
 	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), keys[i].alt);
 
-    for (unsigned i = 0; i < NKEYS; ++i) {
+    for (unsigned i = 0; i < nkeys; ++i) {
 	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), keys[i].alt);
 	CU_ASSERT_EQUAL(dict_remove(dct, keys[i].key), true);
 	dict_verify(dct);
 	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), NULL);
 	CU_ASSERT_EQUAL(dict_remove(dct, keys[i].key), false);
-	for (unsigned j = i + 1; j < NKEYS; ++j) {
+	for (unsigned j = i + 1; j < nkeys; ++j) {
 	    CU_ASSERT_EQUAL(dict_search(dct, keys[j].key), keys[j].alt);
 	}
     }
 
-    CU_ASSERT_EQUAL(dict_clear(dct), 0);
-    CU_ASSERT_EQUAL(dict_count(dct), 0);
-    dict_verify(dct);
-    dict_free(dct);
+    for (unsigned i = 0; i < nkeys; ++i) {
+	void **datum_location = NULL;
+	CU_ASSERT_TRUE(dict_insert(dct, keys[i].key, &datum_location));
+	CU_ASSERT_PTR_NOT_NULL(datum_location);
+	*datum_location = keys[i].value;
+
+	dict_verify(dct);
+    }
+    CU_ASSERT_EQUAL(dict_count(dct), nkeys);
+    CU_ASSERT_EQUAL(dict_clear(dct), nkeys);
+
+    for (unsigned i = 0; i < nkeys; ++i) {
+	void **datum_location = NULL;
+	CU_ASSERT_TRUE(dict_insert(dct, keys[i].key, &datum_location));
+	CU_ASSERT_PTR_NOT_NULL(datum_location);
+	*datum_location = keys[i].value;
+
+	dict_verify(dct);
+    }
+    CU_ASSERT_EQUAL(dict_count(dct), nkeys);
+    CU_ASSERT_EQUAL(dict_free(dct), nkeys);
 }
 
 unsigned
@@ -196,47 +274,60 @@ strhash(const void *p)
 
 void test_basic_hashtable_1()
 {
-    test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 1));
+    test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 1),
+	       keys1, NKEYS1);
+    test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 1),
+	       keys2, NKEYS2);
 }
 
 void test_basic_hashtable_n()
 {
-    test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 7));
+    test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 7),
+	       keys1, NKEYS1);
+    test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 7),
+	       keys2, NKEYS2);
 }
 
 void test_basic_hb()
 {
-    test_basic(hb_dict_new(dict_str_cmp, NULL));
+    test_basic(hb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
+    test_basic(hb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
 }
 
 void test_basic_pr()
 {
-    test_basic(pr_dict_new(dict_str_cmp, NULL));
+    test_basic(pr_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
+    test_basic(pr_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
 }
 
 void test_basic_rb()
 {
-    test_basic(rb_dict_new(dict_str_cmp, NULL));
+    test_basic(rb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
+    test_basic(rb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
 }
 
 void test_basic_sl()
 {
-    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 12));
+    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 12), keys1, NKEYS1);
+    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 12), keys2, NKEYS2);
 }
 
 void test_basic_sp()
 {
-    test_basic(sp_dict_new(dict_str_cmp, NULL));
+    test_basic(sp_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
+    test_basic(sp_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
 }
 
 void test_basic_tr()
 {
-    test_basic(tr_dict_new(dict_str_cmp, NULL, NULL));
+    test_basic(tr_dict_new(dict_str_cmp, NULL, NULL), keys1, NKEYS1);
+    test_basic(tr_dict_new(dict_str_cmp, NULL, NULL), keys2, NKEYS2);
 }
 
 void test_basic_wb()
 {
-    test_basic(wb_dict_new(dict_str_cmp, NULL));
+    test_basic(wb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
+    test_basic(wb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
 }
 
 void test_version_string()
