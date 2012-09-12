@@ -54,7 +54,17 @@ main(int argc, char **argv)
 {
     if (argc != 3) {
 	fprintf(stderr, "usage: %s [type] [input]\n", appname);
-	fprintf(stderr, "type must be one of h, p, r, t, s, w or H\n");
+	fprintf(stderr, "type: specifies the dictionary type:\n");
+	fprintf(stderr, "   h: height-balanced tree\n");
+	fprintf(stderr, "   p: path-reduction tree\n");
+	fprintf(stderr, "   r: red-black tree\n");
+	fprintf(stderr, "   t: treap\n");
+	fprintf(stderr, "   s: splay tree\n");
+	fprintf(stderr, "   w: weight-balanced tree\n");
+	fprintf(stderr, "   S: skiplist\n");
+	fprintf(stderr, "   H: hashtable\n");
+	fprintf(stderr, "input: text file consisting of newline-separated keys"
+		"\n");
 	exit(EXIT_FAILURE);
     }
 
