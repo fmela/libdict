@@ -312,16 +312,15 @@ skiplist_verify(const skiplist *list)
 {
     if (list->count == 0) {
 	ASSERT(list->top_link == 0);
-	for (unsigned i = 0; i < list->max_link; ++i)
-	    ASSERT(list->head->link[i] == NULL);
     } else {
-	ASSERT(list->top_link < list->max_link);
-	for (unsigned i = 0; i < list->top_link; ++i) {
-	    ASSERT(list->head->link[i] != NULL);
-	}
-	for (unsigned i = list->top_link; i < list->max_link; ++i) {
-	    ASSERT(list->head->link[i] == NULL);
-	}
+	ASSERT(list->top_link > 0);
+    }
+    ASSERT(list->top_link < list->max_link);
+    for (unsigned i = 0; i < list->top_link; ++i) {
+	ASSERT(list->head->link[i] != NULL);
+    }
+    for (unsigned i = list->top_link; i < list->max_link; ++i) {
+	ASSERT(list->head->link[i] == NULL);
     }
     unsigned observed_top_link = 0;
 
