@@ -87,6 +87,7 @@ static dict_vtable wb_tree_vtable = {
     (dict_clear_func)		tree_clear,
     (dict_traverse_func)	tree_traverse,
     (dict_count_func)		tree_count,
+    (dict_verify_func)		wb_tree_verify,
 };
 
 static itor_vtable wb_tree_itor_vtable = {
@@ -108,6 +109,8 @@ static itor_vtable wb_tree_itor_vtable = {
 
 static void	rot_left(wb_tree *tree, wb_node *node);
 static void	rot_right(wb_tree *tree, wb_node *node);
+static unsigned	node_verify(const wb_tree *tree, const wb_node *parent,
+			    const wb_node *node);
 static size_t	node_height(const wb_node *node);
 static size_t	node_mheight(const wb_node *node);
 static size_t	node_pathlen(const wb_node *node, size_t level);
@@ -188,6 +191,7 @@ wb_tree_insert(wb_tree *tree, void *key, void ***datum_location)
 	*datum_location = &node->datum;
     if (!(node->parent = parent)) {
 	ASSERT(tree->count == 0);
+	ASSERT(tree->root == NULL);
 	tree->root = node;
     } else {
 	if (cmp < 0)
@@ -198,20 +202,22 @@ wb_tree_insert(wb_tree *tree, void *key, void ***datum_location)
 	while ((node = parent) != NULL) {
 	    parent = node->parent;
 	    ++node->weight;
-	    float wbal = WEIGHT(node->llink) / (float)node->weight;
-	    if (wbal < ALPHA_0) {
+	    unsigned weight_nl = WEIGHT(node->llink);
+	    if (weight_nl*1000 < node->weight*293) {
 		ASSERT(node->rlink != NULL);
-		wbal = WEIGHT(node->rlink->llink) / (float)node->rlink->weight;
-		if (wbal < ALPHA_3) {		    /* LL */
+		unsigned weight_nrl = WEIGHT(node->rlink->llink);
+		if (weight_nrl*1000 < node->rlink->weight*586) {
+						    /* LL */
 		    rot_left(tree, node);
 		} else {			    /* RL */
 		    rot_right(tree, node->rlink);
 		    rot_left(tree, node);
 		}
-	    } else if (wbal > ALPHA_1) {
+	    } else if (weight_nl*1000 > node->weight*707) {
 		ASSERT(node->llink != NULL);
-		wbal = WEIGHT(node->llink->llink) / (float)node->llink->weight;
-		if (wbal > ALPHA_2) {		    /* RR */
+		unsigned weight_nll = WEIGHT(node->llink->llink);
+		if (weight_nll*1000 > node->llink->weight*414) {
+						    /* RR */
 		    rot_right(tree, node);
 		} else {			    /* LR */
 		    rot_left(tree, node->llink);
@@ -503,6 +509,36 @@ wb_dict_itor_new(wb_tree *tree)
     return itor;
 }
 
+static unsigned
+node_verify(const wb_tree *tree, const wb_node *parent, const wb_node *node)
+{
+    ASSERT(tree);
+
+    if (!parent) {
+	ASSERT(tree->root == node);
+    } else {
+	ASSERT(parent->llink == node || parent->rlink == node);
+    }
+    if (node) {
+	ASSERT(node->parent == parent);
+	unsigned lweight = node_verify(tree, node, node->llink);
+	unsigned rweight = node_verify(tree, node, node->rlink);
+	ASSERT(node->weight == lweight + rweight);
+    }
+    return WEIGHT(node);
+}
+
+void
+wb_tree_verify(const wb_tree *tree)
+{
+    if (tree->root) {
+	ASSERT(tree->count > 0);
+	node_verify(tree, NULL, tree->root);
+    } else {
+	ASSERT(tree->count == 0);
+    }
+}
+
 void
 wb_itor_free(wb_itor *itor)
 {
@@ -651,25 +687,4 @@ wb_itor_set_data(wb_itor *itor, void *datum, void **old_datum)
 	*old_datum = itor->node->datum;
     itor->node->datum = datum;
     return true;
-}
-
-static void
-wb_node_verify(const wb_tree *tree, wb_node *node, wb_node *parent)
-{
-    if (!parent) {
-	ASSERT(tree->root == node);
-    }
-    if (node) {
-	ASSERT(node->parent == parent);
-	wb_node_verify(tree, node->llink, node);
-	wb_node_verify(tree, node->rlink, node);
-    }
-}
-
-void
-wb_tree_verify(const wb_tree *tree)
-{
-    ASSERT(tree != NULL);
-
-    wb_node_verify(tree, tree->root, NULL);
 }

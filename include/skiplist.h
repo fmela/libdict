@@ -54,6 +54,7 @@ bool		skiplist_remove(skiplist *list, const void *key);
 size_t		skiplist_clear(skiplist *list);
 size_t		skiplist_traverse(skiplist *list, dict_visit_func visit);
 size_t		skiplist_count(const skiplist *list);
+void		skiplist_verify(const skiplist *list);
 
 typedef struct skiplist_itor skiplist_itor;
 

@@ -43,7 +43,7 @@ struct rb_node {
 };
 
 #define RB_RED		    0
-#define RB_BLK		    1
+#define RB_BLACK	    1
 
 struct rb_tree {
     TREE_FIELDS(rb_node);
@@ -62,6 +62,7 @@ static dict_vtable rb_tree_vtable = {
     (dict_clear_func)	    rb_tree_clear,
     (dict_traverse_func)    rb_tree_traverse,
     (dict_count_func)	    tree_count,
+    (dict_verify_func)	    rb_tree_verify,
 };
 
 static itor_vtable rb_tree_itor_vtable = {
@@ -81,7 +82,7 @@ static itor_vtable rb_tree_itor_vtable = {
     (dict_icompare_func)    NULL /* rb_itor_compare not implemented yet */
 };
 
-static rb_node _null = { NULL, NULL, NULL, NULL, NULL, RB_BLK };
+static rb_node _null = { NULL, NULL, NULL, NULL, NULL, RB_BLACK };
 #define RB_NULL	&_null
 
 static void	rot_left(rb_tree *tree, rb_node *node);
@@ -182,7 +183,7 @@ rb_tree_insert(rb_tree *tree, void *key, void ***datum_location)
     if ((node->parent = parent) == RB_NULL) {
 	tree->root = node;
 	ASSERT(tree->count == 0);
-	node->color = RB_BLK;
+	node->color = RB_BLACK;
     } else {
 	if (cmp < 0)
 	    parent->llink = node;
@@ -205,9 +206,9 @@ insert_fixup(rb_tree *tree, rb_node *node)
 	if (node->parent == node->parent->parent->llink) {
 	    rb_node *temp = node->parent->parent->rlink;
 	    if (temp->color == RB_RED) {
-		temp->color = RB_BLK;
+		temp->color = RB_BLACK;
 		node = node->parent;
-		node->color = RB_BLK;
+		node->color = RB_BLACK;
 		node = node->parent;
 		node->color = RB_RED;
 	    } else {
@@ -216,7 +217,7 @@ insert_fixup(rb_tree *tree, rb_node *node)
 		    rot_left(tree, node);
 		}
 		temp = node->parent;
-		temp->color = RB_BLK;
+		temp->color = RB_BLACK;
 		temp = temp->parent;
 		temp->color = RB_RED;
 		rot_right(tree, temp);
@@ -224,9 +225,9 @@ insert_fixup(rb_tree *tree, rb_node *node)
 	} else {
 	    rb_node *temp = node->parent->parent->llink;
 	    if (temp->color == RB_RED) {
-		temp->color = RB_BLK;
+		temp->color = RB_BLACK;
 		node = node->parent;
-		node->color = RB_BLK;
+		node->color = RB_BLACK;
 		node = node->parent;
 		node->color = RB_RED;
 	    } else {
@@ -235,7 +236,7 @@ insert_fixup(rb_tree *tree, rb_node *node)
 		    rot_right(tree, node);
 		}
 		temp = node->parent;
-		temp->color = RB_BLK;
+		temp->color = RB_BLACK;
 		temp = temp->parent;
 		temp->color = RB_RED;
 		rot_left(tree, temp);
@@ -243,7 +244,7 @@ insert_fixup(rb_tree *tree, rb_node *node)
 	}
     }
 
-    tree->root->color = RB_BLK;
+    tree->root->color = RB_BLACK;
 }
 
 bool
@@ -287,7 +288,7 @@ rb_tree_remove(rb_tree *tree, const void *key)
 	tree->root = temp;
     }
 
-    if (out->color == RB_BLK)
+    if (out->color == RB_BLACK)
 	delete_fixup(tree, temp);
     if (tree->del_func)
 	tree->del_func(out->key, out->datum);
@@ -304,59 +305,61 @@ delete_fixup(rb_tree *tree, rb_node *node)
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
 
-    while (node != tree->root && node->color == RB_BLK) {
+    while (node != tree->root && node->color == RB_BLACK) {
 	if (node->parent->llink == node) {
 	    rb_node *temp = node->parent->rlink;
 	    if (temp->color == RB_RED) {
-		temp->color = RB_BLK;
+		temp->color = RB_BLACK;
 		node->parent->color = RB_RED;
 		rot_left(tree, node->parent);
 		temp = node->parent->rlink;
 	    }
-	    if (temp->llink->color == RB_BLK && temp->rlink->color == RB_BLK) {
+	    if (temp->llink->color == RB_BLACK &&
+		temp->rlink->color == RB_BLACK) {
 		temp->color = RB_RED;
 		node = node->parent;
 	    } else {
-		if (temp->rlink->color == RB_BLK) {
-		    temp->llink->color = RB_BLK;
+		if (temp->rlink->color == RB_BLACK) {
+		    temp->llink->color = RB_BLACK;
 		    temp->color = RB_RED;
 		    rot_right(tree, temp);
 		    temp = node->parent->rlink;
 		}
 		temp->color = node->parent->color;
-		temp->rlink->color = RB_BLK;
-		node->parent->color = RB_BLK;
+		temp->rlink->color = RB_BLACK;
+		node->parent->color = RB_BLACK;
 		rot_left(tree, node->parent);
 		break;
 	    }
 	} else {
 	    rb_node *temp = node->parent->llink;
 	    if (temp->color == RB_RED) {
-		temp->color = RB_BLK;
+		temp->color = RB_BLACK;
 		node->parent->color = RB_RED;
 		rot_right(tree, node->parent);
 		temp = node->parent->llink;
 	    }
-	    if (temp->rlink->color == RB_BLK && temp->llink->color == RB_BLK) {
+	    if (temp->rlink->color == RB_BLACK &&
+		temp->llink->color == RB_BLACK) {
 		temp->color = RB_RED;
 		node = node->parent;
 	    } else {
-		if (temp->llink->color == RB_BLK) {
-		    temp->rlink->color = RB_BLK;
+		if (temp->llink->color == RB_BLACK) {
+		    temp->rlink->color = RB_BLACK;
 		    temp->color = RB_RED;
 		    rot_left(tree, temp);
 		    temp = node->parent->llink;
 		}
 		temp->color = node->parent->color;
-		node->parent->color = RB_BLK;
-		temp->llink->color = RB_BLK;
+		node->parent->color = RB_BLACK;
+		temp->llink->color = RB_BLACK;
 		rot_right(tree, node->parent);
 		break;
 	    }
 	}
     }
 
-    node->color = RB_BLK;
+    node->color = RB_BLACK;
 }
 
 size_t
@@ -624,6 +627,43 @@ node_min(rb_node *node)
     while (node->llink != RB_NULL)
 	node = node->llink;
     return node;
+}
+
+static void
+node_verify(const rb_tree *tree, const rb_node *parent, const rb_node *node)
+{
+    ASSERT(tree);
+
+    if (parent == RB_NULL) {
+	ASSERT(tree->root == node);
+	ASSERT(node->color == RB_BLACK);
+    } else {
+	ASSERT(parent->llink == node || parent->rlink == node);
+    }
+    if (node != RB_NULL) {
+	ASSERT(node->parent == parent);
+	if (node->color == RB_RED) {
+	    /* Verify that every child of a red node is black. */
+	    ASSERT(node->llink->color == RB_BLACK);
+	    ASSERT(node->rlink->color == RB_BLACK);
+	}
+	node_verify(tree, node, node->llink);
+	node_verify(tree, node, node->rlink);
+    } else {
+	/* Verify that every leaf is black. */
+	ASSERT(node->color == RB_BLACK);
+    }
+}
+
+void
+rb_tree_verify(const rb_tree *tree)
+{
+    if (tree->root != RB_NULL) {
+	ASSERT(tree->count > 0);
+	node_verify(tree, RB_NULL, tree->root);
+    } else {
+	ASSERT(tree->count == 0);
+    }
 }
 
 rb_itor *

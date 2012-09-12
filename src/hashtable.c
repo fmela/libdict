@@ -70,7 +70,8 @@ static dict_vtable hashtable_vtable = {
     (dict_remove_func)	    hashtable_remove,
     (dict_clear_func)	    hashtable_clear,
     (dict_traverse_func)    hashtable_traverse,
-    (dict_count_func)	    hashtable_count
+    (dict_count_func)	    hashtable_count,
+    (dict_verify_func)	    hashtable_verify,
 };
 
 static itor_vtable hashtable_itor_vtable = {
@@ -336,6 +337,14 @@ hashtable_resize(hashtable *table, unsigned size)
     table->size = size;
 
     return 0;
+}
+
+void
+hashtable_verify(const hashtable *table)
+{
+    ASSERT(table != NULL);
+
+    // TODO: implement me.
 }
 
 hashtable_itor *

@@ -57,6 +57,7 @@ size_t		pr_tree_mheight(const pr_tree *tree);
 size_t		pr_tree_pathlen(const pr_tree *tree);
 const void*	pr_tree_min(const pr_tree *tree);
 const void*	pr_tree_max(const pr_tree *tree);
+void		pr_tree_verify(const pr_tree *tree);
 
 typedef struct pr_itor pr_itor;
 

@@ -61,6 +61,7 @@ static dict_vtable pr_tree_vtable = {
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
     (dict_count_func)	    tree_count,
+    (dict_verify_func)	    pr_tree_verify,
 };
 
 static itor_vtable pr_tree_itor_vtable = {
@@ -83,6 +84,8 @@ static itor_vtable pr_tree_itor_vtable = {
 static void	fixup(pr_tree *tree, pr_node *node);
 static void	rot_left(pr_tree *tree, pr_node *node);
 static void	rot_right(pr_tree *tree, pr_node *node);
+static unsigned	node_verify(const pr_tree *tree, const pr_node *parent,
+			    const pr_node *node);
 static size_t	node_height(const pr_node *node);
 static size_t	node_mheight(const pr_node *node);
 static size_t	node_pathlen(const pr_node *node, size_t level);
@@ -590,6 +593,36 @@ rot_right(pr_tree *tree, pr_node *node)
 
     node->weight = WEIGHT(node->llink) + WEIGHT(node->rlink);
     llink->weight = WEIGHT(llink->llink) + node->weight;
+}
+
+static unsigned
+node_verify(const pr_tree *tree, const pr_node *parent, const pr_node *node)
+{
+    ASSERT(tree);
+
+    if (!parent) {
+	ASSERT(tree->root == node);
+    } else {
+	ASSERT(parent->llink == node || parent->rlink == node);
+    }
+    if (node) {
+	ASSERT(node->parent == parent);
+	unsigned lweight = node_verify(tree, node, node->llink);
+	unsigned rweight = node_verify(tree, node, node->rlink);
+	ASSERT(node->weight == lweight + rweight);
+    }
+    return WEIGHT(node);
+}
+
+void
+pr_tree_verify(const pr_tree *tree)
+{
+    if (tree->root) {
+	ASSERT(tree->count > 0);
+	node_verify(tree, NULL, tree->root);
+    } else {
+	ASSERT(tree->count == 0);
+    }
 }
 
 pr_itor *

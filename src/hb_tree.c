@@ -59,6 +59,7 @@ static dict_vtable hb_tree_vtable = {
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
     (dict_count_func)	    tree_count,
+    (dict_verify_func)	    hb_tree_verify,
 };
 
 static itor_vtable hb_tree_itor_vtable = {
@@ -497,6 +498,40 @@ rot_right(hb_tree *tree, hb_node *node)
     node->bal  += 1 - MIN(llink->bal, 0);
     llink->bal += 1 + MAX(node->bal, 0);
     return hc;
+}
+
+static unsigned
+node_verify(const hb_tree *tree, const hb_node *parent, const hb_node *node)
+{
+    ASSERT(tree);
+
+    if (!parent) {
+	ASSERT(tree->root == node);
+    } else {
+	ASSERT(parent->llink == node || parent->rlink == node);
+    }
+    if (node) {
+	ASSERT(node->parent == parent);
+	ASSERT(node->bal >= -1);
+	ASSERT(node->bal <= 1);
+	unsigned lheight = node_verify(tree, node, node->llink);
+	unsigned rheight = node_verify(tree, node, node->rlink);
+	ASSERT(node->bal == (int)rheight - (int)lheight);
+	return MAX(lheight, rheight) + 1;
+    } else {
+	return 0;
+    }
+}
+
+void
+hb_tree_verify(const hb_tree *tree)
+{
+    if (tree->root) {
+	ASSERT(tree->count > 0);
+	node_verify(tree, NULL, tree->root);
+    } else {
+	ASSERT(tree->count == 0);
+    }
 }
 
 hb_itor *

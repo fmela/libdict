@@ -74,7 +74,8 @@ static dict_vtable skiplist_vtable = {
     (dict_remove_func)	    skiplist_remove,
     (dict_clear_func)	    skiplist_clear,
     (dict_traverse_func)    skiplist_traverse,
-    (dict_count_func)	    skiplist_count
+    (dict_count_func)	    skiplist_count,
+    (dict_verify_func)	    skiplist_verify,
 };
 
 static itor_vtable skiplist_itor_vtable = {
@@ -225,6 +226,7 @@ skiplist_search(skiplist *list, const void *key)
     return NULL;
 }
 
+// TODO: fix bug where prev does not get set properly.
 bool
 skiplist_remove(skiplist *list, const void *key)
 {
@@ -247,10 +249,14 @@ skiplist_remove(skiplist *list, const void *key)
 	    break;
 	update[k]->link[k] = x->link[k];
     }
+    if (x->prev)
+	x->prev->link[0] = x->link[0];
+    if (x->link[0])
+	x->link[0]->prev = x->prev;
     if (list->del_func)
 	list->del_func(x->key, x->datum);
     FREE(x);
-    while (list->top_link > 0 && !list->head->link[list->top_link])
+    while (list->top_link > 0 && !list->head->link[list->top_link-1])
 	list->top_link--;
     list->count--;
     return true;
@@ -300,6 +306,46 @@ skiplist_count(const skiplist *list)
     ASSERT(list != NULL);
 
     return list->count;
+}
+
+void
+skiplist_verify(const skiplist *list)
+{
+    if (list->count == 0) {
+	ASSERT(list->top_link == 0);
+	for (unsigned i = 0; i < list->max_link; ++i)
+	    ASSERT(list->head->link[i] == NULL);
+    } else {
+	ASSERT(list->top_link < list->max_link);
+	for (unsigned i = 0; i < list->top_link; ++i) {
+	    ASSERT(list->head->link[i] != NULL);
+	}
+	for (unsigned i = list->top_link; i < list->max_link; ++i) {
+	    ASSERT(list->head->link[i] == NULL);
+	}
+    }
+    unsigned observed_top_link = 0;
+
+    skip_node *prev = list->head;
+    skip_node *node = list->head->link[0];
+    ASSERT(prev->prev == NULL);
+    while (node) {
+	if (observed_top_link < node->link_count)
+	    observed_top_link = node->link_count;
+
+	ASSERT(node->prev == prev);
+	ASSERT(node->link_count >= 1);
+	ASSERT(node->link_count <= list->top_link);
+	for (unsigned k = 0; k < node->link_count; k++) {
+	    if (node->link[k]) {
+		ASSERT(node->link[k]->link_count >= k);
+	    }
+	}
+
+	prev = node;
+	node = node->link[0];
+    }
+    ASSERT(list->top_link == observed_top_link);
 }
 
 #define VALID(itor) ((itor)->node && (itor)->node != (itor)->list->head)
@@ -505,29 +551,6 @@ static unsigned
 rand_link_count(skiplist *list)
 {
     unsigned r = list->randgen = list->randgen * RGEN_A + RGEN_M;
-    unsigned i = 1;
-    for (; i+1<list->max_link; ++i)
-	if (r > (1U<<(32-i)))
-/*	if (r & (1U<<(32-i))) */
-	    break;
-    return i;
-}
-
-void
-skiplist_verify(const skiplist *list)
-{
-    ASSERT(list != NULL);
-    ASSERT(list->top_link <= list->max_link);
-
-    const skip_node *node = list->head->link[0];
-    while (node != NULL) {
-	ASSERT(node->link_count >= 1);
-	ASSERT(node->link_count <= list->top_link);
-	for (unsigned k = 0; k < node->link_count; k++) {
-	    if (node->link[k]) {
-		ASSERT(node->link[k]->link_count >= k);
-	    }
-	}
-	node = node->link[0];
-    }
+    unsigned count = __builtin_ctz(r) + 1;
+    return (count >= list->max_link) ?  list->max_link - 1 : count;
 }

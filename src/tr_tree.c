@@ -80,6 +80,7 @@ static dict_vtable tr_tree_vtable = {
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
     (dict_count_func)	    tree_count,
+    (dict_verify_func)	    tr_tree_verify,
 };
 
 static itor_vtable tr_tree_itor_vtable = {
@@ -224,7 +225,7 @@ tr_tree_remove(tr_tree *tree, const void *key)
 	return false;
 
     while (node->llink && node->rlink) {
-	if (node->llink->prio < node->rlink->prio)
+	if (node->llink->prio > node->rlink->prio)
 	    tree_node_rot_right(tree, node);
 	else
 	    tree_node_rot_left(tree, node);
@@ -360,6 +361,40 @@ node_pathlen(const tr_node *node, size_t level)
     if (node->rlink)
 	n += level + node_pathlen(node->rlink, level + 1);
     return n;
+}
+
+static void
+node_verify(const tr_tree *tree, const tr_node *parent, const tr_node *node)
+{
+    ASSERT(tree);
+
+    if (!parent) {
+	ASSERT(tree->root == node);
+    } else {
+	ASSERT(parent->llink == node || parent->rlink == node);
+    }
+    if (node) {
+	ASSERT(node->parent == parent);
+	if (parent) {
+	    if (node->prio > parent->prio)
+		printf("node->prio=%u parent->prio=%u\n",
+		       node->prio, parent->prio);
+	    ASSERT(node->prio <= parent->prio);
+	}
+	node_verify(tree, node, node->llink);
+	node_verify(tree, node, node->rlink);
+    }
+}
+
+void
+tr_tree_verify(const tr_tree *tree)
+{
+    if (tree->root) {
+	ASSERT(tree->count > 0);
+	node_verify(tree, NULL, tree->root);
+    } else {
+	ASSERT(tree->count == 0);
+    }
 }
 
 tr_itor *

@@ -145,15 +145,17 @@ main(int argc, char **argv)
 	ASSERT(*datum_location == NULL);
 	*datum_location = words[i];
     }
+    timer_end(&start, &end, &total);
     printf("   %s container: %.02fkB\n", container_name, malloced_save * 1e-3);
     printf("      %s memory: %.02fkB\n", container_name, malloced * 1e-3);
-    timer_end(&start, &end, &total);
     printf("      %s insert: %.03f s (%9d cmp, %9d hash)\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
     total_comp += comp_count; comp_count = 0;
     total_hash += hash_count; hash_count = 0;
+
+    dict_verify(dct);
 
     unsigned n = dict_count(dct);
     if (n != nwords)
@@ -240,6 +242,8 @@ main(int argc, char **argv)
 	   comp_count, hash_count);
     total_comp += comp_count; comp_count = 0;
     total_hash += hash_count; hash_count = 0;
+
+    dict_verify(dct);
 
     if ((n = dict_count(dct)) != 0)
 	quit("error - count not zero (%u)!", n);

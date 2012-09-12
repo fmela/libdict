@@ -57,6 +57,7 @@ size_t		sp_tree_mheight(const sp_tree *tree);
 size_t		sp_tree_pathlen(const sp_tree *tree);
 const void*	sp_tree_min(const sp_tree *tree);
 const void*	sp_tree_max(const sp_tree *tree);
+void		sp_tree_verify(const sp_tree *tree);
 
 typedef struct sp_itor sp_itor;
 

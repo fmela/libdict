@@ -82,6 +82,7 @@ static dict_vtable sp_tree_vtable = {
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
     (dict_count_func)	    tree_count,
+    (dict_verify_func)	    sp_tree_verify,
 };
 
 static itor_vtable sp_tree_itor_vtable = {
@@ -529,6 +530,34 @@ node_pathlen(const sp_node *node, size_t level)
     if (node->rlink)
 	n += level + node_pathlen(node->rlink, level + 1);
     return n;
+}
+
+static void
+node_verify(const sp_tree *tree, const sp_node *parent, const sp_node *node)
+{
+    ASSERT(tree);
+
+    if (!parent) {
+	ASSERT(tree->root == node);
+    } else {
+	ASSERT(parent->llink == node || parent->rlink == node);
+    }
+    if (node) {
+	ASSERT(node->parent == parent);
+	node_verify(tree, node, node->llink);
+	node_verify(tree, node, node->rlink);
+    }
+}
+
+void
+sp_tree_verify(const sp_tree *tree)
+{
+    if (tree->root) {
+	ASSERT(tree->count > 0);
+    } else {
+	ASSERT(tree->count == 0);
+    }
+    node_verify(tree, NULL, tree->root);
 }
 
 sp_itor *

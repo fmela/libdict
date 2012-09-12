@@ -85,6 +85,7 @@ typedef bool	    (*dict_remove_func)(void *obj, const void *key);
 typedef size_t      (*dict_clear_func)(void *obj);
 typedef size_t      (*dict_traverse_func)(void *obj, dict_visit_func visit);
 typedef size_t      (*dict_count_func)(const void *obj);
+typedef void	    (*dict_verify_func)(const void *obj);
 
 typedef struct {
     dict_inew_func      inew;
@@ -95,6 +96,7 @@ typedef struct {
     dict_clear_func     clear;
     dict_traverse_func  traverse;
     dict_count_func     count;
+    dict_verify_func	verify;
 } dict_vtable;
 
 typedef void	    (*dict_ifree_func)(void *itor);
@@ -141,6 +143,7 @@ struct dict {
 #define dict_remove(dct,k)      ((dct)->_vtable->remove((dct)->_object, (k)))
 #define dict_traverse(dct,f)    ((dct)->_vtable->traverse((dct)->_object, (f)))
 #define dict_count(dct)		((dct)->_vtable->count((dct)->_object))
+#define dict_verify(dct)	((dct)->_vtable->verify((dct)->_object))
 #define dict_clear(dct)		((dct)->_vtable->clear((dct)->_object))
 void dict_free(dict *dct);
 #define dict_itor_new(dct)      (dct)->_vtable->inew((dct)->_object)
