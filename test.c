@@ -117,6 +117,7 @@ main(int argc, char **argv)
 
     if (!dct)
 	quit("can't create container");
+    dict_verify(dct);
 
     const size_t malloced_save = malloced;
 
