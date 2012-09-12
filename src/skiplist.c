@@ -226,7 +226,6 @@ skiplist_search(skiplist *list, const void *key)
     return NULL;
 }
 
-// TODO: fix bug where prev does not get set properly.
 bool
 skiplist_remove(skiplist *list, const void *key)
 {
