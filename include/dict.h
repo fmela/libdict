@@ -145,7 +145,7 @@ struct dict {
 #define dict_count(dct)		((dct)->_vtable->count((dct)->_object))
 #define dict_verify(dct)	((dct)->_vtable->verify((dct)->_object))
 #define dict_clear(dct)		((dct)->_vtable->clear((dct)->_object))
-void dict_free(dict *dct);
+size_t dict_free(dict *dct);
 #define dict_itor_new(dct)      (dct)->_vtable->inew((dct)->_object)
 
 struct dict_itor {

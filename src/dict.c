@@ -45,49 +45,49 @@ void (*dict_free_func)(void *) = free;
 int
 dict_int_cmp(const void *k1, const void *k2)
 {
-	const int *a = k1, *b = k2;
-        return (*a > *b) - (*a < *b);
+    const int *a = k1, *b = k2;
+    return (*a > *b) - (*a < *b);
 }
 
 int
 dict_uint_cmp(const void *k1, const void *k2)
 {
-	const unsigned int *a = k1, *b = k2;
-        return (*a > *b) - (*a < *b);
+    const unsigned int *a = k1, *b = k2;
+    return (*a > *b) - (*a < *b);
 }
 
 int
 dict_long_cmp(const void *k1, const void *k2)
 {
-	const long *a = k1, *b = k2;
-        return (*a > *b) - (*a < *b);
+    const long *a = k1, *b = k2;
+    return (*a > *b) - (*a < *b);
 }
 
 int
 dict_ulong_cmp(const void *k1, const void *k2)
 {
-	const unsigned long *a = k1, *b = k2;
-        return (*a > *b) - (*a < *b);
+    const unsigned long *a = k1, *b = k2;
+    return (*a > *b) - (*a < *b);
 }
 
 int
 dict_ptr_cmp(const void *k1, const void *k2)
 {
-	return (k1 > k2) - (k1 < k2);
+    return (k1 > k2) - (k1 < k2);
 }
 
 int
 dict_str_cmp(const void *k1, const void *k2)
 {
-	const char *a = k1, *b = k2;
-	char p, q;
+    const char *a = k1, *b = k2;
+    char p, q;
 
-	for (;;) {
-		p = *a++; q = *b++;
-		if (p == 0 || p != q)
-			break;
-	}
-	return (p > q) - (p < q);
+    for (;;) {
+	p = *a++; q = *b++;
+	if (p == 0 || p != q)
+	    break;
+    }
+    return (p > q) - (p < q);
 }
 
 unsigned
@@ -101,20 +101,21 @@ dict_str_hash(const void *k)
     return hash;
 }
 
-void
+size_t
 dict_free(dict *dct)
 {
-	ASSERT(dct != NULL);
+    ASSERT(dct != NULL);
 
-	dct->_vtable->dfree(dct->_object);
-	FREE(dct);
+    size_t count = dct->_vtable->dfree(dct->_object);
+    FREE(dct);
+    return count;
 }
 
 void
 dict_itor_free(dict_itor *itor)
 {
-	ASSERT(itor != NULL);
+    ASSERT(itor != NULL);
 
-	itor->_vtable->ifree(itor->_itor);
-	FREE(itor);
+    itor->_vtable->ifree(itor->_itor);
+    FREE(itor);
 }
