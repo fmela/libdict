@@ -44,8 +44,8 @@ void timer_end(const struct rusage* start, struct rusage *end,
 	       struct timeval *total);
 
 /* #define HSIZE 599 */
-#define HSIZE 997
-/* #define HSIZE 9973 */
+/* #define HSIZE 997 */
+#define HSIZE 9973
 
 static size_t malloced = 0;
 

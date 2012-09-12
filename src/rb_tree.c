@@ -660,10 +660,10 @@ rb_tree_verify(const rb_tree *tree)
 {
     if (tree->root != RB_NULL) {
 	ASSERT(tree->count > 0);
-	node_verify(tree, RB_NULL, tree->root);
     } else {
 	ASSERT(tree->count == 0);
     }
+    node_verify(tree, RB_NULL, tree->root);
 }
 
 rb_itor *

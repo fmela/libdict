@@ -391,10 +391,10 @@ tr_tree_verify(const tr_tree *tree)
 {
     if (tree->root) {
 	ASSERT(tree->count > 0);
-	node_verify(tree, NULL, tree->root);
     } else {
 	ASSERT(tree->count == 0);
     }
+    node_verify(tree, NULL, tree->root);
 }
 
 tr_itor *
