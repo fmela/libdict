@@ -136,20 +136,20 @@ main(int argc, char **argv)
 		continue;
 	    }
 	    dict_itor *itor = dict_itor_new(dct);
-	    for (dict_itor_first(itor); dict_itor_valid(itor); dict_itor_next(itor))
+	    dict_itor_first(itor);
+	    for (; dict_itor_valid(itor); dict_itor_next(itor))
 		printf("'%s': '%s'\n",
 		       (char *)dict_itor_key(itor),
 		       (char *)dict_itor_data(itor));
 	    dict_itor_free(itor);
 	} else if (strcmp(buf, "reverse") == 0) {
-	    dict_itor *itor;
-
 	    if (ptr) {
 		printf("usage: reverse\n");
 		continue;
 	    }
-	    itor = dict_itor_new(dct);
-	    for (dict_itor_last(itor); dict_itor_valid(itor); dict_itor_prev(itor))
+	    dict_itor *itor = dict_itor_new(dct);
+	    dict_itor_last(itor);
+	    for (; dict_itor_valid(itor); dict_itor_prev(itor))
 		printf("'%s': '%s'\n",
 		       (char *)dict_itor_key(itor),
 		       (char *)dict_itor_data(itor));
@@ -189,39 +189,36 @@ main(int argc, char **argv)
 char *
 xstrdup(const char *str)
 {
-	return xdup(str, strlen(str) + 1);
+    return xdup(str, strlen(str) + 1);
 }
 
 void
 quit(const char *fmt, ...)
 {
-	va_list args;
+    va_list args;
 
-	va_start(args, fmt);
-	fprintf(stderr, "%s: ", appname);
-	vfprintf(stderr, fmt, args);
-	fprintf(stderr, "\n");
-	va_end(args);
+    va_start(args, fmt);
+    fprintf(stderr, "%s: ", appname);
+    vfprintf(stderr, fmt, args);
+    fprintf(stderr, "\n");
+    va_end(args);
 
-	exit(EXIT_FAILURE);
+    exit(EXIT_FAILURE);
 }
 
 void *
 xmalloc(size_t size)
 {
-	void *p;
-
-	if ((p = malloc(size)) == NULL)
-		quit("out of memory");
-	return p;
+    void *p = malloc(size);
+    if (!p) {
+	fprintf(stderr, "out of memory\n");
+	abort();
+    }
+    return p;
 }
 
 void *
 xdup(const void *ptr, size_t size)
 {
-    void *p;
-
-    p = xmalloc(size);
-    memcpy(p, ptr, size);
-    return p;
+    return memcpy(xmalloc(size), ptr, size);
 }
