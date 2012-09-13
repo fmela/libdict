@@ -266,6 +266,11 @@ main(int argc, char **argv)
 	   (total.tv_sec * 1000000 + total.tv_usec) * 1e-6,
 	   total_comp, total_hash);
 
+    for (unsigned i = 0; i < nwords; ++i) {
+	FREE(words[i]);
+    }
+    FREE(words);
+
     exit(EXIT_SUCCESS);
 }
 
