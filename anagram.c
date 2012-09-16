@@ -71,8 +71,7 @@ main(int argc, char *argv[])
     }
 
     rb_itor *itor = rb_itor_new(tree);
-    rb_itor_first(itor);
-    do {
+    for (rb_itor_first(itor); rb_itor_valid(itor); rb_itor_next(itor)) {
 	WordList *word = rb_itor_data(itor);
 	ASSERT(word != NULL);
 	if (word->next) {
@@ -87,7 +86,15 @@ main(int argc, char *argv[])
 	    }
 	    printf("\n");
 	}
+	while (word) {
+	    WordList *next = word->next;
+	    free(word->word);
+	    free(word);
+	    word = next;
+	}
     } while (rb_itor_next(itor));
+    rb_itor_free(itor);
+    rb_tree_free(tree);
 
     return 0;
 }
