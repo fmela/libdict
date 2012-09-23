@@ -182,7 +182,9 @@ sp_tree_clear(sp_tree *tree)
     return count;
 }
 
-static void splay(sp_tree *t, sp_node *n) {
+static void
+splay(sp_tree *t, sp_node *n)
+{
     for (;;) {
 	sp_node *p = n->parent;
 	if (!p)
