@@ -87,7 +87,16 @@ main(int argc, char *argv[])
 	    }
 	    printf("\n");
 	}
+	word = rb_itor_data(itor);
+	while (word) {
+	    WordList *next = word->next;
+	    free(word->word);
+	    free(word);
+	    word = next;
+	}
     } while (rb_itor_next(itor));
+    rb_itor_free(itor);
+    rb_tree_free(tree);
 
     return 0;
 }
