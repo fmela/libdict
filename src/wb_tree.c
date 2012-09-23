@@ -107,8 +107,6 @@ static itor_vtable wb_tree_itor_vtable = {
     (dict_icompare_func)	NULL /* wb_itor_compare not implemented yet */
 };
 
-static void	rot_left(wb_tree *tree, wb_node *node);
-static void	rot_right(wb_tree *tree, wb_node *node);
 static void	node_verify(const wb_tree *tree, const wb_node *parent,
 			    const wb_node *node);
 static size_t	node_height(const wb_node *node);
@@ -162,25 +160,84 @@ wb_tree_search(wb_tree *tree, const void *key)
 }
 
 static inline void
-fixup(wb_tree *tree, wb_node *node) {
-    unsigned weight = WEIGHT(node->llink);
-    if (weight * 1000U < node->weight * 293U) {
-	ASSERT(node->rlink != NULL);
-	weight = WEIGHT(node->rlink->llink);
-	if (weight * 1000U < node->rlink->weight * 586U) {  /* LL */
-	    rot_left(tree, node);
+fixup(wb_tree *tree, wb_node *n) {
+    unsigned weight = WEIGHT(n->llink);
+    if (weight * 1000U < n->weight * 293U) {
+	wb_node *nr = n->rlink;
+	ASSERT(nr != NULL);
+	wb_node *nrl = nr->llink;
+	if (WEIGHT(nrl) * 1000U < nr->weight * 586U) {	/* LL */
+	    /* Rotate |n| left. */
+	    tree_node_rot_left(tree, n);
+	    nr->weight = (n->weight = WEIGHT(n->llink) + WEIGHT(n->rlink)) +
+			 WEIGHT(nr->rlink);
 	} else {					    /* RL */
-	    rot_right(tree, node->rlink);
-	    rot_left(tree, node);
+	    /* Rotate |nr| right, then |n| left. */
+	    ASSERT(nrl != NULL);
+	    wb_node *p = n->parent;
+	    nrl->parent = p;
+	    if (p) {
+		if (p->llink == n)
+		    p->llink = nrl;
+		else
+		    p->rlink = nrl;
+	    } else {
+		tree->root = nrl;
+	    }
+
+	    wb_node *a = nrl->llink;
+	    nrl->llink = n;
+	    n->parent = nrl;
+	    if ((n->rlink = a) != NULL)
+		a->parent = n;
+
+	    wb_node *b = nrl->rlink;
+	    nrl->rlink = nr;
+	    nr->parent = nrl;
+	    if ((nr->llink = b) != NULL)
+		b->parent = nr;
+
+	    nrl->weight = (n->weight = WEIGHT(n->llink) + WEIGHT(a)) +
+			  (nr->weight = WEIGHT(b) + WEIGHT(nr->rlink));
 	}
-    } else if (weight * 1000U > node->weight * 707U) {
-	ASSERT(node->llink != NULL);
-	weight = WEIGHT(node->llink->llink);
-	if (weight * 1000U > node->llink->weight * 414U) {  /* RR */
-	    rot_right(tree, node);
-	} else {					    /* LR */
-	    rot_left(tree, node->llink);
-	    rot_right(tree, node);
+    } else if (weight * 1000U > n->weight * 707U) {
+	wb_node *nl = n->llink;
+	ASSERT(nl != NULL);
+	weight = WEIGHT(nl->llink);
+	if (weight * 1000U > nl->weight * 414U) {	/* RR */
+	    tree_node_rot_right(tree, n);
+
+	    n->weight = WEIGHT(n->llink) + WEIGHT(n->rlink);
+	    nl->weight = weight + n->weight;
+	} else {						/* LR */
+	    /* Rotate |nl| left, then |n| right. */
+	    wb_node *nlr = nl->rlink;
+	    ASSERT(nlr != NULL);
+	    wb_node *p = n->parent;
+	    nlr->parent = p;
+	    if (p) {
+		if (p->llink == n)
+		    p->llink = nlr;
+		else
+		    p->rlink = nlr;
+	    } else {
+		tree->root = nlr;
+	    }
+
+	    wb_node *a = nlr->llink;
+	    nlr->llink = nl;
+	    nl->parent = nlr;
+	    if ((nl->rlink = a) != NULL)
+		a->parent = nl;
+
+	    wb_node *b = nlr->rlink;
+	    nlr->rlink = n;
+	    n->parent = nlr;
+	    if ((n->llink = b) != NULL)
+		b->parent = n;
+
+	    nlr->weight = (n->weight = WEIGHT(b) + WEIGHT(n->rlink)) +
+			  (nl->weight = WEIGHT(nl->llink) + WEIGHT(a));
 	}
     }
 }
@@ -428,58 +485,6 @@ node_pathlen(const wb_node *node, size_t level)
     if (node->rlink)
 	n += level + node_pathlen(node->rlink, level + 1);
     return n;
-}
-
-/*
- * rot_left(T, B):
- *
- *     /             /
- *    B             D
- *   / \           / \
- *  A   D   ==>   B   E
- *     / \       / \
- *    C   E     A   C
- *
- * Only the weights of B and B's right child need to be readjusted.
- */
-static void
-rot_left(wb_tree *tree, wb_node *node)
-{
-    ASSERT(tree != NULL);
-    ASSERT(node != NULL);
-    ASSERT(node->rlink != NULL);
-
-    wb_node *rlink = node->rlink;
-    tree_node_rot_left(tree, node);
-
-    node->weight = WEIGHT(node->llink) + WEIGHT(node->rlink);
-    rlink->weight = node->weight + WEIGHT(rlink->rlink);
-}
-
-/*
- * rot_right(T, D):
- *
- *       /           /
- *      D           B
- *     / \         / \
- *    B   E  ==>  A   D
- *   / \             / \
- *  A   C           C   E
- *
- * Only the weights of D and D's left child need to be readjusted.
- */
-static void
-rot_right(wb_tree *tree, wb_node *node)
-{
-    ASSERT(tree != NULL);
-    ASSERT(node != NULL);
-    ASSERT(node->llink != NULL);
-
-    wb_node *llink = node->llink;
-    tree_node_rot_right(tree, node);
-
-    node->weight = WEIGHT(node->llink) + WEIGHT(node->rlink);
-    llink->weight = WEIGHT(llink->llink) + node->weight;
 }
 
 wb_itor *
