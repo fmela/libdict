@@ -1,5 +1,6 @@
-Use restrict keyword wherever appropriate.
-Fix skiplist prev pointers.
-Implement incomplete functionality, e.g. iterator remove & compare.
-Reformat to 80 columns.
-Optimize double-rotations.
+[ ] Use restrict keyword wherever appropriate.
+[X] Fix skiplist prev pointers.
+[ ] Implement incomplete functionality, e.g. iterator remove & compare.
+[X] Reformat to 80 columns.
+[ ] Optimize double-rotations.
+[X] Fix bugs in weight balanced tree.
