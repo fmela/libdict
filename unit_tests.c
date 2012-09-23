@@ -21,27 +21,27 @@ struct key_info {
 };
 
 void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys);
-void test_basic_hashtable_1();
-void test_basic_hashtable_n();
-void test_basic_hb();
-void test_basic_pr();
-void test_basic_rb();
-void test_basic_sl();
-void test_basic_sp();
-void test_basic_tr();
-void test_basic_wb();
+void test_basic_hashtable_1bucket();
+void test_basic_hashtable_nbuckets();
+void test_basic_height_balanced_tree();
+void test_basic_path_reduction_tree();
+void test_basic_red_black_tree();
+void test_basic_skiplist();
+void test_basic_splay_tree();
+void test_basic_treap();
+void test_basic_weight_balanced_tree();
 void test_version_string();
 
 CU_TestInfo basic_tests[] = {
-    TEST_FUNC(test_basic_hashtable_1),
-    TEST_FUNC(test_basic_hashtable_n),
-    TEST_FUNC(test_basic_hb),
-    TEST_FUNC(test_basic_pr),
-    TEST_FUNC(test_basic_rb),
-    TEST_FUNC(test_basic_sl),
-    TEST_FUNC(test_basic_sp),
-    TEST_FUNC(test_basic_tr),
-    TEST_FUNC(test_basic_wb),
+    TEST_FUNC(test_basic_hashtable_1bucket),
+    TEST_FUNC(test_basic_hashtable_nbuckets),
+    TEST_FUNC(test_basic_height_balanced_tree),
+    TEST_FUNC(test_basic_path_reduction_tree),
+    TEST_FUNC(test_basic_red_black_tree),
+    TEST_FUNC(test_basic_skiplist),
+    TEST_FUNC(test_basic_splay_tree),
+    TEST_FUNC(test_basic_treap),
+    TEST_FUNC(test_basic_weight_balanced_tree),
     TEST_FUNC(test_version_string),
     CU_TEST_INFO_NULL
 };
@@ -272,7 +272,7 @@ strhash(const void *p)
     return hash;
 }
 
-void test_basic_hashtable_1()
+void test_basic_hashtable_1bucket()
 {
     test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 1),
 	       keys1, NKEYS1);
@@ -280,7 +280,7 @@ void test_basic_hashtable_1()
 	       keys2, NKEYS2);
 }
 
-void test_basic_hashtable_n()
+void test_basic_hashtable_nbuckets()
 {
     test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 7),
 	       keys1, NKEYS1);
@@ -288,43 +288,43 @@ void test_basic_hashtable_n()
 	       keys2, NKEYS2);
 }
 
-void test_basic_hb()
+void test_basic_height_balanced_tree()
 {
     test_basic(hb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
     test_basic(hb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
 }
 
-void test_basic_pr()
+void test_basic_path_reduction_tree()
 {
     test_basic(pr_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
     test_basic(pr_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
 }
 
-void test_basic_rb()
+void test_basic_red_black_tree()
 {
     test_basic(rb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
     test_basic(rb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
 }
 
-void test_basic_sl()
+void test_basic_skiplist()
 {
     test_basic(skiplist_dict_new(dict_str_cmp, NULL, 12), keys1, NKEYS1);
     test_basic(skiplist_dict_new(dict_str_cmp, NULL, 12), keys2, NKEYS2);
 }
 
-void test_basic_sp()
+void test_basic_splay_tree()
 {
     test_basic(sp_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
     test_basic(sp_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
 }
 
-void test_basic_tr()
+void test_basic_treap()
 {
     test_basic(tr_dict_new(dict_str_cmp, NULL, NULL), keys1, NKEYS1);
     test_basic(tr_dict_new(dict_str_cmp, NULL, NULL), keys2, NKEYS2);
 }
 
-void test_basic_wb()
+void test_basic_weight_balanced_tree()
 {
     test_basic(wb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
     test_basic(wb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
