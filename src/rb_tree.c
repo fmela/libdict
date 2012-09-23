@@ -38,12 +38,25 @@
 
 typedef struct rb_node rb_node;
 struct rb_node {
-    TREE_NODE_FIELDS(rb_node);
-    unsigned		    color:1; /* TODO: store in unused low bits. */
+    void	    *key;
+    void	    *datum;
+    rb_node	    *parent;
+    rb_node	    *llink;
+    union {
+	intptr_t    color;
+	rb_node	    *rlink;
+    };
 };
 
 #define RB_RED		    0
 #define RB_BLACK	    1
+
+#define RLINK(node)	    ((rb_node *)((node)->color & ~RB_BLACK))
+#define COLOR(node)	    ((node)->color & RB_BLACK)
+
+#define SET_RED(node)	    (node)->color &= (~(intptr_t)RB_BLACK)
+#define SET_BLACK(node)	    (node)->color |= ((intptr_t)RB_BLACK)
+#define SET_RLINK(node,r)   (node)->color = COLOR(node) | (intptr_t)(r)
 
 struct rb_tree {
     TREE_FIELDS(rb_node);
@@ -82,7 +95,7 @@ static itor_vtable rb_tree_itor_vtable = {
     (dict_icompare_func)    NULL /* rb_itor_compare not implemented yet */
 };
 
-static rb_node _null = { NULL, NULL, NULL, NULL, NULL, RB_BLACK };
+static rb_node _null = { NULL, NULL, NULL, NULL, { RB_BLACK } };
 #define RB_NULL	&_null
 
 static void	rot_left(rb_tree *tree, rb_node *node);
@@ -146,7 +159,7 @@ rb_tree_search(rb_tree *tree, const void *key)
 	if (cmp < 0)
 	    node = node->llink;
 	else if (cmp)
-	    node = node->rlink;
+	    node = RLINK(node);
 	else
 	    return node->datum;
     }
@@ -165,7 +178,7 @@ rb_tree_insert(rb_tree *tree, void *key, void ***datum_location)
 	if (cmp < 0)
 	    parent = node, node = node->llink;
 	else if (cmp)
-	    parent = node, node = node->rlink;
+	    parent = node, node = RLINK(node);
 	else {
 	    if (datum_location)
 		*datum_location = &node->datum;
@@ -183,12 +196,12 @@ rb_tree_insert(rb_tree *tree, void *key, void ***datum_location)
     if ((node->parent = parent) == RB_NULL) {
 	tree->root = node;
 	ASSERT(tree->count == 0);
-	node->color = RB_BLACK;
+	SET_BLACK(node);
     } else {
 	if (cmp < 0)
 	    parent->llink = node;
 	else
-	    parent->rlink = node;
+	    SET_RLINK(parent, node);
 
 	insert_fixup(tree, node);
     }
@@ -202,49 +215,49 @@ insert_fixup(rb_tree *tree, rb_node *node)
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
 
-    while (node != tree->root && node->parent->color == RB_RED) {
+    while (node != tree->root && COLOR(node->parent) == RB_RED) {
 	if (node->parent == node->parent->parent->llink) {
-	    rb_node *temp = node->parent->parent->rlink;
-	    if (temp->color == RB_RED) {
-		temp->color = RB_BLACK;
+	    rb_node *temp = RLINK(node->parent->parent);
+	    if (COLOR(temp) == RB_RED) {
+		SET_BLACK(temp);
 		node = node->parent;
-		node->color = RB_BLACK;
+		SET_BLACK(node);
 		node = node->parent;
-		node->color = RB_RED;
+		SET_RED(node);
 	    } else {
-		if (node == node->parent->rlink) {
+		if (node == RLINK(node->parent)) {
 		    node = node->parent;
 		    rot_left(tree, node);
 		}
 		temp = node->parent;
-		temp->color = RB_BLACK;
+		SET_BLACK(temp);
 		temp = temp->parent;
-		temp->color = RB_RED;
+		SET_RED(temp);
 		rot_right(tree, temp);
 	    }
 	} else {
 	    rb_node *temp = node->parent->parent->llink;
-	    if (temp->color == RB_RED) {
-		temp->color = RB_BLACK;
+	    if (COLOR(temp) == RB_RED) {
+		SET_BLACK(temp);
 		node = node->parent;
-		node->color = RB_BLACK;
+		SET_BLACK(node);
 		node = node->parent;
-		node->color = RB_RED;
+		SET_RED(node);
 	    } else {
 		if (node == node->parent->llink) {
 		    node = node->parent;
 		    rot_right(tree, node);
 		}
 		temp = node->parent;
-		temp->color = RB_BLACK;
+		SET_BLACK(temp);
 		temp = temp->parent;
-		temp->color = RB_RED;
+		SET_RED(temp);
 		rot_left(tree, temp);
 	    }
 	}
     }
 
-    tree->root->color = RB_BLACK;
+    SET_BLACK(tree->root);
 }
 
 bool
@@ -258,7 +271,7 @@ rb_tree_remove(rb_tree *tree, const void *key)
 	if (cmp < 0)
 	    node = node->llink;
 	else if (cmp)
-	    node = node->rlink;
+	    node = RLINK(node);
 	else
 	    break;
     }
@@ -266,29 +279,29 @@ rb_tree_remove(rb_tree *tree, const void *key)
 	return false;
 
     rb_node *out;
-    if (node->llink == RB_NULL || node->rlink == RB_NULL) {
+    if (node->llink == RB_NULL || RLINK(node) == RB_NULL) {
 	out = node;
     } else {
 	void *tmp;
-	for (out = node->rlink; out->llink != RB_NULL; out = out->llink)
+	for (out = RLINK(node); out->llink != RB_NULL; out = out->llink)
 	    /* void */;
 	SWAP(node->key, out->key, tmp);
 	SWAP(node->datum, out->datum, tmp);
     }
 
-    rb_node *temp = out->llink != RB_NULL ? out->llink : out->rlink;
+    rb_node *temp = out->llink != RB_NULL ? out->llink : RLINK(out);
     rb_node *parent = out->parent;
     temp->parent = parent;
     if (parent != RB_NULL) {
 	if (parent->llink == out)
 	    parent->llink = temp;
 	else
-	    parent->rlink = temp;
+	    SET_RLINK(parent, temp);
     } else {
 	tree->root = temp;
     }
 
-    if (out->color == RB_BLACK)
+    if (COLOR(out) == RB_BLACK)
 	delete_fixup(tree, temp);
     if (tree->del_func)
 	tree->del_func(out->key, out->datum);
@@ -305,61 +318,67 @@ delete_fixup(rb_tree *tree, rb_node *node)
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
 
-    while (node != tree->root && node->color == RB_BLACK) {
+    while (node != tree->root && COLOR(node) == RB_BLACK) {
 	if (node->parent->llink == node) {
-	    rb_node *temp = node->parent->rlink;
-	    if (temp->color == RB_RED) {
-		temp->color = RB_BLACK;
-		node->parent->color = RB_RED;
+	    rb_node *temp = RLINK(node->parent);
+	    if (COLOR(temp) == RB_RED) {
+		SET_BLACK(temp);
+		SET_RED(node->parent);
 		rot_left(tree, node->parent);
-		temp = node->parent->rlink;
+		temp = RLINK(node->parent);
 	    }
-	    if (temp->llink->color == RB_BLACK &&
-		temp->rlink->color == RB_BLACK) {
-		temp->color = RB_RED;
+	    if (COLOR(temp->llink) == RB_BLACK &&
+		COLOR(RLINK(temp)) == RB_BLACK) {
+		SET_RED(temp);
 		node = node->parent;
 	    } else {
-		if (temp->rlink->color == RB_BLACK) {
-		    temp->llink->color = RB_BLACK;
-		    temp->color = RB_RED;
+		if (COLOR(RLINK(temp)) == RB_BLACK) {
+		    SET_BLACK(temp->llink);
+		    SET_RED(temp);
 		    rot_right(tree, temp);
-		    temp = node->parent->rlink;
+		    temp = RLINK(node->parent);
 		}
-		temp->color = node->parent->color;
-		temp->rlink->color = RB_BLACK;
-		node->parent->color = RB_BLACK;
+		if (COLOR(node->parent) == RB_RED)
+		    SET_RED(temp);
+		else
+		    SET_BLACK(temp);
+		SET_BLACK(RLINK(temp));
+		SET_BLACK(node->parent);
 		rot_left(tree, node->parent);
 		break;
 	    }
 	} else {
 	    rb_node *temp = node->parent->llink;
-	    if (temp->color == RB_RED) {
-		temp->color = RB_BLACK;
-		node->parent->color = RB_RED;
+	    if (COLOR(temp) == RB_RED) {
+		SET_BLACK(temp);
+		SET_RED(node->parent);
 		rot_right(tree, node->parent);
 		temp = node->parent->llink;
 	    }
-	    if (temp->rlink->color == RB_BLACK &&
-		temp->llink->color == RB_BLACK) {
-		temp->color = RB_RED;
+	    if (COLOR(RLINK(temp)) == RB_BLACK &&
+		COLOR(temp->llink) == RB_BLACK) {
+		SET_RED(temp);
 		node = node->parent;
 	    } else {
-		if (temp->llink->color == RB_BLACK) {
-		    temp->rlink->color = RB_BLACK;
-		    temp->color = RB_RED;
+		if (COLOR(temp->llink) == RB_BLACK) {
+		    SET_BLACK(RLINK(temp));
+		    SET_RED(temp);
 		    rot_left(tree, temp);
 		    temp = node->parent->llink;
 		}
-		temp->color = node->parent->color;
-		node->parent->color = RB_BLACK;
-		temp->llink->color = RB_BLACK;
+		if (COLOR(node->parent) == RB_RED)
+		    SET_RED(temp);
+		else
+		    SET_BLACK(temp);
+		SET_BLACK(node->parent);
+		SET_BLACK(temp->llink);
 		rot_right(tree, node->parent);
 		break;
 	    }
 	}
     }
 
-    node->color = RB_BLACK;
+    SET_BLACK(node);
 }
 
 size_t
@@ -374,8 +393,8 @@ rb_tree_clear(rb_tree *tree)
 	    node = node->llink;
 	    continue;
 	}
-	if (node->rlink != RB_NULL) {
-	    node = node->rlink;
+	if (RLINK(node) != RB_NULL) {
+	    node = RLINK(node);
 	    continue;
 	}
 
@@ -389,7 +408,7 @@ rb_tree_clear(rb_tree *tree)
 	    if (parent->llink == node)
 		parent->llink = RB_NULL;
 	    else
-		parent->rlink = RB_NULL;
+		SET_RLINK(parent, RB_NULL);
 	}
 	node = parent;
     }
@@ -454,7 +473,7 @@ rb_tree_max(const rb_tree *tree)
 	return NULL;
 
     const rb_node *node = tree->root;
-    for (; node->rlink != RB_NULL; node = node->rlink)
+    for (; RLINK(node) != RB_NULL; node = RLINK(node))
 	/* void */;
     return node->key;
 }
@@ -482,7 +501,7 @@ static size_t
 node_height(const rb_node *node)
 {
     size_t l = node->llink != RB_NULL ? node_height(node->llink) + 1 : 0;
-    size_t r = node->rlink != RB_NULL ? node_height(node->rlink) + 1 : 0;
+    size_t r = RLINK(node) != RB_NULL ? node_height(RLINK(node)) + 1 : 0;
     return MAX(l, r);
 }
 
@@ -490,7 +509,7 @@ static size_t
 node_mheight(const rb_node *node)
 {
     size_t l = node->llink != RB_NULL ? node_mheight(node->llink) + 1 : 0;
-    size_t r = node->rlink != RB_NULL ? node_mheight(node->rlink) + 1 : 0;
+    size_t r = RLINK(node) != RB_NULL ? node_mheight(RLINK(node)) + 1 : 0;
     return MIN(l, r);
 }
 
@@ -502,8 +521,8 @@ node_pathlen(const rb_node *node, size_t level)
     size_t n = 0;
     if (node->llink != RB_NULL)
 	n += level + node_pathlen(node->llink, level + 1);
-    if (node->rlink != RB_NULL)
-	n += level + node_pathlen(node->rlink, level + 1);
+    if (RLINK(node) != RB_NULL)
+	n += level + node_pathlen(RLINK(node), level + 1);
     return n;
 }
 
@@ -513,8 +532,8 @@ rot_left(rb_tree *tree, rb_node *node)
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
 
-    rb_node *rlink = node->rlink;
-    node->rlink = rlink->llink;
+    rb_node *rlink = RLINK(node);
+    SET_RLINK(node, rlink->llink);
     if (rlink->llink != RB_NULL)
 	rlink->llink->parent = node;
     rb_node *parent = node->parent;
@@ -523,7 +542,7 @@ rot_left(rb_tree *tree, rb_node *node)
 	if (parent->llink == node)
 	    parent->llink = rlink;
 	else
-	    parent->rlink = rlink;
+	    SET_RLINK(parent, rlink);
     } else {
 	tree->root = rlink;
     }
@@ -538,20 +557,20 @@ rot_right(rb_tree *tree, rb_node *node)
     ASSERT(node != NULL);
 
     rb_node *llink = node->llink;
-    node->llink = llink->rlink;
-    if (llink->rlink != RB_NULL)
-	llink->rlink->parent = node;
+    node->llink = RLINK(llink);
+    if (RLINK(llink) != RB_NULL)
+	RLINK(llink)->parent = node;
     rb_node *parent = node->parent;
     llink->parent = parent;
     if (parent != RB_NULL) {
 	if (parent->llink == node)
 	    parent->llink = llink;
 	else
-	    parent->rlink = llink;
+	    SET_RLINK(parent, llink);
     } else {
 	tree->root = llink;
     }
-    llink->rlink = node;
+    SET_RLINK(llink, node);
     node->parent = llink;
 }
 
@@ -560,11 +579,13 @@ node_new(void *key)
 {
     rb_node *node = MALLOC(sizeof(*node));
     if (node) {
+	ASSERT((((intptr_t)node) & 1) == 0);
 	node->key = key;
 	node->datum = NULL;
-	node->color = RB_RED;
+	node->parent = RB_NULL;
 	node->llink = RB_NULL;
 	node->rlink = RB_NULL;
+	SET_RED(node);
     }
     return node;
 }
@@ -574,12 +595,12 @@ node_next(rb_node *node)
 {
     ASSERT(node != NULL);
 
-    if (node->rlink != RB_NULL) {
-	for (node = node->rlink; node->llink != RB_NULL; node = node->llink)
+    if (RLINK(node) != RB_NULL) {
+	for (node = RLINK(node); node->llink != RB_NULL; node = node->llink)
 	    /* void */;
     } else {
 	rb_node *temp = node->parent;
-	while (temp != RB_NULL && temp->rlink == node) {
+	while (temp != RB_NULL && RLINK(temp) == node) {
 	    node = temp;
 	    temp = temp->parent;
 	}
@@ -595,7 +616,7 @@ node_prev(rb_node *node)
     ASSERT(node != NULL);
 
     if (node->llink != RB_NULL) {
-	for (node = node->llink; node->rlink != RB_NULL; node = node->rlink)
+	for (node = node->llink; RLINK(node) != RB_NULL; node = RLINK(node))
 	    /* void */;
     } else {
 	rb_node *temp = node->parent;
@@ -614,8 +635,8 @@ node_max(rb_node *node)
 {
     ASSERT(node != NULL);
 
-    while (node->rlink != RB_NULL)
-	node = node->rlink;
+    while (RLINK(node) != RB_NULL)
+	node = RLINK(node);
     return node;
 }
 
@@ -636,22 +657,22 @@ node_verify(const rb_tree *tree, const rb_node *parent, const rb_node *node)
 
     if (parent == RB_NULL) {
 	ASSERT(tree->root == node);
-	ASSERT(node->color == RB_BLACK);
+	ASSERT(COLOR(node) == RB_BLACK);
     } else {
-	ASSERT(parent->llink == node || parent->rlink == node);
+	ASSERT(parent->llink == node || RLINK(parent) == node);
     }
     if (node != RB_NULL) {
 	ASSERT(node->parent == parent);
-	if (node->color == RB_RED) {
+	if (COLOR(node) == RB_RED) {
 	    /* Verify that every child of a red node is black. */
-	    ASSERT(node->llink->color == RB_BLACK);
-	    ASSERT(node->rlink->color == RB_BLACK);
+	    ASSERT(COLOR(node->llink) == RB_BLACK);
+	    ASSERT(COLOR(node->rlink) == RB_BLACK);
 	}
 	node_verify(tree, node, node->llink);
-	node_verify(tree, node, node->rlink);
+	node_verify(tree, node, RLINK(node));
     } else {
 	/* Verify that every leaf is black. */
-	ASSERT(node->color == RB_BLACK);
+	ASSERT(COLOR(node) == RB_BLACK);
     }
 }
 
@@ -800,7 +821,7 @@ rb_itor_search(rb_itor *itor, const void *key)
 	if (cmp < 0)
 	    node = node->llink;
 	else if (cmp)
-	    node = node->rlink;
+	    node = RLINK(node);
 	else {
 	    itor->node = node;
 	    return true;

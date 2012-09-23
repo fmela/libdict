@@ -324,7 +324,7 @@ pr_tree_remove(pr_tree *tree, const void *key)
     ASSERT(tree != NULL);
     ASSERT(key != NULL);
 
-    pr_node *node = tree->root, *temp, *out = NULL;
+    pr_node *node = tree->root;
     while (node) {
 	int cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0) {
@@ -335,7 +335,7 @@ pr_tree_remove(pr_tree *tree, const void *key)
 	    continue;
 	}
 	if (!node->llink) {
-	    out = node->rlink;
+	    pr_node *out = node->rlink;
 	    if (out)
 		out->parent = node->parent;
 
@@ -347,7 +347,7 @@ pr_tree_remove(pr_tree *tree, const void *key)
 	    } else {
 		tree->root = out;
 	    }
-	    temp = node->parent;
+	    pr_node *temp = node->parent;
 
 	    if (tree->del_func)
 		tree->del_func(node->key, node->datum);
@@ -358,7 +358,7 @@ pr_tree_remove(pr_tree *tree, const void *key)
 	    tree->count--;
 	    return true;
 	} else if (!node->rlink) {
-	    out = node->llink;
+	    pr_node *out = node->llink;
 	    if (out)
 		out->parent = node->parent;
 	    if (node->parent) {
@@ -369,7 +369,7 @@ pr_tree_remove(pr_tree *tree, const void *key)
 	    } else {
 		tree->root = out;
 	    }
-	    temp = node->parent;
+	    pr_node *temp = node->parent;
 
 	    if (tree->del_func)
 		tree->del_func(node->key, node->datum);
@@ -382,13 +382,13 @@ pr_tree_remove(pr_tree *tree, const void *key)
 	} else if (WEIGHT(node->llink) > WEIGHT(node->rlink)) {
 	    if (WEIGHT(node->llink->llink) < WEIGHT(node->llink->rlink))
 		rot_left(tree, node->llink);
-	    out = node->llink;
+	    pr_node *out = node->llink;
 	    rot_right(tree, node);
 	    node = out->rlink;
 	} else {
 	    if (WEIGHT(node->rlink->rlink) < WEIGHT(node->rlink->llink))
 		rot_right(tree, node->rlink);
-	    out = node->rlink;
+	    pr_node *out = node->rlink;
 	    rot_left(tree, node);
 	    node = out->llink;
 	}
