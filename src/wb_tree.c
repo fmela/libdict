@@ -175,8 +175,7 @@ fixup(wb_tree *tree, wb_node *n) {
 	    /* Rotate |nr| right, then |n| left. */
 	    ASSERT(nrl != NULL);
 	    wb_node *p = n->parent;
-	    nrl->parent = p;
-	    if (p) {
+	    if ((nrl->parent = p) != NULL) {
 		if (p->llink == n)
 		    p->llink = nrl;
 		else
@@ -214,8 +213,7 @@ fixup(wb_tree *tree, wb_node *n) {
 	    wb_node *nlr = nl->rlink;
 	    ASSERT(nlr != NULL);
 	    wb_node *p = n->parent;
-	    nlr->parent = p;
-	    if (p) {
+	    if ((nlr->parent = p) != NULL) {
 		if (p->llink == n)
 		    p->llink = nlr;
 		else
