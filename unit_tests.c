@@ -308,8 +308,8 @@ void test_basic_red_black_tree()
 
 void test_basic_skiplist()
 {
-    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 12), keys1, NKEYS1);
-    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 12), keys2, NKEYS2);
+    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 13), keys1, NKEYS1);
+    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 13), keys2, NKEYS2);
 }
 
 void test_basic_splay_tree()
