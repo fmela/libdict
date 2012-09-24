@@ -5,7 +5,7 @@ libdict is a C library that provides the following data structures with efficien
 * [red-black tree](http://en.wikipedia.org/wiki/Red-black_tree)
 * [splay tree](http://en.wikipedia.org/wiki/Splay_tree)
 * weight-balanced tree
-* path-reduction tree
+* [path-reduction tree](https://cs.uwaterloo.ca/research/tr/1982/CS-82-07.pdf)
 * [treap](http://en.wikipedia.org/wiki/Treap)
 * [hashtable](http://en.wikipedia.org/wiki/Hashtable#Separate_chaining)
 
