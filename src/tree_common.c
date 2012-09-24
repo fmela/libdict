@@ -32,9 +32,8 @@ tree_node_rot_left(void *Tree, void *Node)
 
     ASSERT(t != NULL);
     ASSERT(n != NULL);
-    ASSERT(n->rlink != NULL);
-
     tree_node *nr = n->rlink;
+    ASSERT(nr != NULL);
     if ((n->rlink = nr->llink) != NULL)
 	n->rlink->parent = n;
     nr->llink = n;
@@ -59,9 +58,8 @@ tree_node_rot_right(void *Tree, void *Node)
 
     ASSERT(t != NULL);
     ASSERT(n != NULL);
-    ASSERT(n->llink != NULL);
-
     tree_node *nl = n->llink;
+    ASSERT(nl != NULL);
     if ((n->llink = nl->rlink) != NULL)
 	n->llink->parent = n;
     nl->rlink = n;
