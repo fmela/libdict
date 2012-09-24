@@ -25,7 +25,7 @@ SHARED_LIB := $(OUTPUT_DIR)/$(SHARED_LIB_NAME)
 # Plug in your favorite compiler here:
 CC := $(shell which clang || which gcc)
 INCLUDES = -I$(HEADER_DIR) -I$(SOURCE_DIR) -I$(CUNIT_PREFIX)/include
-CFLAGS = -Wall -Wextra -Wshadow -W -std=c99 -O2 $(INCLUDES)
+CFLAGS = -Wall -Wextra -Wshadow -W -std=c99 -O3 $(INCLUDES)
 LDFLAGS =
 
 AR = ar
