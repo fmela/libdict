@@ -4,3 +4,4 @@
 [X] Reformat to 80 columns.
 [ ] Optimize double-rotations.
 [X] Fix bugs in weight balanced tree.
+[ ] Optimize skiplist.
