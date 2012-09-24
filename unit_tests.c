@@ -168,6 +168,11 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 	*datum_location = keys[i].value;
 
 	dict_verify(dct);
+
+	for (unsigned j = 0; j <= i; ++j)
+	    CU_ASSERT_EQUAL(dict_search(dct, keys[j].key), keys[j].value);
+	for (unsigned j = i + 1; j < nkeys; ++j)
+	    CU_ASSERT_EQUAL(dict_search(dct, keys[j].key), NULL);
     }
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
 
@@ -178,6 +183,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 	void **datum_location = NULL;
 	CU_ASSERT_FALSE(dict_insert(dct, keys[i].key, &datum_location));
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
+	CU_ASSERT_EQUAL(*datum_location, keys[i].value);
 
 	dict_verify(dct);
     }
@@ -232,8 +238,11 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), keys[i].alt);
 	CU_ASSERT_EQUAL(dict_remove(dct, keys[i].key), true);
 	dict_verify(dct);
-	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), NULL);
+
 	CU_ASSERT_EQUAL(dict_remove(dct, keys[i].key), false);
+	for (unsigned j = 0; j <= i; ++j) {
+	    CU_ASSERT_EQUAL(dict_search(dct, keys[j].key), NULL);
+	}
 	for (unsigned j = i + 1; j < nkeys; ++j) {
 	    CU_ASSERT_EQUAL(dict_search(dct, keys[j].key), keys[j].alt);
 	}
