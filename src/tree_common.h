@@ -17,11 +17,20 @@
     node_type*		llink; \
     node_type*		rlink;
 
+typedef struct tree_node_base {
+    TREE_NODE_FIELDS(struct tree_node_base);
+} tree_node_base;
+
 #define TREE_FIELDS(node_type) \
     node_type*		root; \
     size_t		count; \
     dict_compare_func	cmp_func; \
-    dict_delete_func	del_func;
+    dict_delete_func	del_func; \
+    size_t		rotation_count;
+
+typedef struct tree_base {
+    TREE_FIELDS(struct tree_base);
+} tree_base;
 
 #define TREE_ITERATOR_FIELDS(tree_type, node_type) \
     tree_type*		tree; \
