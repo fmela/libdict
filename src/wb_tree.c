@@ -347,12 +347,14 @@ wb_tree_remove(wb_tree *tree, const void *key)
 	    FREE(node);
 	    --tree->count;
 	    /* Now move up the tree, decrementing weights. */
+	    unsigned rotations = 0;
 	    while (parent) {
 		--parent->weight;
 		wb_node *up = parent->parent;
-		fixup(tree, parent);
+		rotations += fixup(tree, parent);
 		parent = up;
 	    }
+	    tree->rotation_count += rotations;
 	    return true;
 	}
     }
