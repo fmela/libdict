@@ -95,6 +95,7 @@ hb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
 	tree->count = 0;
 	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	tree->del_func = del_func;
+	tree->rotation_count = 0;
     }
     return tree;
 }
@@ -213,21 +214,29 @@ hb_tree_insert(hb_tree *tree, void *key, void ***datum_location)
 	    node = parent;
 	    parent = node->parent;
 	}
+	unsigned rotations = 0;
 	if (q) {
 	    if (q->llink == node) {
 		if (--q->bal == -2) {
-		    if (q->llink->bal > 0)
+		    if (q->llink->bal > 0) {
 			rot_left(tree, q->llink);
+			++rotations;
+		    }
 		    rot_right(tree, q);
+		    ++rotations;
 		}
 	    } else {
 		if (++q->bal == +2) {
-		    if (q->rlink->bal < 0)
+		    if (q->rlink->bal < 0) {
 			rot_right(tree, q->rlink);
+			++rotations;
+		    }
 		    rot_left(tree, q);
+		    ++rotations;
 		}
 	    }
 	}
+	tree->rotation_count += rotations;
     }
     ++tree->count;
     return true;
@@ -252,9 +261,16 @@ hb_tree_remove(hb_tree *tree, const void *key)
 	return false;
 
     if (node->llink && node->rlink) {
-	hb_node *out = node->rlink;
-	while (out->llink)
-	    out = out->llink;
+	hb_node *out;
+	if (node->bal > 0) {
+	    out = node->rlink;
+	    while (out->llink)
+		out = out->llink;
+	} else {
+	    out = node->llink;
+	    while (out->rlink)
+		out = out->rlink;
+	}
 	void *tmp;
 	SWAP(node->key, out->key, tmp);
 	SWAP(node->datum, out->datum, tmp);
@@ -262,24 +278,25 @@ hb_tree_remove(hb_tree *tree, const void *key)
 	parent = out->parent;
     }
 
-    hb_node *out = node->llink ? node->llink : node->rlink;
+    hb_node *child = node->llink ? node->llink : node->rlink;
     if (tree->del_func)
 	tree->del_func(node->key, node->datum);
     FREE(node);
-    if (out)
-	out->parent = parent;
+    if (child)
+	child->parent = parent;
     if (!parent) {
-	tree->root = out;
+	tree->root = child;
 	tree->count--;
 	return true;
     }
 
     bool left = parent->llink == node;
     if (left)
-	parent->llink = out;
+	parent->llink = child;
     else
-	parent->rlink = out;
+	parent->rlink = child;
 
+    unsigned rotations = 0;
     for (;;) {
 	if (left) {
 	    if (++parent->bal == 0) {
@@ -289,9 +306,11 @@ hb_tree_remove(hb_tree *tree, const void *key)
 	    if (parent->bal == +2) {
 		ASSERT(parent->rlink != NULL);
 		if (parent->rlink->bal < 0) {
+		    rotations += 2;
 		    rot_right(tree, parent->rlink);
 		    rot_left(tree, parent);
 		} else {
+		    rotations += 1;
 		    ASSERT(parent->rlink->rlink != NULL);
 		    if (!rot_left(tree, parent))
 			break;
@@ -307,9 +326,11 @@ hb_tree_remove(hb_tree *tree, const void *key)
 	    if (parent->bal == -2) {
 		ASSERT(parent->llink != NULL);
 		if (parent->llink->bal > 0) {
+		    rotations += 2;
 		    rot_left(tree, parent->llink);
 		    rot_right(tree, parent);
 		} else {
+		    rotations += 1;
 		    ASSERT(parent->llink->llink != NULL);
 		    if (!rot_right(tree, parent))
 			break;
@@ -328,6 +349,7 @@ higher:
 	    break;
 	left = (parent->llink == node);
     }
+    tree->rotation_count += rotations;
     tree->count--;
     return true;
 }
