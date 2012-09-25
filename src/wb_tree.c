@@ -123,6 +123,7 @@ wb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
 	tree->count = 0;
 	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	tree->del_func = del_func;
+	tree->rotation_count = 0;
     }
     return tree;
 }
@@ -159,8 +160,9 @@ wb_tree_search(wb_tree *tree, const void *key)
     return tree_search(tree, key);
 }
 
-static inline void
+static inline unsigned
 fixup(wb_tree *tree, wb_node *n) {
+    unsigned rotations = 0;
     unsigned weight = WEIGHT(n->llink);
     if (weight * 1000U < n->weight * 293U) {
 	wb_node *nr = n->rlink;
@@ -171,6 +173,7 @@ fixup(wb_tree *tree, wb_node *n) {
 	    tree_node_rot_left(tree, n);
 	    nr->weight = (n->weight = WEIGHT(n->llink) + WEIGHT(n->rlink)) +
 			 WEIGHT(nr->rlink);
+	    rotations += 1;
 	} else {					    /* RL */
 	    /* Rotate |nr| right, then |n| left. */
 	    ASSERT(nrl != NULL);
@@ -198,6 +201,7 @@ fixup(wb_tree *tree, wb_node *n) {
 
 	    nrl->weight = (n->weight = WEIGHT(n->llink) + WEIGHT(a)) +
 			  (nr->weight = WEIGHT(b) + WEIGHT(nr->rlink));
+	    rotations += 2;
 	}
     } else if (weight * 1000U > n->weight * 707U) {
 	wb_node *nl = n->llink;
@@ -208,6 +212,7 @@ fixup(wb_tree *tree, wb_node *n) {
 
 	    n->weight = WEIGHT(n->llink) + WEIGHT(n->rlink);
 	    nl->weight = weight + n->weight;
+	    rotations += 1;
 	} else {						/* LR */
 	    /* Rotate |nl| left, then |n| right. */
 	    wb_node *nlr = nl->rlink;
@@ -236,8 +241,10 @@ fixup(wb_tree *tree, wb_node *n) {
 
 	    nlr->weight = (n->weight = WEIGHT(b) + WEIGHT(n->rlink)) +
 			  (nl->weight = WEIGHT(nl->llink) + WEIGHT(a));
+	    rotations += 2;
 	}
     }
+    return rotations;
 }
 
 bool
@@ -278,11 +285,13 @@ wb_tree_insert(wb_tree *tree, void *key, void ***datum_location)
 	else
 	    parent->rlink = node;
 
+	unsigned rotations = 0;
 	while ((node = parent) != NULL) {
 	    parent = node->parent;
 	    ++node->weight;
-	    fixup(tree, node);
+	    rotations += fixup(tree, node);
 	}
+	tree->rotation_count += rotations;
     }
     ++tree->count;
     return true;
