@@ -55,18 +55,11 @@
 
 typedef struct sp_node sp_node;
 struct sp_node {
-    void*		    key;
-    void*		    datum;
-    sp_node*		    parent;
-    sp_node*		    llink;
-    sp_node*		    rlink;
+    TREE_NODE_FIELDS(sp_node);
 };
 
 struct sp_tree {
-    sp_node*		    root;
-    size_t		    count;
-    dict_compare_func	    cmp_func;
-    dict_delete_func	    del_func;
+    TREE_FIELDS(sp_node);
 };
 
 struct sp_itor {
@@ -117,6 +110,7 @@ sp_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
 	tree->count = 0;
 	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	tree->del_func = del_func;
+	tree->rotation_count = 0;
     }
     return tree;
 }
@@ -185,6 +179,7 @@ sp_tree_clear(sp_tree *tree)
 static void
 splay(sp_tree *t, sp_node *n)
 {
+    unsigned rotations = 0;
     for (;;) {
 	sp_node *p = n->parent;
 	if (!p)
@@ -198,6 +193,7 @@ splay(sp_tree *t, sp_node *n)
 		if ((p->llink = n->rlink) != NULL)
 		    p->llink->parent = p;
 		n->rlink = p;
+		++rotations;
 	    } else {
 		if ((p->rlink = n->llink) != NULL)
 		    p->rlink->parent = p;
@@ -206,9 +202,11 @@ splay(sp_tree *t, sp_node *n)
 	    p->parent = n;
 	    t->root = n;
 	    n->parent = NULL;
+	    rotations += 1;
 	    break;
 	}
 
+	rotations += 2;
 	sp_node *ppp = pp->parent;
 	if (p->llink == n) {
 	    if (pp->llink == p) {
@@ -278,6 +276,7 @@ splay(sp_tree *t, sp_node *n)
 	    break;
 	}
     }
+    t->rotation_count += rotations;
 }
 
 bool
