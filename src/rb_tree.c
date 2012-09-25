@@ -100,8 +100,8 @@ static rb_node _null = { NULL, NULL, NULL, NULL, { RB_BLACK } };
 
 static void	rot_left(rb_tree *tree, rb_node *node);
 static void	rot_right(rb_tree *tree, rb_node *node);
-static void	insert_fixup(rb_tree *tree, rb_node *node);
-static void	delete_fixup(rb_tree *tree, rb_node *node);
+static unsigned	insert_fixup(rb_tree *tree, rb_node *node);
+static unsigned	delete_fixup(rb_tree *tree, rb_node *node);
 static size_t	node_height(const rb_node *node);
 static size_t	node_mheight(const rb_node *node);
 static size_t	node_pathlen(const rb_node *node, size_t level);
@@ -120,6 +120,7 @@ rb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
 	tree->count = 0;
 	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	tree->del_func = del_func;
+	tree->rotation_count = 0;
     }
     return tree;
 }
@@ -203,18 +204,19 @@ rb_tree_insert(rb_tree *tree, void *key, void ***datum_location)
 	else
 	    SET_RLINK(parent, node);
 
-	insert_fixup(tree, node);
+	tree->rotation_count += insert_fixup(tree, node);
     }
     ++tree->count;
     return true;
 }
 
-static void
+static unsigned
 insert_fixup(rb_tree *tree, rb_node *node)
 {
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
 
+    unsigned rotations = 0;
     while (node != tree->root && COLOR(node->parent) == RB_RED) {
 	if (node->parent == node->parent->parent->llink) {
 	    rb_node *temp = RLINK(node->parent->parent);
@@ -228,12 +230,14 @@ insert_fixup(rb_tree *tree, rb_node *node)
 		if (node == RLINK(node->parent)) {
 		    node = node->parent;
 		    rot_left(tree, node);
+		    ++rotations;
 		}
 		temp = node->parent;
 		SET_BLACK(temp);
 		temp = temp->parent;
 		SET_RED(temp);
 		rot_right(tree, temp);
+		++rotations;
 	    }
 	} else {
 	    rb_node *temp = node->parent->parent->llink;
@@ -247,17 +251,20 @@ insert_fixup(rb_tree *tree, rb_node *node)
 		if (node == node->parent->llink) {
 		    node = node->parent;
 		    rot_right(tree, node);
+		    ++rotations;
 		}
 		temp = node->parent;
 		SET_BLACK(temp);
 		temp = temp->parent;
 		SET_RED(temp);
 		rot_left(tree, temp);
+		++rotations;
 	    }
 	}
     }
 
     SET_BLACK(tree->root);
+    return rotations;
 }
 
 bool
@@ -302,7 +309,7 @@ rb_tree_remove(rb_tree *tree, const void *key)
     }
 
     if (COLOR(out) == RB_BLACK)
-	delete_fixup(tree, temp);
+	tree->rotation_count += delete_fixup(tree, temp);
     if (tree->del_func)
 	tree->del_func(out->key, out->datum);
     FREE(out);
@@ -312,12 +319,13 @@ rb_tree_remove(rb_tree *tree, const void *key)
     return true;
 }
 
-static void
+static unsigned
 delete_fixup(rb_tree *tree, rb_node *node)
 {
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
 
+    unsigned rotations = 0;
     while (node != tree->root && COLOR(node) == RB_BLACK) {
 	if (node->parent->llink == node) {
 	    rb_node *temp = RLINK(node->parent);
@@ -325,6 +333,7 @@ delete_fixup(rb_tree *tree, rb_node *node)
 		SET_BLACK(temp);
 		SET_RED(node->parent);
 		rot_left(tree, node->parent);
+		++rotations;
 		temp = RLINK(node->parent);
 	    }
 	    if (COLOR(temp->llink) == RB_BLACK &&
@@ -336,6 +345,7 @@ delete_fixup(rb_tree *tree, rb_node *node)
 		    SET_BLACK(temp->llink);
 		    SET_RED(temp);
 		    rot_right(tree, temp);
+		    ++rotations;
 		    temp = RLINK(node->parent);
 		}
 		if (COLOR(node->parent) == RB_RED)
@@ -345,6 +355,7 @@ delete_fixup(rb_tree *tree, rb_node *node)
 		SET_BLACK(RLINK(temp));
 		SET_BLACK(node->parent);
 		rot_left(tree, node->parent);
+		++rotations;
 		break;
 	    }
 	} else {
@@ -353,6 +364,7 @@ delete_fixup(rb_tree *tree, rb_node *node)
 		SET_BLACK(temp);
 		SET_RED(node->parent);
 		rot_right(tree, node->parent);
+		++rotations;
 		temp = node->parent->llink;
 	    }
 	    if (COLOR(RLINK(temp)) == RB_BLACK &&
@@ -364,6 +376,7 @@ delete_fixup(rb_tree *tree, rb_node *node)
 		    SET_BLACK(RLINK(temp));
 		    SET_RED(temp);
 		    rot_left(tree, temp);
+		    ++rotations;
 		    temp = node->parent->llink;
 		}
 		if (COLOR(node->parent) == RB_RED)
@@ -373,12 +386,14 @@ delete_fixup(rb_tree *tree, rb_node *node)
 		SET_BLACK(node->parent);
 		SET_BLACK(temp->llink);
 		rot_right(tree, node->parent);
+		++rotations;
 		break;
 	    }
 	}
     }
 
     SET_BLACK(node);
+    return rotations;
 }
 
 size_t
