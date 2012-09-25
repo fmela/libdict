@@ -377,12 +377,14 @@ pr_tree_remove(pr_tree *tree, const void *key)
 	    FREE(node);
 	    --tree->count;
 	    /* Now move up the tree, decrementing weights. */
+	    unsigned rotations = 0;
 	    while (parent) {
 		pr_node *up = parent->parent;
 		--parent->weight;
-		fixup(tree, parent);
+		rotations += fixup(tree, parent);
 		parent = up;
 	    }
+	    tree->rotation_count += rotations;
 	    return true;
 	}
     }
