@@ -114,8 +114,9 @@ tr_tree_new(dict_compare_func cmp_func, dict_prio_func prio_func,
 	tree->root = NULL;
 	tree->count = 0;
 	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
-	tree->prio_func = prio_func;
 	tree->del_func = del_func;
+	tree->rotation_count = 0;
+	tree->prio_func = prio_func;
 	tree->randgen = rand();
     }
     return tree;
@@ -193,7 +194,9 @@ tr_tree_insert(tr_tree *tree, void *key, void ***datum_location)
 	else
 	    parent->rlink = node;
 
+	unsigned rotations = 0;
 	while (parent->prio < node->prio) {
+	    ++rotations;
 	    if (parent->llink == node)
 		tree_node_rot_right(tree, parent);
 	    else
@@ -201,6 +204,7 @@ tr_tree_insert(tr_tree *tree, void *key, void ***datum_location)
 	    if (!(parent = node->parent))
 		break;
 	}
+	tree->rotation_count += rotations;
     }
     ++tree->count;
     return true;
@@ -224,12 +228,16 @@ tr_tree_remove(tr_tree *tree, const void *key)
     if (!node)
 	return false;
 
+    unsigned rotations = 0;
     while (node->llink && node->rlink) {
+	++rotations;
 	if (node->llink->prio > node->rlink->prio)
 	    tree_node_rot_right(tree, node);
 	else
 	    tree_node_rot_left(tree, node);
     }
+    tree->rotation_count += rotations;
+
     tr_node *out = node->llink ? node->llink : node->rlink;
     if (out)
 	out->parent = node->parent;
