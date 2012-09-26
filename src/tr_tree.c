@@ -371,38 +371,39 @@ node_pathlen(const tr_node *node, size_t level)
     return n;
 }
 
-static void
+static bool
 node_verify(const tr_tree *tree, const tr_node *parent, const tr_node *node)
 {
     ASSERT(tree);
 
     if (!parent) {
-	ASSERT(tree->root == node);
+	VERIFY(tree->root == node, return false);
     } else {
-	ASSERT(parent->llink == node || parent->rlink == node);
+	VERIFY(parent->llink == node || parent->rlink == node, return false);
     }
     if (node) {
-	ASSERT(node->parent == parent);
+	VERIFY(node->parent == parent, return false);
 	if (parent) {
-	    if (node->prio > parent->prio)
-		printf("node->prio=%u parent->prio=%u\n",
-		       node->prio, parent->prio);
-	    ASSERT(node->prio <= parent->prio);
+	    VERIFY(node->prio <= parent->prio, return false);
 	}
-	node_verify(tree, node, node->llink);
-	node_verify(tree, node, node->rlink);
+	if (!node_verify(tree, node, node->llink) ||
+	    !node_verify(tree, node, node->rlink))
+	    return false;
     }
+    return true;
 }
 
-void
+bool
 tr_tree_verify(const tr_tree *tree)
 {
+    ASSERT(tree);
+
     if (tree->root) {
-	ASSERT(tree->count > 0);
+	VERIFY(tree->count > 0, return false);
     } else {
-	ASSERT(tree->count == 0);
+	VERIFY(tree->count == 0, return false);
     }
-    node_verify(tree, NULL, tree->root);
+    return node_verify(tree, NULL, tree->root);
 }
 
 tr_itor *

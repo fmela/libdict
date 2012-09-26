@@ -118,7 +118,7 @@ main(int argc, char **argv)
 
     if (!dct)
 	quit("can't create container");
-    dict_verify(dct);
+    ASSERT(dict_verify(dct));
 
     const size_t malloced_save = malloced;
 
@@ -173,7 +173,7 @@ main(int argc, char **argv)
 	tree->rotation_count = 0;
     }
 
-    dict_verify(dct);
+    ASSERT(dict_verify(dct));
 
     unsigned n = dict_count(dct);
     if (n != nwords)
@@ -273,7 +273,7 @@ main(int argc, char **argv)
 	tree->rotation_count = 0;
     }
 
-    dict_verify(dct);
+    ASSERT(dict_verify(dct));
 
     if ((n = dict_count(dct)) != 0)
 	quit("error - count not zero (%u)!", n);

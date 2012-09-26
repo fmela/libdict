@@ -107,8 +107,6 @@ static itor_vtable wb_tree_itor_vtable = {
     (dict_icompare_func)	NULL /* wb_itor_compare not implemented yet */
 };
 
-static void	node_verify(const wb_tree *tree, const wb_node *parent,
-			    const wb_node *node);
 static size_t	node_height(const wb_node *node);
 static size_t	node_mheight(const wb_node *node);
 static size_t	node_pathlen(const wb_node *node, size_t level);
@@ -524,36 +522,40 @@ wb_dict_itor_new(wb_tree *tree)
     return itor;
 }
 
-static void
+static bool
 node_verify(const wb_tree *tree, const wb_node *parent, const wb_node *node)
 {
     ASSERT(tree);
 
     if (!parent) {
-	ASSERT(tree->root == node);
+	VERIFY(tree->root == node, return false);
     } else {
-	ASSERT(parent->llink == node || parent->rlink == node);
+	VERIFY(parent->llink == node || parent->rlink == node, return false);
     }
     if (node) {
-	ASSERT(node->parent == parent);
-	node_verify(tree, node, node->llink);
-	node_verify(tree, node, node->rlink);
+	VERIFY(node->parent == parent, return false);
+	if (!node_verify(tree, node, node->llink) ||
+	    !node_verify(tree, node, node->rlink))
+	    return false;
 	const unsigned lweight = WEIGHT(node->llink);
-	ASSERT(node->weight == lweight + WEIGHT(node->rlink));
-	ASSERT(lweight * 1000U >= node->weight * 292U);
-	ASSERT(lweight * 1000U <= node->weight * 708U);
+	VERIFY(node->weight == lweight + WEIGHT(node->rlink), return false);
+	VERIFY(lweight * 1000U >= node->weight * 292U, return false);
+	VERIFY(lweight * 1000U <= node->weight * 708U, return false);
     }
+    return true;
 }
 
-void
+bool
 wb_tree_verify(const wb_tree *tree)
 {
+    ASSERT(tree);
+
     if (tree->root) {
-	ASSERT(tree->count > 0);
+	VERIFY(tree->count > 0, return false);
     } else {
-	ASSERT(tree->count == 0);
+	VERIFY(tree->count == 0, return false);
     }
-    node_verify(tree, NULL, tree->root);
+    return node_verify(tree, NULL, tree->root);
 }
 
 void

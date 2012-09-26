@@ -59,7 +59,7 @@ size_t		tr_tree_mheight(const tr_tree *tree);
 size_t		tr_tree_pathlen(const tr_tree *tree);
 const void*	tr_tree_min(const tr_tree *tree);
 const void*	tr_tree_max(const tr_tree *tree);
-void		tr_tree_verify(const tr_tree *tree);
+bool		tr_tree_verify(const tr_tree *tree);
 
 typedef struct tr_itor tr_itor;
 

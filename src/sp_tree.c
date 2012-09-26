@@ -533,32 +533,36 @@ node_pathlen(const sp_node *node, size_t level)
     return n;
 }
 
-static void
+static bool
 node_verify(const sp_tree *tree, const sp_node *parent, const sp_node *node)
 {
     ASSERT(tree);
 
     if (!parent) {
-	ASSERT(tree->root == node);
+	VERIFY(tree->root == node, return false);
     } else {
-	ASSERT(parent->llink == node || parent->rlink == node);
+	VERIFY(parent->llink == node || parent->rlink == node, return false);
     }
     if (node) {
-	ASSERT(node->parent == parent);
-	node_verify(tree, node, node->llink);
-	node_verify(tree, node, node->rlink);
+	VERIFY(node->parent == parent, return false);
+	if (!node_verify(tree, node, node->llink) ||
+	    !node_verify(tree, node, node->rlink))
+	    return false;
     }
+    return true;
 }
 
-void
+bool
 sp_tree_verify(const sp_tree *tree)
 {
+    ASSERT(tree);
+
     if (tree->root) {
-	ASSERT(tree->count > 0);
+	VERIFY(tree->count > 0, return false);
     } else {
-	ASSERT(tree->count == 0);
+	VERIFY(tree->count == 0, return false);
     }
-    node_verify(tree, NULL, tree->root);
+    return node_verify(tree, NULL, tree->root);
 }
 
 sp_itor *

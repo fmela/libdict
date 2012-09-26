@@ -339,12 +339,27 @@ hashtable_resize(hashtable *table, unsigned size)
     return 0;
 }
 
-void
+bool
 hashtable_verify(const hashtable *table)
 {
     ASSERT(table != NULL);
 
-    // TODO: implement me.
+    for (unsigned slot = 0; slot < table->size; ++slot) {
+	for (hash_node *n = table->table[slot]; n; n = n->next) {
+	    if (n == table->table[slot]) {
+		VERIFY(n->prev == NULL, return false);
+	    } else {
+		VERIFY(n->prev != NULL, return false);
+		VERIFY(n->prev->next == n, return false);
+	    }
+	    if (n->next) {
+		VERIFY(n->next->prev == n, return false);
+		VERIFY(n->hash <= n->next->hash, return false);
+	    }
+	    VERIFY(n->hash % table->size == slot, return false);
+	}
+    }
+    return true;
 }
 
 hashtable_itor *

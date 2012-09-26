@@ -41,6 +41,15 @@
 # define ASSERT(expr)	(void)(expr)
 #endif
 
+#define VERIFY(expr, fail_expr) \
+    do { \
+	if (!(expr)) { \
+	    fprintf(stderr, "\n%s:%d (%s) verification failed: %s\n", \
+		    __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
+	    fail_expr; \
+	} \
+    } while (0)
+
 #define MALLOC(n)	(*dict_malloc_func)(n)
 #define FREE(p)		(*dict_free_func)(p)
 

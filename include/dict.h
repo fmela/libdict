@@ -85,7 +85,7 @@ typedef bool	    (*dict_remove_func)(void *obj, const void *key);
 typedef size_t      (*dict_clear_func)(void *obj);
 typedef size_t      (*dict_traverse_func)(void *obj, dict_visit_func visit);
 typedef size_t      (*dict_count_func)(const void *obj);
-typedef void	    (*dict_verify_func)(const void *obj);
+typedef bool	    (*dict_verify_func)(const void *obj);
 
 typedef struct {
     dict_inew_func      inew;

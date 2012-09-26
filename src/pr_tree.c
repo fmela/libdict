@@ -33,6 +33,7 @@
 
 #include "pr_tree.h"
 
+#include <setjmp.h>
 #include "dict_private.h"
 #include "tree_common.h"
 
@@ -84,8 +85,6 @@ static itor_vtable pr_tree_itor_vtable = {
 static unsigned	fixup(pr_tree *tree, pr_node *node);
 static void	rot_left(pr_tree *tree, pr_node *node);
 static void	rot_right(pr_tree *tree, pr_node *node);
-static unsigned	node_verify(const pr_tree *tree, const pr_node *parent,
-			    const pr_node *node);
 static size_t	node_height(const pr_node *node);
 static size_t	node_mheight(const pr_node *node);
 static size_t	node_pathlen(const pr_node *node, size_t level);
@@ -591,41 +590,50 @@ rot_right(pr_tree *tree, pr_node *node)
 }
 
 static unsigned
-node_verify(const pr_tree *tree, const pr_node *parent, const pr_node *node)
+node_verify(const pr_tree *tree, const pr_node *parent, const pr_node *node,
+	    jmp_buf jmp)
 {
     ASSERT(tree);
 
     if (!parent) {
-	ASSERT(tree->root == node);
+	VERIFY(tree->root == node, longjmp(jmp, 1));
     } else {
-	ASSERT(parent->llink == node || parent->rlink == node);
+	VERIFY(parent->llink == node || parent->rlink == node, longjmp(jmp, 1));
     }
     if (node) {
-	ASSERT(node->parent == parent);
+	VERIFY(node->parent == parent, longjmp(jmp, 1));
 	pr_node *l = node->llink, *r = node->rlink;
-	unsigned lweight = node_verify(tree, node, l);
-	unsigned rweight = node_verify(tree, node, r);
-	ASSERT(node->weight == lweight + rweight);
+	unsigned lweight = node_verify(tree, node, l, jmp);
+	unsigned rweight = node_verify(tree, node, r, jmp);
+	VERIFY(node->weight == lweight + rweight, longjmp(jmp, 1));
 	if (rweight > lweight) {
-	    ASSERT(!(WEIGHT(r->rlink) > lweight) ||
-		   !(WEIGHT(r->llink) > lweight));
+	    VERIFY(!(WEIGHT(r->rlink) > lweight) ||
+		   !(WEIGHT(r->llink) > lweight), longjmp(jmp, 1));
 	} else if (lweight > rweight) {
-	    ASSERT(!(WEIGHT(l->llink) > rweight) ||
-		   !(WEIGHT(l->rlink) > rweight));
+	    VERIFY(!(WEIGHT(l->llink) > rweight) ||
+		   !(WEIGHT(l->rlink) > rweight), longjmp(jmp, 1));
 	}
     }
     return WEIGHT(node);
 }
 
-void
+bool
 pr_tree_verify(const pr_tree *tree)
 {
+    ASSERT(tree);
+
     if (tree->root) {
-	ASSERT(tree->count > 0);
+	VERIFY(tree->count > 0, return false);
     } else {
-	ASSERT(tree->count == 0);
+	VERIFY(tree->count == 0, return false);
     }
-    node_verify(tree, NULL, tree->root);
+    jmp_buf jmp;
+    if (setjmp(jmp) == 0) {
+	node_verify(tree, NULL, tree->root, jmp);
+	return true;
+    } else {
+	return false;
+    }
 }
 
 pr_itor *

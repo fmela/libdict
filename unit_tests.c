@@ -159,7 +159,7 @@ static const struct key_info keys2[] = {
 #define NKEYS2 (sizeof(keys2) / sizeof(keys2[0]))
 
 void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
-    dict_verify(dct);
+    CU_ASSERT_TRUE(dict_verify(dct));
 
     for (unsigned i = 0; i < nkeys; ++i) {
 	void **datum_location = NULL;
@@ -167,7 +167,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
 	*datum_location = keys[i].value;
 
-	dict_verify(dct);
+	CU_ASSERT_TRUE(dict_verify(dct));
 
 	for (unsigned j = 0; j <= i; ++j)
 	    CU_ASSERT_EQUAL(dict_search(dct, keys[j].key), keys[j].value);
@@ -185,7 +185,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
 	CU_ASSERT_EQUAL(*datum_location, keys[i].value);
 
-	dict_verify(dct);
+	CU_ASSERT_TRUE(dict_verify(dct));
     }
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
 
@@ -227,7 +227,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
 	*datum_location = keys[i].alt;
 
-	dict_verify(dct);
+	CU_ASSERT_TRUE(dict_verify(dct));
     }
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
 
@@ -237,7 +237,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     for (unsigned i = 0; i < nkeys; ++i) {
 	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), keys[i].alt);
 	CU_ASSERT_EQUAL(dict_remove(dct, keys[i].key), true);
-	dict_verify(dct);
+	CU_ASSERT_TRUE(dict_verify(dct));
 
 	CU_ASSERT_EQUAL(dict_remove(dct, keys[i].key), false);
 	for (unsigned j = 0; j <= i; ++j) {
@@ -254,7 +254,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
 	*datum_location = keys[i].value;
 
-	dict_verify(dct);
+	CU_ASSERT_TRUE(dict_verify(dct));
     }
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
     CU_ASSERT_EQUAL(dict_clear(dct), nkeys);
@@ -265,7 +265,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
 	*datum_location = keys[i].value;
 
-	dict_verify(dct);
+	CU_ASSERT_TRUE(dict_verify(dct));
     }
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
     CU_ASSERT_EQUAL(dict_free(dct), nkeys);

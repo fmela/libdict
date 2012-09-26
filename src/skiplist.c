@@ -307,43 +307,44 @@ skiplist_count(const skiplist *list)
     return list->count;
 }
 
-void
+bool
 skiplist_verify(const skiplist *list)
 {
     if (list->count == 0) {
-	ASSERT(list->top_link == 0);
+	VERIFY(list->top_link == 0, return false);
     } else {
-	ASSERT(list->top_link > 0);
+	VERIFY(list->top_link > 0, return false);
     }
-    ASSERT(list->top_link < list->max_link);
+    VERIFY(list->top_link < list->max_link, return false);
     for (unsigned i = 0; i < list->top_link; ++i) {
-	ASSERT(list->head->link[i] != NULL);
+	VERIFY(list->head->link[i] != NULL, return false);
     }
     for (unsigned i = list->top_link; i < list->max_link; ++i) {
-	ASSERT(list->head->link[i] == NULL);
+	VERIFY(list->head->link[i] == NULL, return false);
     }
     unsigned observed_top_link = 0;
 
     skip_node *prev = list->head;
     skip_node *node = list->head->link[0];
-    ASSERT(prev->prev == NULL);
+    VERIFY(prev->prev == NULL, return false);
     while (node) {
 	if (observed_top_link < node->link_count)
 	    observed_top_link = node->link_count;
 
-	ASSERT(node->prev == prev);
-	ASSERT(node->link_count >= 1);
-	ASSERT(node->link_count <= list->top_link);
+	VERIFY(node->prev == prev, return false);
+	VERIFY(node->link_count >= 1, return false);
+	VERIFY(node->link_count <= list->top_link, return false);
 	for (unsigned k = 0; k < node->link_count; k++) {
 	    if (node->link[k]) {
-		ASSERT(node->link[k]->link_count >= k);
+		VERIFY(node->link[k]->link_count >= k, return false);
 	    }
 	}
 
 	prev = node;
 	node = node->link[0];
     }
-    ASSERT(list->top_link == observed_top_link);
+    VERIFY(list->top_link == observed_top_link, return false);
+    return true;
 }
 
 #define VALID(itor) ((itor)->node && (itor)->node != (itor)->list->head)

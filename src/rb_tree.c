@@ -665,41 +665,45 @@ node_min(rb_node *node)
     return node;
 }
 
-static void
+static bool
 node_verify(const rb_tree *tree, const rb_node *parent, const rb_node *node)
 {
     ASSERT(tree);
 
     if (parent == RB_NULL) {
-	ASSERT(tree->root == node);
-	ASSERT(COLOR(node) == RB_BLACK);
+	VERIFY(tree->root == node, return false);
+	VERIFY(COLOR(node) == RB_BLACK, return false);
     } else {
-	ASSERT(parent->llink == node || RLINK(parent) == node);
+	VERIFY(parent->llink == node || RLINK(parent) == node, return false);
     }
     if (node != RB_NULL) {
-	ASSERT(node->parent == parent);
+	VERIFY(node->parent == parent, return false);
 	if (COLOR(node) == RB_RED) {
 	    /* Verify that every child of a red node is black. */
-	    ASSERT(COLOR(node->llink) == RB_BLACK);
-	    ASSERT(COLOR(node->rlink) == RB_BLACK);
+	    VERIFY(COLOR(node->llink) == RB_BLACK, return false);
+	    VERIFY(COLOR(node->rlink) == RB_BLACK, return false);
 	}
-	node_verify(tree, node, node->llink);
-	node_verify(tree, node, RLINK(node));
+	if (!node_verify(tree, node, node->llink) ||
+	    !node_verify(tree, node, RLINK(node)))
+	    return false;
     } else {
 	/* Verify that every leaf is black. */
-	ASSERT(COLOR(node) == RB_BLACK);
+	VERIFY(COLOR(node) == RB_BLACK, return false);
     }
+    return true;
 }
 
-void
+bool
 rb_tree_verify(const rb_tree *tree)
 {
+    ASSERT(tree);
+
     if (tree->root != RB_NULL) {
-	ASSERT(tree->count > 0);
+	VERIFY(tree->count > 0, return false);
     } else {
-	ASSERT(tree->count == 0);
+	VERIFY(tree->count == 0, return false);
     }
-    node_verify(tree, RB_NULL, tree->root);
+    return node_verify(tree, RB_NULL, tree->root);
 }
 
 rb_itor *

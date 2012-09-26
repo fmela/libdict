@@ -56,7 +56,7 @@ size_t		hashtable_traverse(hashtable *table, dict_visit_func visit);
 size_t		hashtable_count(const hashtable *table);
 size_t		hashtable_size(const hashtable *table);
 size_t		hashtable_slots_used(const hashtable *table);
-void		hashtable_verify(const hashtable *table);
+bool		hashtable_verify(const hashtable *table);
 bool		hashtable_resize(hashtable *table, unsigned size);
 
 typedef struct hashtable_itor hashtable_itor;

@@ -39,8 +39,10 @@ BEGIN_DECL
 
 typedef struct hb_tree hb_tree;
 
-hb_tree*	hb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func);
-dict*		hb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func);
+hb_tree*	hb_tree_new(dict_compare_func cmp_func,
+			    dict_delete_func del_func);
+dict*		hb_dict_new(dict_compare_func cmp_func,
+			    dict_delete_func del_func);
 size_t		hb_tree_free(hb_tree *tree);
 
 bool		hb_tree_insert(hb_tree *tree, void *key,
@@ -55,7 +57,7 @@ size_t		hb_tree_mheight(const hb_tree *tree);
 size_t		hb_tree_pathlen(const hb_tree *tree);
 const void*	hb_tree_min(const hb_tree *tree);
 const void*	hb_tree_max(const hb_tree *tree);
-void		hb_tree_verify(const hb_tree *tree);
+bool		hb_tree_verify(const hb_tree *tree);
 
 typedef struct hb_itor hb_itor;
 
