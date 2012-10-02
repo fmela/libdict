@@ -32,7 +32,6 @@
 
 #include "hb_tree.h"
 
-#include <setjmp.h>
 #include "dict_private.h"
 #include "tree_common.h"
 
@@ -532,28 +531,33 @@ rot_right(hb_tree *tree, hb_node *node)
     return hc;
 }
 
-static unsigned
+static bool
 node_verify(const hb_tree *tree, const hb_node *parent, const hb_node *node,
-	    jmp_buf jmp)
+	    unsigned *height)
 {
     ASSERT(tree);
 
     if (!parent) {
-	VERIFY(tree->root == node, longjmp(jmp, 1));
+	VERIFY(tree->root == node, return false);
     } else {
-	VERIFY(parent->llink == node || parent->rlink == node, longjmp(jmp, 1));
+	VERIFY(parent->llink == node || parent->rlink == node, return false);
     }
     if (node) {
-	VERIFY(node->parent == parent, longjmp(jmp, 1));
-	VERIFY(node->bal >= -1, longjmp(jmp, 1));
-	VERIFY(node->bal <= 1, longjmp(jmp, 1));
-	unsigned lheight = node_verify(tree, node, node->llink, jmp);
-	unsigned rheight = node_verify(tree, node, node->rlink, jmp);
-	VERIFY(node->bal == (int)rheight - (int)lheight, longjmp(jmp, 1));
-	return MAX(lheight, rheight) + 1;
+	VERIFY(node->parent == parent, return false);
+	VERIFY(node->bal >= -1, return false);
+	VERIFY(node->bal <= 1, return false);
+	unsigned lheight, rheight;
+	if (!node_verify(tree, node, node->llink, &lheight) ||
+	    !node_verify(tree, node, node->rlink, &rheight))
+	    return false;
+	VERIFY(node->bal == (int)rheight - (int)lheight, return false);
+	if (height)
+	    *height = MAX(lheight, rheight) + 1;
     } else {
-	return 0;
+	if (height)
+	    *height = 0;
     }
+    return true;
 }
 
 bool
@@ -562,17 +566,11 @@ hb_tree_verify(const hb_tree *tree)
     ASSERT(tree);
 
     if (tree->root) {
-	ASSERT(tree->count > 0);
+	VERIFY(tree->count > 0, return false);
     } else {
-	ASSERT(tree->count == 0);
+	VERIFY(tree->count == 0, return false);
     }
-    jmp_buf jmp;
-    if (setjmp(jmp) == 0) {
-	node_verify(tree, NULL, tree->root, jmp);
-	return true;
-    } else {
-	return false;
-    }
+    return node_verify(tree, NULL, tree->root, NULL);
 }
 
 hb_itor *
