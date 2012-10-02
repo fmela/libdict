@@ -33,7 +33,6 @@
 
 #include "pr_tree.h"
 
-#include <setjmp.h>
 #include "dict_private.h"
 #include "tree_common.h"
 
@@ -200,8 +199,8 @@ fixup(pr_tree *tree, pr_node *node)
 	    rot_left(tree, node);
 	    rotations += 1;
 	    rotations += fixup(tree, node);
-	    /* Commenting the next line means we must turn the weight
-	     * verification condition in node_verify() from AND to OR. */
+	    /* Commenting the next line means we must make the weight
+	     * verification condition in node_verify() less stringent. */
 	    rotations += fixup(tree, r);
 	} else if (WEIGHT(r->llink) > lweight) {    /* RL */
 	    /* Rotate |r| right, then |node| left, with |rl| taking the place
@@ -247,7 +246,7 @@ fixup(pr_tree *tree, pr_node *node)
 	    rotations += 1;
 	    rotations += fixup(tree, node);
 	    /* Commenting the next line means we must turn the weight
-	     * verification condition in node_verify() from AND to OR. */
+	     * verification condition in node_verify() less stringent. */
 	    rotations += fixup(tree, l);
 	} else if (WEIGHT(l->rlink) > rweight) {    /* LR */
 	    /* Rotate |l| left, then |node| right, with |lr| taking the place of
@@ -602,32 +601,34 @@ rot_right(pr_tree *tree, pr_node *node)
     llink->weight = WEIGHT(llink->llink) + node->weight;
 }
 
-static unsigned
-node_verify(const pr_tree *tree, const pr_node *parent, const pr_node *node,
-	    jmp_buf jmp)
+static bool
+node_verify(const pr_tree *tree, const pr_node *parent, const pr_node *node)
 {
     ASSERT(tree);
 
     if (!parent) {
-	VERIFY(tree->root == node, longjmp(jmp, 1));
+	VERIFY(tree->root == node, return false);
     } else {
-	VERIFY(parent->llink == node || parent->rlink == node, longjmp(jmp, 1));
+	VERIFY(parent->llink == node || parent->rlink == node, return false);
     }
     if (node) {
-	VERIFY(node->parent == parent, longjmp(jmp, 1));
+	VERIFY(node->parent == parent, return false);
 	pr_node *l = node->llink, *r = node->rlink;
-	unsigned lweight = node_verify(tree, node, l, jmp);
-	unsigned rweight = node_verify(tree, node, r, jmp);
-	VERIFY(node->weight == lweight + rweight, longjmp(jmp, 1));
+	if (!node_verify(tree, node, l) ||
+	    !node_verify(tree, node, r))
+	    return false;
+	unsigned lweight = WEIGHT(l);
+	unsigned rweight = WEIGHT(r);
+	VERIFY(node->weight == lweight + rweight, return false);
 	if (rweight > lweight) {
 	    VERIFY((WEIGHT(r->rlink) <= lweight) &&
-		   (WEIGHT(r->llink) <= lweight), longjmp(jmp, 1));
+		   (WEIGHT(r->llink) <= lweight), return false);
 	} else if (lweight > rweight) {
 	    VERIFY((WEIGHT(l->llink) <= rweight) &&
-		   (WEIGHT(l->rlink) <= rweight), longjmp(jmp, 1));
+		   (WEIGHT(l->rlink) <= rweight), return false);
 	}
     }
-    return WEIGHT(node);
+    return true;
 }
 
 bool
@@ -640,13 +641,7 @@ pr_tree_verify(const pr_tree *tree)
     } else {
 	VERIFY(tree->count == 0, return false);
     }
-    jmp_buf jmp;
-    if (setjmp(jmp) == 0) {
-	node_verify(tree, NULL, tree->root, jmp);
-	return true;
-    } else {
-	return false;
-    }
+    return node_verify(tree, NULL, tree->root);
 }
 
 pr_itor *
