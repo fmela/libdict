@@ -81,6 +81,7 @@ static dict_vtable tr_tree_vtable = {
     (dict_traverse_func)    tree_traverse,
     (dict_count_func)	    tree_count,
     (dict_verify_func)	    tr_tree_verify,
+    (dict_clone_func)	    tr_tree_clone,
 };
 
 static itor_vtable tr_tree_itor_vtable = {
@@ -145,6 +146,14 @@ tr_tree_free(tr_tree *tree)
     size_t count = tree_clear(tree);
     FREE(tree);
     return count;
+}
+
+tr_tree *
+tr_tree_clone(tr_tree *tree, dict_key_datum_clone_func clone_func)
+{
+    ASSERT(tree != NULL);
+
+    return tree_clone(tree, sizeof(tr_tree), sizeof(tr_node), clone_func);
 }
 
 size_t

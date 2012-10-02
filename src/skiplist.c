@@ -76,6 +76,7 @@ static dict_vtable skiplist_vtable = {
     (dict_traverse_func)    skiplist_traverse,
     (dict_count_func)	    skiplist_count,
     (dict_verify_func)	    skiplist_verify,
+    (dict_clone_func)	    skiplist_clone,
 };
 
 static itor_vtable skiplist_itor_vtable = {
@@ -151,7 +152,36 @@ skiplist_free(skiplist *list)
     return count;
 }
 
-bool
+skiplist *
+skiplist_clone(skiplist *list, dict_key_datum_clone_func clone_func)
+{
+    ASSERT(list != NULL);
+
+    skiplist *clone = skiplist_new(list->cmp_func, list->del_func,
+				   list->max_link);
+    if (clone) {
+	skip_node *node = list->head->link[0];
+	while (node) {
+	    void **datum = NULL;
+	    if (!skiplist_insert(clone, node->key, &datum) || !datum) {
+		skiplist_free(clone);
+		return NULL;
+	    }
+	    *datum = node->datum;
+	    node = node->link[0];
+	}
+	if (clone_func) {
+	    node = clone->head->link[0];
+	    while (node) {
+		clone_func(&node->key, &node->datum);
+		node = node->link[0];
+	    }
+	}
+    }
+    return clone;
+}
+
+static bool
 node_insert(skiplist *list, void *key, void ***datum_location,
 	    skip_node **update)
 {

@@ -33,15 +33,6 @@
 #ifndef _DICT_H_
 #define _DICT_H_
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdbool.h>
-
-#define DICT_VERSION_MAJOR	0
-#define DICT_VERSION_MINOR	3
-#define DICT_VERSION_PATCH	0
-extern const char *const kDictVersionString;
-
 #if defined(__cplusplus) || defined(c_plusplus)
 # define BEGIN_DECL     extern "C" {
 # define END_DECL       }
@@ -51,6 +42,15 @@ extern const char *const kDictVersionString;
 #endif
 
 BEGIN_DECL
+
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+#define DICT_VERSION_MAJOR	0
+#define DICT_VERSION_MINOR	3
+#define DICT_VERSION_PATCH	0
+extern const char *const kDictVersionString;
 
 /* A pointer to a function that compares two keys. It needs to return a
  * negative value if k1<k2, a positive value if k1>k2, and zero if the keys are
@@ -66,6 +66,13 @@ typedef bool	    (*dict_visit_func)(const void *, void *);
 typedef unsigned    (*dict_hash_func)(const void *);
 /* A pointer to a function that returns the priority of a key. */
 typedef unsigned    (*dict_prio_func)(const void *);
+/* A pointer to a function that clones a key or datum value, given the key-datum
+ * pair. */
+typedef void	    (*dict_key_datum_clone_func)(void **key, void **datum);
+/* A pointer to a function that clones a dictionary. */
+typedef void*	    (*dict_clone_func)(void *,
+				       dict_key_datum_clone_func clone_func);
+
 
 /* A pointer to a function that libdict will use to allocate memory. */
 void*		    (*dict_malloc_func)(size_t);
@@ -97,6 +104,7 @@ typedef struct {
     dict_traverse_func  traverse;
     dict_count_func     count;
     dict_verify_func	verify;
+    dict_clone_func	clone;
 } dict_vtable;
 
 typedef void	    (*dict_ifree_func)(void *itor);
@@ -145,8 +153,9 @@ struct dict {
 #define dict_count(dct)		((dct)->_vtable->count((dct)->_object))
 #define dict_verify(dct)	((dct)->_vtable->verify((dct)->_object))
 #define dict_clear(dct)		((dct)->_vtable->clear((dct)->_object))
-size_t dict_free(dict *dct);
 #define dict_itor_new(dct)      (dct)->_vtable->inew((dct)->_object)
+size_t dict_free(dict *dct);
+dict* dict_clone(dict *dct, dict_key_datum_clone_func clone_func);
 
 struct dict_itor {
     void*	    _itor;

@@ -46,6 +46,8 @@ dict*		hashtable_dict_new(dict_compare_func cmp_func,
 				   dict_hash_func hash_func,
 				   dict_delete_func del_func, unsigned size);
 size_t		hashtable_free(hashtable *table);
+hashtable*	hashtable_clone(hashtable *table,
+				dict_key_datum_clone_func clone_func);
 
 bool		hashtable_insert(hashtable *table, void *key,
 				 void ***datum_location);

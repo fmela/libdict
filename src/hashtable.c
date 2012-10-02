@@ -72,6 +72,7 @@ static dict_vtable hashtable_vtable = {
     (dict_traverse_func)    hashtable_traverse,
     (dict_count_func)	    hashtable_count,
     (dict_verify_func)	    hashtable_verify,
+    (dict_clone_func)	    hashtable_clone,
 };
 
 static itor_vtable hashtable_itor_vtable = {
@@ -113,6 +114,43 @@ hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func,
 	table->count = 0;
     }
     return table;
+}
+
+hashtable *
+hashtable_clone(hashtable *table, dict_key_datum_clone_func clone_func)
+{
+    ASSERT(table);
+
+    hashtable *clone = hashtable_new(table->cmp_func, table->hash_func,
+				     table->del_func, table->size);
+    if (clone) {
+	clone->count = table->count;
+	for (unsigned slot = 0; slot < table->size; ++slot) {
+	    hash_node *prev = NULL;
+	    hash_node *node = table->table[slot];
+	    for (; node; node = node->next) {
+		hash_node *add = MALLOC(sizeof(*add));
+		if (!add) {
+		    hashtable_free(clone);
+		    return NULL;
+		}
+		add->key = node->key;
+		add->datum = node->datum;
+		if (clone_func)
+		    clone_func(&add->key, &add->datum);
+		add->next = NULL;
+		add->prev = prev;
+		if (prev)
+		    prev->next = add;
+		else
+		    clone->table[slot] = add;
+		add->hash = node->hash;
+
+		prev = add;
+	    }
+	}
+    }
+    return clone;
 }
 
 dict *
@@ -302,41 +340,47 @@ hashtable_slots_used(const hashtable *table)
 }
 
 bool
-hashtable_resize(hashtable *table, unsigned size)
+hashtable_resize(hashtable *table, unsigned new_size)
 {
     ASSERT(table != NULL);
-    ASSERT(size != 0);
+    ASSERT(new_size != 0);
 
-    if (table->size == size)
-	return 0;
+    if (table->size == new_size)
+	return true;
 
     /* TODO: use REALLOC instead of MALLOC. */
-    const size_t table_memory = size * sizeof(hash_node *);
+    const size_t table_memory = new_size * sizeof(hash_node *);
     hash_node **ntable = MALLOC(table_memory);
     if (!ntable)
 	return false;
     memset(ntable, 0, table_memory);
 
-    /* FIXME: insert data in sorted order in the new list. */
     for (unsigned i = 0; i < table->size; i++) {
 	hash_node *node = table->table[i];
 	while (node) {
 	    hash_node *next = node->next;
-	    unsigned hash = table->hash_func(node->key) % size;
-	    node->next = ntable[hash];
-	    node->prev = NULL;
-	    if (ntable[hash])
-		ntable[hash]->prev = node;
-	    ntable[hash] = node;
+	    unsigned mhash = table->hash_func(node->key) % new_size;
+
+	    hash_node *search = ntable[mhash], *prev = NULL;
+	    while (search && node->hash >= search->hash) {
+		prev = search;
+		search = search->next;
+	    }
+	    if ((node->next = search) != NULL)
+		search->prev = node;
+	    if ((node->prev = prev) != NULL)
+		prev->next = node;
+	    else
+		ntable[mhash] = node;
+
 	    node = next;
 	}
     }
 
     FREE(table->table);
     table->table = ntable;
-    table->size = size;
-
-    return 0;
+    table->size = new_size;
+    return true;
 }
 
 bool

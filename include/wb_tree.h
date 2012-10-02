@@ -44,6 +44,8 @@ wb_tree*	wb_tree_new(dict_compare_func cmp_func,
 dict*		wb_dict_new(dict_compare_func cmp_func,
 			    dict_delete_func del_func);
 size_t		wb_tree_free(wb_tree *tree);
+wb_tree*	wb_tree_clone(wb_tree *tree,
+			      dict_key_datum_clone_func clone_func);
 
 bool		wb_tree_insert(wb_tree *tree, void *key,
 			       void ***datum_location);

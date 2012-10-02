@@ -176,6 +176,31 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     }
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
 
+    if (dct->_vtable->insert == (dict_insert_func)hashtable_insert) {
+	/* Verify that hashtable_resize works as expected. */
+	dict *clone = dict_clone(dct, NULL);
+	CU_ASSERT_TRUE(dict_verify(dct));
+	CU_ASSERT_TRUE(hashtable_resize(dict_private(clone), 3));
+	CU_ASSERT_TRUE(dict_verify(dct));
+	for (unsigned j = 0; j < nkeys; ++j)
+	    CU_ASSERT_EQUAL(dict_search(clone, keys[j].key), keys[j].value);
+	dict_free(clone);
+    }
+
+    if (dct->_vtable->clone) {
+	dict *clone = dict_clone(dct, NULL);
+	CU_ASSERT_PTR_NOT_NULL(clone);
+	CU_ASSERT_TRUE(dict_verify(clone));
+	CU_ASSERT_EQUAL(dict_count(clone), nkeys);
+	for (unsigned i = 0; i < nkeys; ++i) {
+	    CU_ASSERT_EQUAL(dict_search(clone, keys[i].key), keys[i].value);
+	}
+	for (unsigned i = 0; i < nkeys; ++i) {
+	    CU_ASSERT_TRUE(dict_remove(clone, keys[i].key));
+	}
+	dict_free(clone);
+    }
+
     for (unsigned i = 0; i < nkeys; ++i)
 	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), keys[i].value);
 
@@ -236,7 +261,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 
     for (unsigned i = 0; i < nkeys; ++i) {
 	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), keys[i].alt);
-	CU_ASSERT_EQUAL(dict_remove(dct, keys[i].key), true);
+	CU_ASSERT_TRUE(dict_remove(dct, keys[i].key));
 	CU_ASSERT_TRUE(dict_verify(dct));
 
 	CU_ASSERT_EQUAL(dict_remove(dct, keys[i].key), false);

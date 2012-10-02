@@ -65,7 +65,7 @@
 typedef struct wb_node wb_node;
 struct wb_node {
     TREE_NODE_FIELDS(wb_node);
-    uint32_t			weight;
+    uint32_t		    weight;
 };
 
 #define WEIGHT(n)	((n) ? (n)->weight : 1U)
@@ -79,32 +79,33 @@ struct wb_itor {
 };
 
 static dict_vtable wb_tree_vtable = {
-    (dict_inew_func)		wb_dict_itor_new,
-    (dict_dfree_func)		tree_free,
-    (dict_insert_func)		wb_tree_insert,
-    (dict_search_func)		tree_search,
-    (dict_remove_func)		wb_tree_remove,
-    (dict_clear_func)		tree_clear,
-    (dict_traverse_func)	tree_traverse,
-    (dict_count_func)		tree_count,
-    (dict_verify_func)		wb_tree_verify,
+    (dict_inew_func)	    wb_dict_itor_new,
+    (dict_dfree_func)	    tree_free,
+    (dict_insert_func)	    wb_tree_insert,
+    (dict_search_func)	    tree_search,
+    (dict_remove_func)	    wb_tree_remove,
+    (dict_clear_func)	    tree_clear,
+    (dict_traverse_func)    tree_traverse,
+    (dict_count_func)	    tree_count,
+    (dict_verify_func)	    wb_tree_verify,
+    (dict_clone_func)	    wb_tree_clone,
 };
 
 static itor_vtable wb_tree_itor_vtable = {
-    (dict_ifree_func)		tree_iterator_free,
-    (dict_valid_func)		tree_iterator_valid,
-    (dict_invalidate_func)	tree_iterator_invalidate,
-    (dict_next_func)		tree_iterator_next,
-    (dict_prev_func)		tree_iterator_prev,
-    (dict_nextn_func)		tree_iterator_next_n,
-    (dict_prevn_func)		tree_iterator_prev_n,
-    (dict_first_func)		tree_iterator_first,
-    (dict_last_func)		tree_iterator_last,
-    (dict_key_func)		tree_iterator_key,
-    (dict_data_func)		tree_iterator_data,
-    (dict_set_data_func)	tree_iterator_set_data,
-    (dict_iremove_func)		NULL,/* wb_itor_remove not implemented yet */
-    (dict_icompare_func)	NULL /* wb_itor_compare not implemented yet */
+    (dict_ifree_func)	    tree_iterator_free,
+    (dict_valid_func)	    tree_iterator_valid,
+    (dict_invalidate_func)  tree_iterator_invalidate,
+    (dict_next_func)	    tree_iterator_next,
+    (dict_prev_func)	    tree_iterator_prev,
+    (dict_nextn_func)	    tree_iterator_next_n,
+    (dict_prevn_func)	    tree_iterator_prev_n,
+    (dict_first_func)	    tree_iterator_first,
+    (dict_last_func)	    tree_iterator_last,
+    (dict_key_func)	    tree_iterator_key,
+    (dict_data_func)	    tree_iterator_data,
+    (dict_set_data_func)    tree_iterator_set_data,
+    (dict_iremove_func)	    NULL,/* wb_itor_remove not implemented yet */
+    (dict_icompare_func)    NULL /* wb_itor_compare not implemented yet */
 };
 
 static size_t	node_height(const wb_node *node);
@@ -148,6 +149,14 @@ wb_tree_free(wb_tree *tree)
     size_t count = tree_clear(tree);
     FREE(tree);
     return count;
+}
+
+wb_tree*
+wb_tree_clone(wb_tree *tree, dict_key_datum_clone_func clone_func)
+{
+    ASSERT(tree != NULL);
+
+    return tree_clone(tree, sizeof(wb_tree), sizeof(wb_node), clone_func);
 }
 
 void *

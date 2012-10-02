@@ -29,7 +29,7 @@ typedef struct tree_node_base {
     size_t		rotation_count;
 
 typedef struct tree_base {
-    TREE_FIELDS(struct tree_base);
+    TREE_FIELDS(struct tree_node_base);
 } tree_base;
 
 #define TREE_ITERATOR_FIELDS(tree_type, node_type) \
@@ -70,6 +70,11 @@ size_t	    tree_count(const void *tree);
 size_t	    tree_clear(void *tree);
 /* Remove all elements from |tree| and free its memory. */
 size_t	    tree_free(void *tree);
+/* Return a clone of the tree |tree| where |tree_size| is the tree object size
+ * in bytes, |node_size| is the node object size in bytes, and |clone_func| is
+ * an optional key-datum cloning function. */
+void*	    tree_clone(void *tree, size_t tree_size, size_t node_size,
+		       dict_key_datum_clone_func clone_func);
 /* Returns the depth of the leaf with minimal depth, or 0 for an empty tree. */
 size_t	    tree_min_leaf_depth(const void *tree);
 /* Returns the depth of the leaf with maximal depth, or 0 for an empty tree. */

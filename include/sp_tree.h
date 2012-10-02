@@ -44,6 +44,8 @@ sp_tree*	sp_tree_new(dict_compare_func cmp_func,
 dict*		sp_dict_new(dict_compare_func cmp_func,
 			    dict_delete_func del_func);
 size_t		sp_tree_free(sp_tree *tree);
+sp_tree*	sp_tree_clone(sp_tree *tree,
+			      dict_key_datum_clone_func clone_func);
 
 bool		sp_tree_insert(sp_tree *tree, void *key,
 			       void ***datum_location);

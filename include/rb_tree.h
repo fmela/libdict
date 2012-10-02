@@ -44,6 +44,8 @@ rb_tree*	rb_tree_new(dict_compare_func cmp_func,
 dict*		rb_dict_new(dict_compare_func cmp_func,
 			    dict_delete_func del_func);
 size_t		rb_tree_free(rb_tree *tree);
+rb_tree*	rb_tree_clone(rb_tree *tree,
+			      dict_key_datum_clone_func clone_func);
 
 bool		rb_tree_insert(rb_tree *tree, void *key,
 			       void ***datum_location);

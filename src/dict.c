@@ -111,6 +111,22 @@ dict_free(dict *dct)
     return count;
 }
 
+dict* dict_clone(dict *dct, dict_key_datum_clone_func clone_func)
+{
+    ASSERT(dct);
+
+    dict *clone = MALLOC(sizeof(*clone));
+    if (clone) {
+	clone->_object = dct->_vtable->clone(dct->_object, clone_func);
+	if (!clone->_object) {
+	    FREE(clone);
+	    return NULL;
+	}
+	clone->_vtable = dct->_vtable;
+    }
+    return clone;
+}
+
 void
 dict_itor_free(dict_itor *itor)
 {
