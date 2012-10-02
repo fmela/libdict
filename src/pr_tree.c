@@ -200,7 +200,9 @@ fixup(pr_tree *tree, pr_node *node)
 	    rot_left(tree, node);
 	    rotations += 1;
 	    rotations += fixup(tree, node);
-	    /* rotations += fixup(tree, r); */
+	    /* Commenting the next line means we must turn the weight
+	     * verification condition in node_verify() from AND to OR. */
+	    rotations += fixup(tree, r);
 	} else if (WEIGHT(r->llink) > lweight) {    /* RL */
 	    /* Rotate |r| right, then |node| left, with |rl| taking the place
 	     * of |node| and having |node| and |r| as left and right children,
@@ -244,7 +246,9 @@ fixup(pr_tree *tree, pr_node *node)
 	    rot_right(tree, node);
 	    rotations += 1;
 	    rotations += fixup(tree, node);
-	    /* rotations += fixup(tree, l); */
+	    /* Commenting the next line means we must turn the weight
+	     * verification condition in node_verify() from AND to OR. */
+	    rotations += fixup(tree, l);
 	} else if (WEIGHT(l->rlink) > rweight) {    /* LR */
 	    /* Rotate |l| left, then |node| right, with |lr| taking the place of
 	     * |node| and having |l| and |node| as left and right children,
@@ -616,11 +620,11 @@ node_verify(const pr_tree *tree, const pr_node *parent, const pr_node *node,
 	unsigned rweight = node_verify(tree, node, r, jmp);
 	VERIFY(node->weight == lweight + rweight, longjmp(jmp, 1));
 	if (rweight > lweight) {
-	    VERIFY(!(WEIGHT(r->rlink) > lweight) ||
-		   !(WEIGHT(r->llink) > lweight), longjmp(jmp, 1));
+	    VERIFY((WEIGHT(r->rlink) <= lweight) &&
+		   (WEIGHT(r->llink) <= lweight), longjmp(jmp, 1));
 	} else if (lweight > rweight) {
-	    VERIFY(!(WEIGHT(l->llink) > rweight) ||
-		   !(WEIGHT(l->rlink) > rweight), longjmp(jmp, 1));
+	    VERIFY((WEIGHT(l->llink) <= rweight) &&
+		   (WEIGHT(l->rlink) <= rweight), longjmp(jmp, 1));
 	}
     }
     return WEIGHT(node);
