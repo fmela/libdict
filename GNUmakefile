@@ -28,9 +28,6 @@ INCLUDES = -I$(HEADER_DIR) -I$(SOURCE_DIR) -I$(CUNIT_PREFIX)/include
 CFLAGS = -Wall -Wextra -Wshadow -W -std=c99 -O3 $(INCLUDES)
 LDFLAGS =
 
-AR = ar
-ARFLAGS = cru
-
 INSTALL_PREFIX ?= /usr/local
 INSTALL_BINDIR = $(INSTALL_PREFIX)/bin
 INSTALL_LIBDIR = $(INSTALL_PREFIX)/lib
@@ -48,27 +45,27 @@ $(OUTPUT_DIR):
 	[ -d $(OUTPUT_DIR) ] || mkdir -m 755 $(OUTPUT_DIR)
 
 $(STATIC_LIB): $(STATIC_OBJ)
-	$(AR) $(ARFLAGS) $(STATIC_LIB) $(STATIC_OBJ)
+	ar cru $(STATIC_LIB) $(STATIC_OBJ)
 
 $(PROFIL_LIB): $(PROFIL_OBJ)
-	$(AR) $(ARFLAGS) $(PROFIL_LIB) $(PROFIL_OBJ)
+	ar cru $(PROFIL_LIB) $(PROFIL_OBJ)
 
 $(SHARED_LIB): $(SHARED_OBJ)
 	$(CC) -shared -o $(SHARED_LIB) $(SHARED_OBJ)
 
-$(OUTPUT_DIR)/%.o: $(SOURCE_DIR)/%.c $(HEADER)
+$(OUTPUT_DIR)/%.o: $(SOURCE_DIR)/%.c $(HEADER) GNUmakefile
 	$(CC) $(CFLAGS) -c -o $(@) $(<)
 
-$(OUTPUT_DIR)/%.po: $(SOURCE_DIR)/%.c $(HEADER)
+$(OUTPUT_DIR)/%.po: $(SOURCE_DIR)/%.c $(HEADER) GNUmakefile
 	$(CC) $(CFLAGS) -pg -c -o $(@) $(<)
 
-$(OUTPUT_DIR)/%.So: $(SOURCE_DIR)/%.c $(HEADER)
+$(OUTPUT_DIR)/%.So: $(SOURCE_DIR)/%.c $(HEADER) GNUmakefile
 	$(CC) $(CFLAGS) -fPIC -DPIC -c -o $(@) $(<)
 
-$(OUTPUT_DIR)/unit_tests: unit_tests.c $(STATIC_LIB)
+$(OUTPUT_DIR)/unit_tests: unit_tests.c $(STATIC_LIB) GNUmakefile
 	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_LIB) -L$(CUNIT_PREFIX)/lib $(LDFLAGS) -lcunit
 
-$(OUTPUT_DIR)/%: %.c $(STATIC_LIB)
+$(OUTPUT_DIR)/%: %.c $(STATIC_LIB) GNUmakefile
 	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_LIB) $(LDFLAGS)
 
 .PHONY: clean
