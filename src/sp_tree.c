@@ -96,16 +96,16 @@ static itor_vtable sp_tree_itor_vtable = {
     (dict_icompare_func)    NULL /* sp_itor_compare not implemented yet */
 };
 
-static sp_node*	node_new(void *key);
-static size_t	node_height(const sp_node *node);
-static size_t	node_mheight(const sp_node *node);
-static size_t	node_pathlen(const sp_node *node, size_t level);
-static void	splay(sp_tree *t, sp_node *n);
+static sp_node*	node_new(void* key);
+static size_t	node_height(const sp_node* node);
+static size_t	node_mheight(const sp_node* node);
+static size_t	node_pathlen(const sp_node* node, size_t level);
+static void	splay(sp_tree* t, sp_node* n);
 
-sp_tree *
+sp_tree*
 sp_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
-    sp_tree *tree = MALLOC(sizeof(*tree));
+    sp_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = NULL;
 	tree->count = 0;
@@ -116,10 +116,10 @@ sp_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
     return tree;
 }
 
-dict *
+dict*
 sp_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
-    dict *dct = MALLOC(sizeof(*dct));
+    dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
 	if (!(dct->_object = sp_tree_new(cmp_func, del_func))) {
 	    FREE(dct);
@@ -131,7 +131,7 @@ sp_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 }
 
 size_t
-sp_tree_free(sp_tree *tree)
+sp_tree_free(sp_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -141,7 +141,7 @@ sp_tree_free(sp_tree *tree)
 }
 
 sp_tree*
-sp_tree_clone(sp_tree *tree, dict_key_datum_clone_func clone_func)
+sp_tree_clone(sp_tree* tree, dict_key_datum_clone_func clone_func)
 {
     ASSERT(tree != NULL);
 
@@ -149,12 +149,12 @@ sp_tree_clone(sp_tree *tree, dict_key_datum_clone_func clone_func)
 }
 
 size_t
-sp_tree_clear(sp_tree *tree)
+sp_tree_clear(sp_tree* tree)
 {
     ASSERT(tree != NULL);
 
     const size_t count = tree->count;
-    sp_node *node = tree->root;
+    sp_node* node = tree->root;
     while (node) {
 	if (node->llink) {
 	    node = node->llink;
@@ -169,7 +169,7 @@ sp_tree_clear(sp_tree *tree)
 	    tree->del_func(node->key, node->datum);
 	--tree->count;
 
-	sp_node *parent = node->parent;
+	sp_node* parent = node->parent;
 	if (parent) {
 	    if (parent->llink == node)
 	parent->llink = NULL;
@@ -186,15 +186,15 @@ sp_tree_clear(sp_tree *tree)
 }
 
 static void
-splay(sp_tree *t, sp_node *n)
+splay(sp_tree* t, sp_node* n)
 {
     unsigned rotations = 0;
     for (;;) {
-	sp_node *p = n->parent;
+	sp_node* p = n->parent;
 	if (!p)
 	    break;
 
-	sp_node *pp = p->parent;
+	sp_node* pp = p->parent;
 	if (!pp) {
 	    /* Parent is the root; simply rotate root left or right so that |n|
 	     * becomes new root. */
@@ -216,30 +216,30 @@ splay(sp_tree *t, sp_node *n)
 	}
 
 	rotations += 2;
-	sp_node *ppp = pp->parent;
+	sp_node* ppp = pp->parent;
 	if (p->llink == n) {
 	    if (pp->llink == p) {
 		/* Rotate parent right, then node right. */
-		sp_node *pr = p->rlink;
+		sp_node* pr = p->rlink;
 		p->rlink = pp;
 		pp->parent = p;
 		if ((pp->llink = pr) != NULL)
 		    pr->parent = pp;
 
-		sp_node *nr = n->rlink;
+		sp_node* nr = n->rlink;
 		n->rlink = p;
 		p->parent = n;
 		if ((p->llink = nr) != NULL)
 		    nr->parent = p;
 	    } else {
 		/* Rotate node right, then parent left. */
-		sp_node *nr = n->rlink;
+		sp_node* nr = n->rlink;
 		n->rlink = p;
 		p->parent = n;
 		if ((p->llink = nr) != NULL)
 		    nr->parent = p;
 
-		sp_node *nl = n->llink;
+		sp_node* nl = n->llink;
 		n->llink = pp;
 		pp->parent = n;
 		if ((pp->rlink = nl) != NULL)
@@ -248,26 +248,26 @@ splay(sp_tree *t, sp_node *n)
 	} else {
 	    if (pp->rlink == p) {
 		/* Rotate parent left, then node left. */
-		sp_node *pl = p->llink;
+		sp_node* pl = p->llink;
 		p->llink = pp;
 		pp->parent = p;
 		if ((pp->rlink = pl) != NULL)
 		    pl->parent = pp;
 
-		sp_node *nl = n->llink;
+		sp_node* nl = n->llink;
 		n->llink = p;
 		p->parent = n;
 		if ((p->rlink = nl) != NULL)
 		    nl->parent = p;
 	    } else {
 		/* Rotate node left, then parent right. */
-		sp_node *nl = n->llink;
+		sp_node* nl = n->llink;
 		n->llink = p;
 		p->parent = n;
 		if ((p->rlink = nl) != NULL)
 		    nl->parent = p;
 
-		sp_node *nr = n->rlink;
+		sp_node* nr = n->rlink;
 		n->rlink = pp;
 		pp->parent = n;
 		if ((pp->llink = nr) != NULL)
@@ -289,12 +289,13 @@ splay(sp_tree *t, sp_node *n)
 }
 
 bool
-sp_tree_insert(sp_tree *tree, void *key, void ***datum_location)
+sp_tree_insert(sp_tree* tree, void* key, void*** datum_location)
 {
     ASSERT(tree != NULL);
 
     int cmp = 0;
-    sp_node *node = tree->root, *parent = NULL;
+    sp_node* node = tree->root;
+    sp_node* parent = NULL;
     while (node) {
 	cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
@@ -332,12 +333,13 @@ sp_tree_insert(sp_tree *tree, void *key, void ***datum_location)
     return true;
 }
 
-void *
-sp_tree_search(sp_tree *tree, const void *key)
+void*
+sp_tree_search(sp_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
 
-    sp_node *node = tree->root, *parent = NULL;
+    sp_node* node = tree->root;
+    sp_node* parent = NULL;
     while (node) {
 	int cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
@@ -359,11 +361,11 @@ sp_tree_search(sp_tree *tree, const void *key)
 }
 
 bool
-sp_tree_remove(sp_tree *tree, const void *key)
+sp_tree_remove(sp_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
 
-    sp_node *node = tree->root;
+    sp_node* node = tree->root;
     while (node) {
 	int cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
@@ -376,11 +378,11 @@ sp_tree_remove(sp_tree *tree, const void *key)
     if (!node)
 	return false;
 
-    sp_node *out;
+    sp_node* out;
     if (!node->llink || !node->rlink) {
 	out = node;
     } else {
-	void *tmp;
+	void* tmp;
 	/* This is sure to screw up iterators that were positioned at the node
 	 * "out". */
 	for (out = node->rlink; out->llink; out = out->llink)
@@ -389,8 +391,8 @@ sp_tree_remove(sp_tree *tree, const void *key)
 	SWAP(node->datum, out->datum, tmp);
     }
 
-    sp_node *temp = out->llink ? out->llink : out->rlink;
-    sp_node *parent = out->parent;
+    sp_node* temp = out->llink ? out->llink : out->rlink;
+    sp_node* parent = out->parent;
     if (temp)
 	temp->parent = parent;
     if (parent) {
@@ -420,14 +422,14 @@ sp_tree_remove(sp_tree *tree, const void *key)
 }
 
 size_t
-sp_tree_traverse(sp_tree *tree, dict_visit_func visit)
+sp_tree_traverse(sp_tree* tree, dict_visit_func visit)
 {
     ASSERT(tree != NULL);
     ASSERT(visit != NULL);
 
     size_t count = 0;
     if (tree->root) {
-	sp_node *node = tree_node_min(tree->root);
+	sp_node* node = tree_node_min(tree->root);
 	do {
 	    ++count;
 	    if (!visit(node->key, node->datum))
@@ -439,7 +441,7 @@ sp_tree_traverse(sp_tree *tree, dict_visit_func visit)
 }
 
 size_t
-sp_tree_count(const sp_tree *tree)
+sp_tree_count(const sp_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -447,7 +449,7 @@ sp_tree_count(const sp_tree *tree)
 }
 
 size_t
-sp_tree_height(const sp_tree *tree)
+sp_tree_height(const sp_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -455,7 +457,7 @@ sp_tree_height(const sp_tree *tree)
 }
 
 size_t
-sp_tree_mheight(const sp_tree *tree)
+sp_tree_mheight(const sp_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -463,45 +465,45 @@ sp_tree_mheight(const sp_tree *tree)
 }
 
 size_t
-sp_tree_pathlen(const sp_tree *tree)
+sp_tree_pathlen(const sp_tree* tree)
 {
     ASSERT(tree != NULL);
 
     return tree->root ? node_pathlen(tree->root, 1) : 0;
 }
 
-const void *
-sp_tree_min(const sp_tree *tree)
+const void*
+sp_tree_min(const sp_tree* tree)
 {
     ASSERT(tree != NULL);
 
     if (!tree->root)
 	return NULL;
 
-    const sp_node *node = tree->root;
+    const sp_node* node = tree->root;
     for (; node->llink; node = node->llink)
 	/* void */;
     return node->key;
 }
 
-const void *
-sp_tree_max(const sp_tree *tree)
+const void*
+sp_tree_max(const sp_tree* tree)
 {
     ASSERT(tree != NULL);
 
     if (!tree->root)
 	return NULL;
 
-    const sp_node *node = tree->root;
+    const sp_node* node = tree->root;
     for (; node->rlink; node = node->rlink)
 	/* void */;
     return node->key;
 }
 
-static sp_node *
-node_new(void *key)
+static sp_node*
+node_new(void* key)
 {
-    sp_node *node = MALLOC(sizeof(*node));
+    sp_node* node = MALLOC(sizeof(*node));
     if (node) {
 	node->key = key;
 	node->datum = NULL;
@@ -513,7 +515,7 @@ node_new(void *key)
 }
 
 static size_t
-node_height(const sp_node *node)
+node_height(const sp_node* node)
 {
     size_t l = node->llink ? node_height(node->llink) + 1 : 0;
     size_t r = node->rlink ? node_height(node->rlink) + 1 : 0;
@@ -521,7 +523,7 @@ node_height(const sp_node *node)
 }
 
 static size_t
-node_mheight(const sp_node *node)
+node_mheight(const sp_node* node)
 {
     size_t l = node->llink ? node_mheight(node->llink) + 1 : 0;
     size_t r = node->rlink ? node_mheight(node->rlink) + 1 : 0;
@@ -529,7 +531,7 @@ node_mheight(const sp_node *node)
 }
 
 static size_t
-node_pathlen(const sp_node *node, size_t level)
+node_pathlen(const sp_node* node, size_t level)
 {
     size_t n = 0;
 
@@ -543,7 +545,7 @@ node_pathlen(const sp_node *node, size_t level)
 }
 
 static bool
-node_verify(const sp_tree *tree, const sp_node *parent, const sp_node *node)
+node_verify(const sp_tree* tree, const sp_node* parent, const sp_node* node)
 {
     ASSERT(tree);
 
@@ -562,7 +564,7 @@ node_verify(const sp_tree *tree, const sp_node *parent, const sp_node *node)
 }
 
 bool
-sp_tree_verify(const sp_tree *tree)
+sp_tree_verify(const sp_tree* tree)
 {
     ASSERT(tree);
 
@@ -574,12 +576,12 @@ sp_tree_verify(const sp_tree *tree)
     return node_verify(tree, NULL, tree->root);
 }
 
-sp_itor *
-sp_itor_new(sp_tree *tree)
+sp_itor*
+sp_itor_new(sp_tree* tree)
 {
     ASSERT(tree != NULL);
 
-    sp_itor *itor = MALLOC(sizeof(*itor));
+    sp_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->tree = tree;
 	itor->node = NULL;
@@ -587,12 +589,12 @@ sp_itor_new(sp_tree *tree)
     return itor;
 }
 
-dict_itor *
-sp_dict_itor_new(sp_tree *tree)
+dict_itor*
+sp_dict_itor_new(sp_tree* tree)
 {
     ASSERT(tree != NULL);
 
-    dict_itor *itor = MALLOC(sizeof(*itor));
+    dict_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	if (!(itor->_itor = sp_itor_new(tree))) {
 	    FREE(itor);
@@ -604,7 +606,7 @@ sp_dict_itor_new(sp_tree *tree)
 }
 
 void
-sp_itor_free(sp_itor *itor)
+sp_itor_free(sp_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -612,7 +614,7 @@ sp_itor_free(sp_itor *itor)
 }
 
 bool
-sp_itor_valid(const sp_itor *itor)
+sp_itor_valid(const sp_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -620,7 +622,7 @@ sp_itor_valid(const sp_itor *itor)
 }
 
 void
-sp_itor_invalidate(sp_itor *itor)
+sp_itor_invalidate(sp_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -628,7 +630,7 @@ sp_itor_invalidate(sp_itor *itor)
 }
 
 bool
-sp_itor_next(sp_itor *itor)
+sp_itor_next(sp_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -636,7 +638,7 @@ sp_itor_next(sp_itor *itor)
 }
 
 bool
-sp_itor_prev(sp_itor *itor)
+sp_itor_prev(sp_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -644,7 +646,7 @@ sp_itor_prev(sp_itor *itor)
 }
 
 bool
-sp_itor_nextn(sp_itor *itor, size_t count)
+sp_itor_nextn(sp_itor* itor, size_t count)
 {
     ASSERT(itor != NULL);
 
@@ -652,7 +654,7 @@ sp_itor_nextn(sp_itor *itor, size_t count)
 }
 
 bool
-sp_itor_prevn(sp_itor *itor, size_t count)
+sp_itor_prevn(sp_itor* itor, size_t count)
 {
     ASSERT(itor != NULL);
 
@@ -660,7 +662,7 @@ sp_itor_prevn(sp_itor *itor, size_t count)
 }
 
 bool
-sp_itor_first(sp_itor *itor)
+sp_itor_first(sp_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -668,7 +670,7 @@ sp_itor_first(sp_itor *itor)
 }
 
 bool
-sp_itor_last(sp_itor *itor)
+sp_itor_last(sp_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -676,23 +678,23 @@ sp_itor_last(sp_itor *itor)
 }
 
 bool
-sp_itor_search(sp_itor *itor, const void *key)
+sp_itor_search(sp_itor* itor, const void* key)
 {
     ASSERT(itor != NULL);
 
     return tree_iterator_search(itor, key);
 }
 
-const void *
-sp_itor_key(const sp_itor *itor)
+const void*
+sp_itor_key(const sp_itor* itor)
 {
     ASSERT(itor != NULL);
 
     return tree_iterator_key(itor);
 }
 
-void *
-sp_itor_data(sp_itor *itor)
+void*
+sp_itor_data(sp_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -700,7 +702,7 @@ sp_itor_data(sp_itor *itor)
 }
 
 bool
-sp_itor_set_data(sp_itor *itor, void *datum, void **old_datum)
+sp_itor_set_data(sp_itor* itor, void* datum, void** old_datum)
 {
     ASSERT(itor != NULL);
 

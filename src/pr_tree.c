@@ -82,18 +82,18 @@ static itor_vtable pr_tree_itor_vtable = {
     (dict_icompare_func)    NULL /* pr_itor_compare not implemented yet */
 };
 
-static unsigned	fixup(pr_tree *tree, pr_node *node);
-static void	rot_left(pr_tree *tree, pr_node *node);
-static void	rot_right(pr_tree *tree, pr_node *node);
-static size_t	node_height(const pr_node *node);
-static size_t	node_mheight(const pr_node *node);
-static size_t	node_pathlen(const pr_node *node, size_t level);
-static pr_node*	node_new(void *key);
+static unsigned	fixup(pr_tree* tree, pr_node* node);
+static void	rot_left(pr_tree* tree, pr_node* node);
+static void	rot_right(pr_tree* tree, pr_node* node);
+static size_t	node_height(const pr_node* node);
+static size_t	node_mheight(const pr_node* node);
+static size_t	node_pathlen(const pr_node* node, size_t level);
+static pr_node*	node_new(void* key);
 
-pr_tree *
+pr_tree*
 pr_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
-    pr_tree *tree = MALLOC(sizeof(*tree));
+    pr_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = NULL;
 	tree->count = 0;
@@ -104,10 +104,10 @@ pr_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
     return tree;
 }
 
-dict *
+dict*
 pr_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
-    dict *dct = MALLOC(sizeof(*dct));
+    dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
 	if (!(dct->_object = pr_tree_new(cmp_func, del_func))) {
 	    FREE(dct);
@@ -119,7 +119,7 @@ pr_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 }
 
 size_t
-pr_tree_free(pr_tree *tree)
+pr_tree_free(pr_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -128,20 +128,20 @@ pr_tree_free(pr_tree *tree)
     return count;
 }
 
-pr_tree *
-pr_tree_clone(pr_tree *tree, dict_key_datum_clone_func clone_func)
+pr_tree*
+pr_tree_clone(pr_tree* tree, dict_key_datum_clone_func clone_func)
 {
     ASSERT(tree != NULL);
 
     return tree_clone(tree, sizeof(pr_tree), sizeof(pr_node), clone_func);
 }
 
-void *
-pr_tree_search(pr_tree *tree, const void *key)
+void*
+pr_tree_search(pr_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
 
-    pr_node *node = tree->root;
+    pr_node* node = tree->root;
     while (node) {
 	int cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
@@ -156,7 +156,7 @@ pr_tree_search(pr_tree *tree, const void *key)
 }
 
 static unsigned
-fixup(pr_tree *tree, pr_node *node)
+fixup(pr_tree* tree, pr_node* node)
 {
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
@@ -193,7 +193,7 @@ fixup(pr_tree *tree, pr_node *node)
     const unsigned lweight = WEIGHT(node->llink);
     const unsigned rweight = WEIGHT(node->rlink);
     if (lweight < rweight) {
-	pr_node *r = node->rlink;
+	pr_node* r = node->rlink;
 	ASSERT(r != NULL);
 	if (WEIGHT(r->rlink) > lweight) {	    /* LL */
 	    rot_left(tree, node);
@@ -206,16 +206,16 @@ fixup(pr_tree *tree, pr_node *node)
 	    /* Rotate |r| right, then |node| left, with |rl| taking the place
 	     * of |node| and having |node| and |r| as left and right children,
 	     * respectively. */
-	    pr_node *rl = r->llink;
-	    pr_node *parent = node->parent;
+	    pr_node* rl = r->llink;
+	    pr_node* parent = node->parent;
 
-	    pr_node *a = rl->llink;
+	    pr_node* a = rl->llink;
 	    rl->llink = node;
 	    node->parent = rl;
 	    if ((node->rlink = a) != NULL)
 		a->parent = node;
 
-	    pr_node *b = rl->rlink;
+	    pr_node* b = rl->rlink;
 	    rl->rlink = r;
 	    r->parent = rl;
 	    if ((r->llink = b) != NULL)
@@ -239,7 +239,7 @@ fixup(pr_tree *tree, pr_node *node)
 	    rotations += fixup(tree, node);
 	}
     } else if (lweight > rweight) {
-	pr_node *l = node->llink;
+	pr_node* l = node->llink;
 	ASSERT(l != NULL);
 	if (WEIGHT(l->llink) > rweight) {	    /* RR */
 	    rot_right(tree, node);
@@ -252,16 +252,16 @@ fixup(pr_tree *tree, pr_node *node)
 	    /* Rotate |l| left, then |node| right, with |lr| taking the place of
 	     * |node| and having |l| and |node| as left and right children,
 	     * respectively. */
-	    pr_node *lr = l->rlink;
-	    pr_node *parent = node->parent;
+	    pr_node* lr = l->rlink;
+	    pr_node* parent = node->parent;
 
-	    pr_node *a = lr->llink;
+	    pr_node* a = lr->llink;
 	    lr->llink = l;
 	    l->parent = lr;
 	    if ((l->rlink = a) != NULL)
 		a->parent = l;
 
-	    pr_node *b = lr->rlink;
+	    pr_node* b = lr->rlink;
 	    lr->rlink = node;
 	    node->parent = lr;
 	    if ((node->llink = b) != NULL)
@@ -289,12 +289,13 @@ fixup(pr_tree *tree, pr_node *node)
 }
 
 bool
-pr_tree_insert(pr_tree *tree, void *key, void ***datum_location)
+pr_tree_insert(pr_tree* tree, void* key, void*** datum_location)
 {
     ASSERT(tree != NULL);
 
     int cmp = 0;
-    pr_node *node = tree->root, *parent = NULL;
+    pr_node* node = tree->root;
+    pr_node* parent = NULL;
     while (node) {
 	cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
@@ -339,12 +340,12 @@ pr_tree_insert(pr_tree *tree, void *key, void ***datum_location)
 }
 
 bool
-pr_tree_remove(pr_tree *tree, const void *key)
+pr_tree_remove(pr_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
     ASSERT(key != NULL);
 
-    pr_node *node = tree->root;
+    pr_node* node = tree->root;
     while (node) {
 	int cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0) {
@@ -353,7 +354,7 @@ pr_tree_remove(pr_tree *tree, const void *key)
 	    node = node->rlink;
 	} else {
 	    if (node->llink && node->rlink) {
-		pr_node *out;
+		pr_node* out;
 		if (node->llink->weight > node->rlink->weight) {
 		    out = node->llink;
 		    while (out->rlink)
@@ -363,15 +364,15 @@ pr_tree_remove(pr_tree *tree, const void *key)
 		    while (out->llink)
 			out = out->llink;
 		}
-		void *tmp;
+		void* tmp;
 		SWAP(node->key, out->key, tmp);
 		SWAP(node->datum, out->datum, tmp);
 		node = out;
 	    }
 	    ASSERT(!node->llink || !node->rlink);
 	    /* Splice in the successor, if any. */
-	    pr_node *child = node->llink ? node->llink : node->rlink;
-	    pr_node *parent = node->parent;
+	    pr_node* child = node->llink ? node->llink : node->rlink;
+	    pr_node* parent = node->parent;
 	    if (child)
 		child->parent = parent;
 	    if (parent) {
@@ -390,7 +391,7 @@ pr_tree_remove(pr_tree *tree, const void *key)
 	    /* Now move up the tree, decrementing weights. */
 	    unsigned rotations = 0;
 	    while (parent) {
-		pr_node *up = parent->parent;
+		pr_node* up = parent->parent;
 		--parent->weight;
 		rotations += fixup(tree, parent);
 		parent = up;
@@ -403,12 +404,12 @@ pr_tree_remove(pr_tree *tree, const void *key)
 }
 
 size_t
-pr_tree_clear(pr_tree *tree)
+pr_tree_clear(pr_tree* tree)
 {
     ASSERT(tree != NULL);
 
     const size_t count = tree->count;
-    pr_node *node = tree->root;
+    pr_node* node = tree->root;
     while (node) {
 	if (node->llink || node->rlink) {
 	    node = node->llink ? node->llink : node->rlink;
@@ -418,7 +419,7 @@ pr_tree_clear(pr_tree *tree)
 	if (tree->del_func)
 	    tree->del_func(node->key, node->datum);
 
-	pr_node *parent = node->parent;
+	pr_node* parent = node->parent;
 	FREE(node);
 
 	if (parent) {
@@ -435,34 +436,34 @@ pr_tree_clear(pr_tree *tree)
     return count;
 }
 
-const void *
-pr_tree_min(const pr_tree *tree)
+const void*
+pr_tree_min(const pr_tree* tree)
 {
     ASSERT(tree != NULL);
 
     if (!tree->root)
 	return NULL;
-    const pr_node *node = tree->root;
+    const pr_node* node = tree->root;
     for (; node->llink; node = node->llink)
 	/* void */;
     return node->key;
 }
 
-const void *
-pr_tree_max(const pr_tree *tree)
+const void*
+pr_tree_max(const pr_tree* tree)
 {
     ASSERT(tree != NULL);
 
     if (!tree->root)
 	return NULL;
-    const pr_node *node = tree->root;
+    const pr_node* node = tree->root;
     for (; node->rlink; node = node->rlink)
 	/* void */;
     return node->key;
 }
 
 size_t
-pr_tree_traverse(pr_tree *tree, dict_visit_func visit)
+pr_tree_traverse(pr_tree* tree, dict_visit_func visit)
 {
     ASSERT(tree != NULL);
 
@@ -470,7 +471,7 @@ pr_tree_traverse(pr_tree *tree, dict_visit_func visit)
 }
 
 size_t
-pr_tree_count(const pr_tree *tree)
+pr_tree_count(const pr_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -478,7 +479,7 @@ pr_tree_count(const pr_tree *tree)
 }
 
 size_t
-pr_tree_height(const pr_tree *tree)
+pr_tree_height(const pr_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -486,7 +487,7 @@ pr_tree_height(const pr_tree *tree)
 }
 
 size_t
-pr_tree_mheight(const pr_tree *tree)
+pr_tree_mheight(const pr_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -494,17 +495,17 @@ pr_tree_mheight(const pr_tree *tree)
 }
 
 size_t
-pr_tree_pathlen(const pr_tree *tree)
+pr_tree_pathlen(const pr_tree* tree)
 {
     ASSERT(tree != NULL);
 
     return tree->root ? node_pathlen(tree->root, 1) : 0;
 }
 
-static pr_node *
-node_new(void *key)
+static pr_node*
+node_new(void* key)
 {
-    pr_node *node = MALLOC(sizeof(*node));
+    pr_node* node = MALLOC(sizeof(*node));
     if (node) {
 	node->key = key;
 	node->datum = NULL;
@@ -517,7 +518,7 @@ node_new(void *key)
 }
 
 static size_t
-node_height(const pr_node *node)
+node_height(const pr_node* node)
 {
     ASSERT(node != NULL);
 
@@ -527,7 +528,7 @@ node_height(const pr_node *node)
 }
 
 static size_t
-node_mheight(const pr_node *node)
+node_mheight(const pr_node* node)
 {
     ASSERT(node != NULL);
 
@@ -537,7 +538,7 @@ node_mheight(const pr_node *node)
 }
 
 static size_t
-node_pathlen(const pr_node *node, size_t level)
+node_pathlen(const pr_node* node, size_t level)
 {
     ASSERT(node != NULL);
 
@@ -562,13 +563,13 @@ node_pathlen(const pr_node *node, size_t level)
  * Only the weights of B and B's right child to be readjusted.
  */
 static void
-rot_left(pr_tree *tree, pr_node	*node)
+rot_left(pr_tree* tree, pr_node	*node)
 {
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
     ASSERT(node->rlink != NULL);
 
-    pr_node *rlink = node->rlink;
+    pr_node* rlink = node->rlink;
     tree_node_rot_left(tree, node);
 
     node->weight = WEIGHT(node->llink) + WEIGHT(node->rlink);
@@ -588,13 +589,13 @@ rot_left(pr_tree *tree, pr_node	*node)
  * Only the weights of D and D's left child need to be readjusted.
  */
 static void
-rot_right(pr_tree *tree, pr_node *node)
+rot_right(pr_tree* tree, pr_node* node)
 {
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
     ASSERT(node->llink != NULL);
 
-    pr_node *llink = node->llink;
+    pr_node* llink = node->llink;
     tree_node_rot_right(tree, node);
 
     node->weight = WEIGHT(node->llink) + WEIGHT(node->rlink);
@@ -602,7 +603,7 @@ rot_right(pr_tree *tree, pr_node *node)
 }
 
 static bool
-node_verify(const pr_tree *tree, const pr_node *parent, const pr_node *node)
+node_verify(const pr_tree* tree, const pr_node* parent, const pr_node* node)
 {
     ASSERT(tree);
 
@@ -613,7 +614,8 @@ node_verify(const pr_tree *tree, const pr_node *parent, const pr_node *node)
     }
     if (node) {
 	VERIFY(node->parent == parent, return false);
-	pr_node *l = node->llink, *r = node->rlink;
+	pr_node* l = node->llink;
+	pr_node* r = node->rlink;
 	if (!node_verify(tree, node, l) ||
 	    !node_verify(tree, node, r))
 	    return false;
@@ -632,7 +634,7 @@ node_verify(const pr_tree *tree, const pr_node *parent, const pr_node *node)
 }
 
 bool
-pr_tree_verify(const pr_tree *tree)
+pr_tree_verify(const pr_tree* tree)
 {
     ASSERT(tree);
 
@@ -644,12 +646,12 @@ pr_tree_verify(const pr_tree *tree)
     return node_verify(tree, NULL, tree->root);
 }
 
-pr_itor *
-pr_itor_new(pr_tree *tree)
+pr_itor*
+pr_itor_new(pr_tree* tree)
 {
     ASSERT(tree != NULL);
 
-    pr_itor *itor = MALLOC(sizeof(*itor));
+    pr_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->tree = tree;
 	itor->node = NULL;
@@ -657,13 +659,13 @@ pr_itor_new(pr_tree *tree)
     return itor;
 }
 
-dict_itor *
-pr_dict_itor_new(pr_tree *tree)
+dict_itor*
+pr_dict_itor_new(pr_tree* tree)
 {
 
     ASSERT(tree != NULL);
 
-    dict_itor *itor = MALLOC(sizeof(*itor));
+    dict_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	if (!(itor->_itor = pr_itor_new(tree))) {
 	    FREE(itor);
@@ -675,7 +677,7 @@ pr_dict_itor_new(pr_tree *tree)
 }
 
 void
-pr_itor_free(pr_itor *itor)
+pr_itor_free(pr_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -683,7 +685,7 @@ pr_itor_free(pr_itor *itor)
 }
 
 bool
-pr_itor_valid(const pr_itor *itor)
+pr_itor_valid(const pr_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -691,7 +693,7 @@ pr_itor_valid(const pr_itor *itor)
 }
 
 void
-pr_itor_invalidate(pr_itor *itor)
+pr_itor_invalidate(pr_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -699,7 +701,7 @@ pr_itor_invalidate(pr_itor *itor)
 }
 
 bool
-pr_itor_next(pr_itor *itor)
+pr_itor_next(pr_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -711,7 +713,7 @@ pr_itor_next(pr_itor *itor)
 }
 
 bool
-pr_itor_prev(pr_itor *itor)
+pr_itor_prev(pr_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -723,7 +725,7 @@ pr_itor_prev(pr_itor *itor)
 }
 
 bool
-pr_itor_nextn(pr_itor *itor, size_t count)
+pr_itor_nextn(pr_itor* itor, size_t count)
 {
     ASSERT(itor != NULL);
 
@@ -734,7 +736,7 @@ pr_itor_nextn(pr_itor *itor, size_t count)
 }
 
 bool
-pr_itor_prevn(pr_itor *itor, size_t count)
+pr_itor_prevn(pr_itor* itor, size_t count)
 {
     ASSERT(itor != NULL);
 
@@ -745,7 +747,7 @@ pr_itor_prevn(pr_itor *itor, size_t count)
 }
 
 bool
-pr_itor_first(pr_itor *itor)
+pr_itor_first(pr_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -757,7 +759,7 @@ pr_itor_first(pr_itor *itor)
 }
 
 bool
-pr_itor_last(pr_itor *itor)
+pr_itor_last(pr_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -769,11 +771,11 @@ pr_itor_last(pr_itor *itor)
 }
 
 bool
-pr_itor_search(pr_itor *itor, const void *key)
+pr_itor_search(pr_itor* itor, const void* key)
 {
     ASSERT(itor != NULL);
 
-    pr_node *node = itor->tree->root;
+    pr_node* node = itor->tree->root;
     while (node) {
 	int cmp = itor->tree->cmp_func(key, node->key);
 	if (cmp < 0)
@@ -789,16 +791,16 @@ pr_itor_search(pr_itor *itor, const void *key)
     return false;
 }
 
-const void *
-pr_itor_key(const pr_itor *itor)
+const void*
+pr_itor_key(const pr_itor* itor)
 {
     ASSERT(itor != NULL);
 
     return itor->node ? itor->node->key : NULL;
 }
 
-void *
-pr_itor_data(pr_itor *itor)
+void*
+pr_itor_data(pr_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -806,7 +808,7 @@ pr_itor_data(pr_itor *itor)
 }
 
 bool
-pr_itor_set_data(pr_itor *itor, void *datum, void **old_datum)
+pr_itor_set_data(pr_itor* itor, void* datum, void** old_datum)
 {
     ASSERT(itor != NULL);
 

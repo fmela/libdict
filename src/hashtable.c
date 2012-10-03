@@ -101,12 +101,12 @@ hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func,
 
     hashtable* table = MALLOC(sizeof(*table));
     if (table) {
-	table->table = MALLOC(size * sizeof(hash_node *));
+	table->table = MALLOC(size * sizeof(hash_node*));
 	if (!table->table) {
 	    FREE(table);
 	    return NULL;
 	}
-	memset(table->table, 0, size * sizeof(hash_node *));
+	memset(table->table, 0, size * sizeof(hash_node*));
 	table->size = size;
 	table->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	table->hash_func = hash_func;

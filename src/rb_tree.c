@@ -39,20 +39,20 @@
 
 typedef struct rb_node rb_node;
 struct rb_node {
-    void	    *key;
-    void	    *datum;
-    rb_node	    *parent;
-    rb_node	    *llink;
+    void*	    key;
+    void*	    datum;
+    rb_node*	    parent;
+    rb_node*	    llink;
     union {
 	intptr_t    color;
-	rb_node	    *rlink;
+	rb_node*    rlink;
     };
 };
 
 #define RB_RED		    0
 #define RB_BLACK	    1
 
-#define RLINK(node)	    ((rb_node *)((node)->color & ~RB_BLACK))
+#define RLINK(node)	    ((rb_node*)((node)->color & ~RB_BLACK))
 #define COLOR(node)	    ((node)->color & RB_BLACK)
 
 #define SET_RED(node)	    (node)->color &= (~(intptr_t)RB_BLACK)
@@ -100,23 +100,23 @@ static itor_vtable rb_tree_itor_vtable = {
 static rb_node _null = { NULL, NULL, NULL, NULL, { RB_BLACK } };
 #define RB_NULL	&_null
 
-static void	rot_left(rb_tree *tree, rb_node *node);
-static void	rot_right(rb_tree *tree, rb_node *node);
-static unsigned	insert_fixup(rb_tree *tree, rb_node *node);
-static unsigned	delete_fixup(rb_tree *tree, rb_node *node);
-static size_t	node_height(const rb_node *node);
-static size_t	node_mheight(const rb_node *node);
-static size_t	node_pathlen(const rb_node *node, size_t level);
-static rb_node*	node_new(void *key);
-static rb_node*	node_next(rb_node *node);
-static rb_node*	node_prev(rb_node *node);
-static rb_node*	node_max(rb_node *node);
-static rb_node*	node_min(rb_node *node);
+static void	rot_left(rb_tree* tree, rb_node* node);
+static void	rot_right(rb_tree* tree, rb_node* node);
+static unsigned	insert_fixup(rb_tree* tree, rb_node* node);
+static unsigned	delete_fixup(rb_tree* tree, rb_node* node);
+static size_t	node_height(const rb_node* node);
+static size_t	node_mheight(const rb_node* node);
+static size_t	node_pathlen(const rb_node* node, size_t level);
+static rb_node*	node_new(void* key);
+static rb_node*	node_next(rb_node* node);
+static rb_node*	node_prev(rb_node* node);
+static rb_node*	node_max(rb_node* node);
+static rb_node*	node_min(rb_node* node);
 
-rb_tree *
+rb_tree*
 rb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
-    rb_tree *tree = MALLOC(sizeof(*tree));
+    rb_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = RB_NULL;
 	tree->count = 0;
@@ -127,10 +127,10 @@ rb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
     return tree;
 }
 
-dict *
+dict*
 rb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
-    dict *dct = MALLOC(sizeof(*dct));
+    dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
 	if (!(dct->_object = rb_tree_new(cmp_func, del_func))) {
 	    FREE(dct);
@@ -142,7 +142,7 @@ rb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 }
 
 size_t
-rb_tree_free(rb_tree *tree)
+rb_tree_free(rb_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -152,11 +152,11 @@ rb_tree_free(rb_tree *tree)
 }
 
 static rb_node*
-node_clone(rb_node *node, rb_node *parent, dict_key_datum_clone_func clone_func)
+node_clone(rb_node* node, rb_node* parent, dict_key_datum_clone_func clone_func)
 {
     if (node == RB_NULL)
 	return RB_NULL;
-    rb_node *clone = MALLOC(sizeof(*clone));
+    rb_node* clone = MALLOC(sizeof(*clone));
     if (!clone)
 	return RB_NULL;
     clone->parent = parent;
@@ -171,12 +171,12 @@ node_clone(rb_node *node, rb_node *parent, dict_key_datum_clone_func clone_func)
     return clone;
 }
 
-rb_tree *
-rb_tree_clone(rb_tree *tree, dict_key_datum_clone_func clone_func)
+rb_tree*
+rb_tree_clone(rb_tree* tree, dict_key_datum_clone_func clone_func)
 {
     ASSERT(tree != NULL);
 
-    rb_tree *clone = rb_tree_new(tree->cmp_func, tree->del_func);
+    rb_tree* clone = rb_tree_new(tree->cmp_func, tree->del_func);
     if (clone) {
 	memcpy(clone, tree, sizeof(rb_tree));
 	clone->root = node_clone(tree->root, RB_NULL, clone_func);
@@ -184,12 +184,12 @@ rb_tree_clone(rb_tree *tree, dict_key_datum_clone_func clone_func)
     return clone;
 }
 
-void *
-rb_tree_search(rb_tree *tree, const void *key)
+void*
+rb_tree_search(rb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
 
-    rb_node *node = tree->root;
+    rb_node* node = tree->root;
     while (node != RB_NULL) {
 	int cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
@@ -203,12 +203,13 @@ rb_tree_search(rb_tree *tree, const void *key)
 }
 
 bool
-rb_tree_insert(rb_tree *tree, void *key, void ***datum_location)
+rb_tree_insert(rb_tree* tree, void* key, void*** datum_location)
 {
     ASSERT(tree != NULL);
 
     int cmp = 0;	/* Quell GCC warning about uninitialized usage. */
-    rb_node *node = tree->root, *parent = RB_NULL;
+    rb_node* node = tree->root;
+    rb_node* parent = RB_NULL;
     while (node != RB_NULL) {
 	cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
@@ -246,7 +247,7 @@ rb_tree_insert(rb_tree *tree, void *key, void ***datum_location)
 }
 
 static unsigned
-insert_fixup(rb_tree *tree, rb_node *node)
+insert_fixup(rb_tree* tree, rb_node* node)
 {
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
@@ -254,7 +255,7 @@ insert_fixup(rb_tree *tree, rb_node *node)
     unsigned rotations = 0;
     while (node != tree->root && COLOR(node->parent) == RB_RED) {
 	if (node->parent == node->parent->parent->llink) {
-	    rb_node *temp = RLINK(node->parent->parent);
+	    rb_node* temp = RLINK(node->parent->parent);
 	    if (COLOR(temp) == RB_RED) {
 		SET_BLACK(temp);
 		node = node->parent;
@@ -275,7 +276,7 @@ insert_fixup(rb_tree *tree, rb_node *node)
 		++rotations;
 	    }
 	} else {
-	    rb_node *temp = node->parent->parent->llink;
+	    rb_node* temp = node->parent->parent->llink;
 	    if (COLOR(temp) == RB_RED) {
 		SET_BLACK(temp);
 		node = node->parent;
@@ -303,11 +304,11 @@ insert_fixup(rb_tree *tree, rb_node *node)
 }
 
 bool
-rb_tree_remove(rb_tree *tree, const void *key)
+rb_tree_remove(rb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
 
-    rb_node *node = tree->root;
+    rb_node* node = tree->root;
     while (node != RB_NULL) {
 	int cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
@@ -320,19 +321,19 @@ rb_tree_remove(rb_tree *tree, const void *key)
     if (node == RB_NULL)
 	return false;
 
-    rb_node *out;
+    rb_node* out;
     if (node->llink == RB_NULL || RLINK(node) == RB_NULL) {
 	out = node;
     } else {
-	void *tmp;
+	void* tmp;
 	for (out = RLINK(node); out->llink != RB_NULL; out = out->llink)
 	    /* void */;
 	SWAP(node->key, out->key, tmp);
 	SWAP(node->datum, out->datum, tmp);
     }
 
-    rb_node *temp = out->llink != RB_NULL ? out->llink : RLINK(out);
-    rb_node *parent = out->parent;
+    rb_node* temp = out->llink != RB_NULL ? out->llink : RLINK(out);
+    rb_node* parent = out->parent;
     temp->parent = parent;
     if (parent != RB_NULL) {
 	if (parent->llink == out)
@@ -355,7 +356,7 @@ rb_tree_remove(rb_tree *tree, const void *key)
 }
 
 static unsigned
-delete_fixup(rb_tree *tree, rb_node *node)
+delete_fixup(rb_tree* tree, rb_node* node)
 {
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
@@ -363,7 +364,7 @@ delete_fixup(rb_tree *tree, rb_node *node)
     unsigned rotations = 0;
     while (node != tree->root && COLOR(node) == RB_BLACK) {
 	if (node->parent->llink == node) {
-	    rb_node *temp = RLINK(node->parent);
+	    rb_node* temp = RLINK(node->parent);
 	    if (COLOR(temp) == RB_RED) {
 		SET_BLACK(temp);
 		SET_RED(node->parent);
@@ -394,7 +395,7 @@ delete_fixup(rb_tree *tree, rb_node *node)
 		break;
 	    }
 	} else {
-	    rb_node *temp = node->parent->llink;
+	    rb_node* temp = node->parent->llink;
 	    if (COLOR(temp) == RB_RED) {
 		SET_BLACK(temp);
 		SET_RED(node->parent);
@@ -432,12 +433,12 @@ delete_fixup(rb_tree *tree, rb_node *node)
 }
 
 size_t
-rb_tree_clear(rb_tree *tree)
+rb_tree_clear(rb_tree* tree)
 {
     ASSERT(tree != NULL);
 
     const size_t count = tree->count;
-    rb_node *node = tree->root;
+    rb_node* node = tree->root;
     while (node != RB_NULL) {
 	if (node->llink != RB_NULL) {
 	    node = node->llink;
@@ -451,7 +452,7 @@ rb_tree_clear(rb_tree *tree)
 	if (tree->del_func)
 	    tree->del_func(node->key, node->datum);
 
-	rb_node *parent = node->parent;
+	rb_node* parent = node->parent;
 	FREE(node);
 	tree->count--;
 	if (parent != RB_NULL) {
@@ -469,7 +470,7 @@ rb_tree_clear(rb_tree *tree)
 }
 
 size_t
-rb_tree_count(const rb_tree *tree)
+rb_tree_count(const rb_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -477,7 +478,7 @@ rb_tree_count(const rb_tree *tree)
 }
 
 size_t
-rb_tree_height(const rb_tree *tree)
+rb_tree_height(const rb_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -485,7 +486,7 @@ rb_tree_height(const rb_tree *tree)
 }
 
 size_t
-rb_tree_mheight(const rb_tree *tree)
+rb_tree_mheight(const rb_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -493,43 +494,43 @@ rb_tree_mheight(const rb_tree *tree)
 }
 
 size_t
-rb_tree_pathlen(const rb_tree *tree)
+rb_tree_pathlen(const rb_tree* tree)
 {
     ASSERT(tree != NULL);
 
     return tree->root != RB_NULL ? node_pathlen(tree->root, 1) : 0;
 }
 
-const void *
-rb_tree_min(const rb_tree *tree)
+const void*
+rb_tree_min(const rb_tree* tree)
 {
     ASSERT(tree != NULL);
 
     if (tree->root == RB_NULL)
 	return NULL;
 
-    const rb_node *node = tree->root;
+    const rb_node* node = tree->root;
     for (; node->llink != RB_NULL; node = node->llink)
 	/* void */;
     return node->key;
 }
 
-const void *
-rb_tree_max(const rb_tree *tree)
+const void*
+rb_tree_max(const rb_tree* tree)
 {
     ASSERT(tree != NULL);
 
     if (tree->root == RB_NULL)
 	return NULL;
 
-    const rb_node *node = tree->root;
+    const rb_node* node = tree->root;
     for (; RLINK(node) != RB_NULL; node = RLINK(node))
 	/* void */;
     return node->key;
 }
 
 size_t
-rb_tree_traverse(rb_tree *tree, dict_visit_func visit)
+rb_tree_traverse(rb_tree* tree, dict_visit_func visit)
 {
     ASSERT(tree != NULL);
     ASSERT(visit != NULL);
@@ -538,7 +539,7 @@ rb_tree_traverse(rb_tree *tree, dict_visit_func visit)
 	return 0;
 
     size_t count = 0;
-    rb_node *node = node_min(tree->root);
+    rb_node* node = node_min(tree->root);
     for (; node != RB_NULL; node = node_next(node)) {
 	++count;
 	if (!visit(node->key, node->datum))
@@ -548,7 +549,7 @@ rb_tree_traverse(rb_tree *tree, dict_visit_func visit)
 }
 
 static size_t
-node_height(const rb_node *node)
+node_height(const rb_node* node)
 {
     size_t l = node->llink != RB_NULL ? node_height(node->llink) + 1 : 0;
     size_t r = RLINK(node) != RB_NULL ? node_height(RLINK(node)) + 1 : 0;
@@ -556,7 +557,7 @@ node_height(const rb_node *node)
 }
 
 static size_t
-node_mheight(const rb_node *node)
+node_mheight(const rb_node* node)
 {
     size_t l = node->llink != RB_NULL ? node_mheight(node->llink) + 1 : 0;
     size_t r = RLINK(node) != RB_NULL ? node_mheight(RLINK(node)) + 1 : 0;
@@ -564,7 +565,7 @@ node_mheight(const rb_node *node)
 }
 
 static size_t
-node_pathlen(const rb_node *node, size_t level)
+node_pathlen(const rb_node* node, size_t level)
 {
     ASSERT(node != RB_NULL);
 
@@ -577,16 +578,16 @@ node_pathlen(const rb_node *node, size_t level)
 }
 
 static void
-rot_left(rb_tree *tree, rb_node *node)
+rot_left(rb_tree* tree, rb_node* node)
 {
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
 
-    rb_node *rlink = RLINK(node);
+    rb_node* rlink = RLINK(node);
     SET_RLINK(node, rlink->llink);
     if (rlink->llink != RB_NULL)
 	rlink->llink->parent = node;
-    rb_node *parent = node->parent;
+    rb_node* parent = node->parent;
     rlink->parent = parent;
     if (parent != RB_NULL) {
 	if (parent->llink == node)
@@ -601,16 +602,16 @@ rot_left(rb_tree *tree, rb_node *node)
 }
 
 static void
-rot_right(rb_tree *tree, rb_node *node)
+rot_right(rb_tree* tree, rb_node* node)
 {
     ASSERT(tree != NULL);
     ASSERT(node != NULL);
 
-    rb_node *llink = node->llink;
+    rb_node* llink = node->llink;
     node->llink = RLINK(llink);
     if (RLINK(llink) != RB_NULL)
 	RLINK(llink)->parent = node;
-    rb_node *parent = node->parent;
+    rb_node* parent = node->parent;
     llink->parent = parent;
     if (parent != RB_NULL) {
 	if (parent->llink == node)
@@ -624,10 +625,10 @@ rot_right(rb_tree *tree, rb_node *node)
     node->parent = llink;
 }
 
-static rb_node *
-node_new(void *key)
+static rb_node*
+node_new(void* key)
 {
-    rb_node *node = MALLOC(sizeof(*node));
+    rb_node* node = MALLOC(sizeof(*node));
     if (node) {
 	ASSERT((((intptr_t)node) & 1) == 0);
 	node->key = key;
@@ -640,8 +641,8 @@ node_new(void *key)
     return node;
 }
 
-static rb_node *
-node_next(rb_node *node)
+static rb_node*
+node_next(rb_node* node)
 {
     ASSERT(node != NULL);
 
@@ -649,7 +650,7 @@ node_next(rb_node *node)
 	for (node = RLINK(node); node->llink != RB_NULL; node = node->llink)
 	    /* void */;
     } else {
-	rb_node *temp = node->parent;
+	rb_node* temp = node->parent;
 	while (temp != RB_NULL && RLINK(temp) == node) {
 	    node = temp;
 	    temp = temp->parent;
@@ -660,8 +661,8 @@ node_next(rb_node *node)
     return node;
 }
 
-static rb_node *
-node_prev(rb_node *node)
+static rb_node*
+node_prev(rb_node* node)
 {
     ASSERT(node != NULL);
 
@@ -669,7 +670,7 @@ node_prev(rb_node *node)
 	for (node = node->llink; RLINK(node) != RB_NULL; node = RLINK(node))
 	    /* void */;
     } else {
-	rb_node *temp = node->parent;
+	rb_node* temp = node->parent;
 	while (temp != RB_NULL && temp->llink == node) {
 	    node = temp;
 	    temp = temp->parent;
@@ -680,8 +681,8 @@ node_prev(rb_node *node)
     return node;
 }
 
-static rb_node *
-node_max(rb_node *node)
+static rb_node*
+node_max(rb_node* node)
 {
     ASSERT(node != NULL);
 
@@ -690,8 +691,8 @@ node_max(rb_node *node)
     return node;
 }
 
-static rb_node *
-node_min(rb_node *node)
+static rb_node*
+node_min(rb_node* node)
 {
     ASSERT(node != NULL);
 
@@ -701,7 +702,7 @@ node_min(rb_node *node)
 }
 
 static bool
-node_verify(const rb_tree *tree, const rb_node *parent, const rb_node *node)
+node_verify(const rb_tree* tree, const rb_node* parent, const rb_node* node)
 {
     ASSERT(tree);
 
@@ -729,7 +730,7 @@ node_verify(const rb_tree *tree, const rb_node *parent, const rb_node *node)
 }
 
 bool
-rb_tree_verify(const rb_tree *tree)
+rb_tree_verify(const rb_tree* tree)
 {
     ASSERT(tree);
 
@@ -741,12 +742,12 @@ rb_tree_verify(const rb_tree *tree)
     return node_verify(tree, RB_NULL, tree->root);
 }
 
-rb_itor *
-rb_itor_new(rb_tree *tree)
+rb_itor*
+rb_itor_new(rb_tree* tree)
 {
     ASSERT(tree != NULL);
 
-    rb_itor *itor = MALLOC(sizeof(*itor));
+    rb_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->tree = tree;
 	itor->node = RB_NULL;
@@ -754,12 +755,12 @@ rb_itor_new(rb_tree *tree)
     return itor;
 }
 
-dict_itor *
-rb_dict_itor_new(rb_tree *tree)
+dict_itor*
+rb_dict_itor_new(rb_tree* tree)
 {
     ASSERT(tree != NULL);
 
-    dict_itor *itor = MALLOC(sizeof(*itor));
+    dict_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	if (!(itor->_itor = rb_itor_new(tree))) {
 	    FREE(itor);
@@ -771,7 +772,7 @@ rb_dict_itor_new(rb_tree *tree)
 }
 
 void
-rb_itor_free(rb_itor *itor)
+rb_itor_free(rb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -779,7 +780,7 @@ rb_itor_free(rb_itor *itor)
 }
 
 bool
-rb_itor_valid(const rb_itor *itor)
+rb_itor_valid(const rb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -787,7 +788,7 @@ rb_itor_valid(const rb_itor *itor)
 }
 
 void
-rb_itor_invalidate(rb_itor *itor)
+rb_itor_invalidate(rb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -795,7 +796,7 @@ rb_itor_invalidate(rb_itor *itor)
 }
 
 bool
-rb_itor_next(rb_itor *itor)
+rb_itor_next(rb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -807,7 +808,7 @@ rb_itor_next(rb_itor *itor)
 }
 
 bool
-rb_itor_prev(rb_itor *itor)
+rb_itor_prev(rb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -819,7 +820,7 @@ rb_itor_prev(rb_itor *itor)
 }
 
 bool
-rb_itor_nextn(rb_itor *itor, size_t count)
+rb_itor_nextn(rb_itor* itor, size_t count)
 {
     ASSERT(itor != NULL);
 
@@ -830,7 +831,7 @@ rb_itor_nextn(rb_itor *itor, size_t count)
 }
 
 bool
-rb_itor_prevn(rb_itor *itor, size_t count)
+rb_itor_prevn(rb_itor* itor, size_t count)
 {
     ASSERT(itor != NULL);
 
@@ -841,7 +842,7 @@ rb_itor_prevn(rb_itor *itor, size_t count)
 }
 
 bool
-rb_itor_first(rb_itor *itor)
+rb_itor_first(rb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -853,7 +854,7 @@ rb_itor_first(rb_itor *itor)
 }
 
 bool
-rb_itor_last(rb_itor *itor)
+rb_itor_last(rb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -865,11 +866,11 @@ rb_itor_last(rb_itor *itor)
 }
 
 bool
-rb_itor_search(rb_itor *itor, const void *key)
+rb_itor_search(rb_itor* itor, const void* key)
 {
     ASSERT(itor != NULL);
 
-    rb_node *node = itor->tree->root;
+    rb_node* node = itor->tree->root;
     while (node != RB_NULL) {
 	int cmp = itor->tree->cmp_func(key, node->key);
 	if (cmp < 0)
@@ -885,16 +886,16 @@ rb_itor_search(rb_itor *itor, const void *key)
     return false;
 }
 
-const void *
-rb_itor_key(const rb_itor *itor)
+const void*
+rb_itor_key(const rb_itor* itor)
 {
     ASSERT(itor != NULL);
 
     return itor->node != RB_NULL ? itor->node->key : NULL;
 }
 
-void *
-rb_itor_data(rb_itor *itor)
+void*
+rb_itor_data(rb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -902,7 +903,7 @@ rb_itor_data(rb_itor *itor)
 }
 
 bool
-rb_itor_set_data(rb_itor *itor, void *datum, void **old_datum)
+rb_itor_set_data(rb_itor* itor, void* datum, void** old_datum)
 {
     ASSERT(itor != NULL);
 

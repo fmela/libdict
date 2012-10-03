@@ -108,15 +108,15 @@ static itor_vtable wb_tree_itor_vtable = {
     (dict_icompare_func)    NULL /* wb_itor_compare not implemented yet */
 };
 
-static size_t	node_height(const wb_node *node);
-static size_t	node_mheight(const wb_node *node);
-static size_t	node_pathlen(const wb_node *node, size_t level);
-static wb_node*	node_new(void *key);
+static size_t	node_height(const wb_node* node);
+static size_t	node_mheight(const wb_node* node);
+static size_t	node_pathlen(const wb_node* node, size_t level);
+static wb_node*	node_new(void* key);
 
-wb_tree *
+wb_tree*
 wb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
-    wb_tree *tree = MALLOC(sizeof(*tree));
+    wb_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = NULL;
 	tree->count = 0;
@@ -127,10 +127,10 @@ wb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
     return tree;
 }
 
-dict *
+dict*
 wb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 {
-    dict *dct = MALLOC(sizeof(*dct));
+    dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
 	if (!(dct->_object = wb_tree_new(cmp_func, del_func))) {
 	    FREE(dct);
@@ -142,7 +142,7 @@ wb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 }
 
 size_t
-wb_tree_free(wb_tree *tree)
+wb_tree_free(wb_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -152,15 +152,15 @@ wb_tree_free(wb_tree *tree)
 }
 
 wb_tree*
-wb_tree_clone(wb_tree *tree, dict_key_datum_clone_func clone_func)
+wb_tree_clone(wb_tree* tree, dict_key_datum_clone_func clone_func)
 {
     ASSERT(tree != NULL);
 
     return tree_clone(tree, sizeof(wb_tree), sizeof(wb_node), clone_func);
 }
 
-void *
-wb_tree_search(wb_tree *tree, const void *key)
+void*
+wb_tree_search(wb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
 
@@ -168,13 +168,13 @@ wb_tree_search(wb_tree *tree, const void *key)
 }
 
 static inline unsigned
-fixup(wb_tree *tree, wb_node *n) {
+fixup(wb_tree* tree, wb_node* n) {
     unsigned rotations = 0;
     unsigned weight = WEIGHT(n->llink);
     if (weight * 1000U < n->weight * 293U) {
-	wb_node *nr = n->rlink;
+	wb_node* nr = n->rlink;
 	ASSERT(nr != NULL);
-	wb_node *nrl = nr->llink;
+	wb_node* nrl = nr->llink;
 	if (WEIGHT(nrl) * 1000U < nr->weight * 586U) {	/* LL */
 	    /* Rotate |n| left. */
 	    tree_node_rot_left(tree, n);
@@ -184,7 +184,7 @@ fixup(wb_tree *tree, wb_node *n) {
 	} else {					    /* RL */
 	    /* Rotate |nr| right, then |n| left. */
 	    ASSERT(nrl != NULL);
-	    wb_node *p = n->parent;
+	    wb_node* p = n->parent;
 	    if ((nrl->parent = p) != NULL) {
 		if (p->llink == n)
 		    p->llink = nrl;
@@ -194,13 +194,13 @@ fixup(wb_tree *tree, wb_node *n) {
 		tree->root = nrl;
 	    }
 
-	    wb_node *a = nrl->llink;
+	    wb_node* a = nrl->llink;
 	    nrl->llink = n;
 	    n->parent = nrl;
 	    if ((n->rlink = a) != NULL)
 		a->parent = n;
 
-	    wb_node *b = nrl->rlink;
+	    wb_node* b = nrl->rlink;
 	    nrl->rlink = nr;
 	    nr->parent = nrl;
 	    if ((nr->llink = b) != NULL)
@@ -211,7 +211,7 @@ fixup(wb_tree *tree, wb_node *n) {
 	    rotations += 2;
 	}
     } else if (weight * 1000U > n->weight * 707U) {
-	wb_node *nl = n->llink;
+	wb_node* nl = n->llink;
 	ASSERT(nl != NULL);
 	weight = WEIGHT(nl->llink);
 	if (weight * 1000U > nl->weight * 414U) {	/* RR */
@@ -222,9 +222,9 @@ fixup(wb_tree *tree, wb_node *n) {
 	    rotations += 1;
 	} else {						/* LR */
 	    /* Rotate |nl| left, then |n| right. */
-	    wb_node *nlr = nl->rlink;
+	    wb_node* nlr = nl->rlink;
 	    ASSERT(nlr != NULL);
-	    wb_node *p = n->parent;
+	    wb_node* p = n->parent;
 	    if ((nlr->parent = p) != NULL) {
 		if (p->llink == n)
 		    p->llink = nlr;
@@ -234,13 +234,13 @@ fixup(wb_tree *tree, wb_node *n) {
 		tree->root = nlr;
 	    }
 
-	    wb_node *a = nlr->llink;
+	    wb_node* a = nlr->llink;
 	    nlr->llink = nl;
 	    nl->parent = nlr;
 	    if ((nl->rlink = a) != NULL)
 		a->parent = nl;
 
-	    wb_node *b = nlr->rlink;
+	    wb_node* b = nlr->rlink;
 	    nlr->rlink = n;
 	    n->parent = nlr;
 	    if ((n->llink = b) != NULL)
@@ -255,13 +255,14 @@ fixup(wb_tree *tree, wb_node *n) {
 }
 
 bool
-wb_tree_insert(wb_tree *tree, void *key, void ***datum_location)
+wb_tree_insert(wb_tree* tree, void* key, void*** datum_location)
 {
     int cmp = 0;
 
     ASSERT(tree != NULL);
 
-    wb_node *node = tree->root, *parent = NULL;
+    wb_node* node = tree->root;
+    wb_node* parent = NULL;
     while (node) {
 	cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
@@ -305,12 +306,12 @@ wb_tree_insert(wb_tree *tree, void *key, void ***datum_location)
 }
 
 bool
-wb_tree_remove(wb_tree *tree, const void *key)
+wb_tree_remove(wb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
     ASSERT(key != NULL);
 
-    wb_node *node = tree->root;
+    wb_node* node = tree->root;
     while (node) {
 	int cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0) {
@@ -319,7 +320,7 @@ wb_tree_remove(wb_tree *tree, const void *key)
 	    node = node->rlink;
 	} else {
 	    if (node->llink && node->rlink) {
-		wb_node *out;
+		wb_node* out;
 		if (node->llink->weight > node->rlink->weight) {
 		    out = node->llink;
 		    while (out->rlink)
@@ -329,15 +330,15 @@ wb_tree_remove(wb_tree *tree, const void *key)
 		    while (out->llink)
 			out = out->llink;
 		}
-		void *tmp;
+		void* tmp;
 		SWAP(node->key, out->key, tmp);
 		SWAP(node->datum, out->datum, tmp);
 		node = out;
 	    }
 	    ASSERT(!node->llink || !node->rlink);
 	    /* Splice in the successor, if any. */
-	    wb_node *child = node->llink ? node->llink : node->rlink;
-	    wb_node *parent = node->parent;
+	    wb_node* child = node->llink ? node->llink : node->rlink;
+	    wb_node* parent = node->parent;
 	    if (child)
 		child->parent = parent;
 	    if (parent) {
@@ -357,7 +358,7 @@ wb_tree_remove(wb_tree *tree, const void *key)
 	    unsigned rotations = 0;
 	    while (parent) {
 		--parent->weight;
-		wb_node *up = parent->parent;
+		wb_node* up = parent->parent;
 		rotations += fixup(tree, parent);
 		parent = up;
 	    }
@@ -369,50 +370,50 @@ wb_tree_remove(wb_tree *tree, const void *key)
 }
 
 size_t
-wb_tree_clear(wb_tree *tree)
+wb_tree_clear(wb_tree* tree)
 {
     ASSERT(tree != NULL);
 
     return tree_clear(tree);
 }
 
-const void *
-wb_tree_min(const wb_tree *tree)
+const void*
+wb_tree_min(const wb_tree* tree)
 {
     ASSERT(tree != NULL);
 
     if (!tree->root)
 	return NULL;
 
-    const wb_node *node = tree->root;
+    const wb_node* node = tree->root;
     while (node->llink)
 	node = node->llink;
     return node->key;
 }
 
-const void *
-wb_tree_max(const wb_tree *tree)
+const void*
+wb_tree_max(const wb_tree* tree)
 {
     ASSERT(tree != NULL);
 
     if (!tree->root)
 	return NULL;
 
-    const wb_node *node = tree->root;
+    const wb_node* node = tree->root;
     while (node->rlink)
 	node = node->rlink;
     return node->key;
 }
 
 size_t
-wb_tree_traverse(wb_tree *tree, dict_visit_func visit)
+wb_tree_traverse(wb_tree* tree, dict_visit_func visit)
 {
     ASSERT(tree != NULL);
 
     if (!tree->root)
 	return 0;
     size_t count = 0;
-    wb_node *node = tree_node_min(tree->root);
+    wb_node* node = tree_node_min(tree->root);
     while (node) {
 	++count;
 	if (!visit(node->key, node->datum))
@@ -423,7 +424,7 @@ wb_tree_traverse(wb_tree *tree, dict_visit_func visit)
 }
 
 size_t
-wb_tree_count(const wb_tree *tree)
+wb_tree_count(const wb_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -431,7 +432,7 @@ wb_tree_count(const wb_tree *tree)
 }
 
 size_t
-wb_tree_height(const wb_tree *tree)
+wb_tree_height(const wb_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -439,7 +440,7 @@ wb_tree_height(const wb_tree *tree)
 }
 
 size_t
-wb_tree_mheight(const wb_tree *tree)
+wb_tree_mheight(const wb_tree* tree)
 {
     ASSERT(tree != NULL);
 
@@ -447,17 +448,17 @@ wb_tree_mheight(const wb_tree *tree)
 }
 
 size_t
-wb_tree_pathlen(const wb_tree *tree)
+wb_tree_pathlen(const wb_tree* tree)
 {
     ASSERT(tree != NULL);
 
     return tree->root ? node_pathlen(tree->root, 1) : 0;
 }
 
-static wb_node *
-node_new(void *key)
+static wb_node*
+node_new(void* key)
 {
-    wb_node *node = MALLOC(sizeof(*node));
+    wb_node* node = MALLOC(sizeof(*node));
     if (node) {
 	node->key = key;
 	node->datum = NULL;
@@ -470,7 +471,7 @@ node_new(void *key)
 }
 
 static size_t
-node_height(const wb_node *node)
+node_height(const wb_node* node)
 {
     ASSERT(node != NULL);
 
@@ -480,7 +481,7 @@ node_height(const wb_node *node)
 }
 
 static size_t
-node_mheight(const wb_node *node)
+node_mheight(const wb_node* node)
 {
     ASSERT(node != NULL);
 
@@ -490,7 +491,7 @@ node_mheight(const wb_node *node)
 }
 
 static size_t
-node_pathlen(const wb_node *node, size_t level)
+node_pathlen(const wb_node* node, size_t level)
 {
     size_t n = 0;
 
@@ -503,12 +504,12 @@ node_pathlen(const wb_node *node, size_t level)
     return n;
 }
 
-wb_itor *
-wb_itor_new(wb_tree *tree)
+wb_itor*
+wb_itor_new(wb_tree* tree)
 {
     ASSERT(tree != NULL);
 
-    wb_itor *itor = MALLOC(sizeof(*itor));
+    wb_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->tree = tree;
 	itor->node = NULL;
@@ -516,11 +517,11 @@ wb_itor_new(wb_tree *tree)
     return itor;
 }
 
-dict_itor *
-wb_dict_itor_new(wb_tree *tree)
+dict_itor*
+wb_dict_itor_new(wb_tree* tree)
 {
     ASSERT(tree != NULL);
-    dict_itor *itor = MALLOC(sizeof(*itor));
+    dict_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	if (!(itor->_itor = wb_itor_new(tree))) {
 	    FREE(itor);
@@ -532,7 +533,7 @@ wb_dict_itor_new(wb_tree *tree)
 }
 
 static bool
-node_verify(const wb_tree *tree, const wb_node *parent, const wb_node *node)
+node_verify(const wb_tree* tree, const wb_node* parent, const wb_node* node)
 {
     ASSERT(tree);
 
@@ -555,7 +556,7 @@ node_verify(const wb_tree *tree, const wb_node *parent, const wb_node *node)
 }
 
 bool
-wb_tree_verify(const wb_tree *tree)
+wb_tree_verify(const wb_tree* tree)
 {
     ASSERT(tree);
 
@@ -568,7 +569,7 @@ wb_tree_verify(const wb_tree *tree)
 }
 
 void
-wb_itor_free(wb_itor *itor)
+wb_itor_free(wb_itor* itor)
 {
 	ASSERT(itor != NULL);
 
@@ -576,7 +577,7 @@ wb_itor_free(wb_itor *itor)
 }
 
 bool
-wb_itor_valid(const wb_itor *itor)
+wb_itor_valid(const wb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -584,7 +585,7 @@ wb_itor_valid(const wb_itor *itor)
 }
 
 void
-wb_itor_invalidate(wb_itor *itor)
+wb_itor_invalidate(wb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -592,7 +593,7 @@ wb_itor_invalidate(wb_itor *itor)
 }
 
 bool
-wb_itor_next(wb_itor *itor)
+wb_itor_next(wb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -605,7 +606,7 @@ wb_itor_next(wb_itor *itor)
 }
 
 bool
-wb_itor_prev(wb_itor *itor)
+wb_itor_prev(wb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -618,7 +619,7 @@ wb_itor_prev(wb_itor *itor)
 }
 
 bool
-wb_itor_nextn(wb_itor *itor, size_t count)
+wb_itor_nextn(wb_itor* itor, size_t count)
 {
     ASSERT(itor != NULL);
 
@@ -629,7 +630,7 @@ wb_itor_nextn(wb_itor *itor, size_t count)
 }
 
 bool
-wb_itor_prevn(wb_itor *itor, size_t count)
+wb_itor_prevn(wb_itor* itor, size_t count)
 {
     ASSERT(itor != NULL);
 
@@ -640,7 +641,7 @@ wb_itor_prevn(wb_itor *itor, size_t count)
 }
 
 bool
-wb_itor_first(wb_itor *itor)
+wb_itor_first(wb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -654,7 +655,7 @@ wb_itor_first(wb_itor *itor)
 }
 
 bool
-wb_itor_last(wb_itor *itor)
+wb_itor_last(wb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -668,11 +669,11 @@ wb_itor_last(wb_itor *itor)
 }
 
 bool
-wb_itor_search(wb_itor *itor, const void *key)
+wb_itor_search(wb_itor* itor, const void* key)
 {
     ASSERT(itor != NULL);
 
-    for (wb_node *node = itor->tree->root; node;) {
+    for (wb_node* node = itor->tree->root; node;) {
 	int cmp = itor->tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    node = node->llink;
@@ -687,16 +688,16 @@ wb_itor_search(wb_itor *itor, const void *key)
     return false;
 }
 
-const void *
-wb_itor_key(const wb_itor *itor)
+const void*
+wb_itor_key(const wb_itor* itor)
 {
     ASSERT(itor != NULL);
 
     return itor->node ? itor->node->key : NULL;
 }
 
-void *
-wb_itor_data(wb_itor *itor)
+void*
+wb_itor_data(wb_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -704,7 +705,7 @@ wb_itor_data(wb_itor *itor)
 }
 
 bool
-wb_itor_set_data(wb_itor *itor, void *datum, void **old_datum)
+wb_itor_set_data(wb_itor* itor, void* datum, void** old_datum)
 {
     ASSERT(itor != NULL);
 

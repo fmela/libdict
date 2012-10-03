@@ -96,12 +96,12 @@ static itor_vtable skiplist_itor_vtable = {
     (dict_icompare_func)    NULL/* skiplist_itor_compare not implemented yet */
 };
 
-static skip_node*   node_new(void *key, unsigned link_count);
-static bool	    node_insert(skiplist *list, void *key,
-				void ***datum_location, skip_node **update);
-static unsigned	    rand_link_count(skiplist *list);
+static skip_node*   node_new(void* key, unsigned link_count);
+static bool	    node_insert(skiplist* list, void* key,
+				void*** datum_location, skip_node** update);
+static unsigned	    rand_link_count(skiplist* list);
 
-skiplist *
+skiplist*
 skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func,
 	     unsigned max_link)
 {
@@ -110,7 +110,7 @@ skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func,
     if (max_link > MAX_LINK)
 	max_link = MAX_LINK;
 
-    skiplist *list = MALLOC(sizeof(*list));
+    skiplist* list = MALLOC(sizeof(*list));
     if (list) {
 	if (!(list->head = node_new(NULL, max_link))) {
 	    FREE(list);
@@ -127,10 +127,10 @@ skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func,
     return list;
 }
 
-dict *
+dict*
 skiplist_dict_new(dict_compare_func cmp_func, dict_delete_func del_func,
 		  unsigned max_link) {
-    dict *dct = MALLOC(sizeof(*dct));
+    dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
 	if (!(dct->_object = skiplist_new(cmp_func, del_func, max_link))) {
 	    FREE(dct);
@@ -142,7 +142,7 @@ skiplist_dict_new(dict_compare_func cmp_func, dict_delete_func del_func,
 }
 
 size_t
-skiplist_free(skiplist *list)
+skiplist_free(skiplist* list)
 {
     ASSERT(list != NULL);
 
@@ -152,17 +152,17 @@ skiplist_free(skiplist *list)
     return count;
 }
 
-skiplist *
-skiplist_clone(skiplist *list, dict_key_datum_clone_func clone_func)
+skiplist*
+skiplist_clone(skiplist* list, dict_key_datum_clone_func clone_func)
 {
     ASSERT(list != NULL);
 
-    skiplist *clone = skiplist_new(list->cmp_func, list->del_func,
+    skiplist* clone = skiplist_new(list->cmp_func, list->del_func,
 				   list->max_link);
     if (clone) {
-	skip_node *node = list->head->link[0];
+	skip_node* node = list->head->link[0];
 	while (node) {
-	    void **datum = NULL;
+	    void** datum = NULL;
 	    if (!skiplist_insert(clone, node->key, &datum) || !datum) {
 		skiplist_free(clone);
 		return NULL;
@@ -182,12 +182,12 @@ skiplist_clone(skiplist *list, dict_key_datum_clone_func clone_func)
 }
 
 static bool
-node_insert(skiplist *list, void *key, void ***datum_location,
-	    skip_node **update)
+node_insert(skiplist* list, void* key, void*** datum_location,
+	    skip_node** update)
 {
     const unsigned nlinks = rand_link_count(list);
     ASSERT(nlinks < list->max_link);
-    skip_node *x = node_new(key, nlinks);
+    skip_node* x = node_new(key, nlinks);
     if (!x) {
 	if (datum_location)
 	    *datum_location = NULL;
@@ -217,11 +217,12 @@ node_insert(skiplist *list, void *key, void ***datum_location,
 }
 
 bool
-skiplist_insert(skiplist *list, void *key, void ***datum_location)
+skiplist_insert(skiplist* list, void* key, void*** datum_location)
 {
     ASSERT(list != NULL);
 
-    skip_node *x = list->head, *update[MAX_LINK] = { 0 };
+    skip_node* x = list->head;
+    skip_node* update[MAX_LINK] = { 0 };
     for (unsigned k = list->top_link+1; k-->0; ) {
 	ASSERT(x->link_count > k);
 	while (x->link[k] && list->cmp_func(key, x->link[k]->key) > 0)
@@ -237,12 +238,12 @@ skiplist_insert(skiplist *list, void *key, void ***datum_location)
     return node_insert(list, key, datum_location, update);
 }
 
-void *
-skiplist_search(skiplist *list, const void *key)
+void*
+skiplist_search(skiplist* list, const void* key)
 {
     ASSERT(list != NULL);
 
-    skip_node *x = list->head;
+    skip_node* x = list->head;
     for (unsigned k = list->top_link+1; k-->0;) {
 	while (x->link[k]) {
 	    int cmp = list->cmp_func(key, x->link[k]->key);
@@ -257,11 +258,12 @@ skiplist_search(skiplist *list, const void *key)
 }
 
 bool
-skiplist_remove(skiplist *list, const void *key)
+skiplist_remove(skiplist* list, const void* key)
 {
     ASSERT(list != NULL);
 
-    skip_node *x = list->head, *update[MAX_LINK] = { 0 };
+    skip_node* x = list->head;
+    skip_node* update[MAX_LINK] = { 0 };
     for (unsigned k = list->top_link+1; k-->0;) {
 	ASSERT(x->link_count > k);
 	while (x->link[k] && list->cmp_func(key, x->link[k]->key) > 0)
@@ -292,13 +294,13 @@ skiplist_remove(skiplist *list, const void *key)
 }
 
 size_t
-skiplist_clear(skiplist *list)
+skiplist_clear(skiplist* list)
 {
     ASSERT(list != NULL);
 
-    skip_node *node = list->head->link[0];
+    skip_node* node = list->head->link[0];
     while (node) {
-	skip_node *next = node->link[0];
+	skip_node* next = node->link[0];
 	if (list->del_func)
 	    list->del_func(node->key, node->datum);
 	FREE(node);
@@ -315,13 +317,13 @@ skiplist_clear(skiplist *list)
 }
 
 size_t
-skiplist_traverse(skiplist *list, dict_visit_func visit)
+skiplist_traverse(skiplist* list, dict_visit_func visit)
 {
     ASSERT(list != NULL);
     ASSERT(visit != NULL);
 
     size_t count = 0;
-    for (skip_node *node = list->head->link[0]; node; node = node->link[0]) {
+    for (skip_node* node = list->head->link[0]; node; node = node->link[0]) {
 	++count;
 	if (!visit(node->key, node->datum))
 	    break;
@@ -330,7 +332,7 @@ skiplist_traverse(skiplist *list, dict_visit_func visit)
 }
 
 size_t
-skiplist_count(const skiplist *list)
+skiplist_count(const skiplist* list)
 {
     ASSERT(list != NULL);
 
@@ -338,7 +340,7 @@ skiplist_count(const skiplist *list)
 }
 
 bool
-skiplist_verify(const skiplist *list)
+skiplist_verify(const skiplist* list)
 {
     if (list->count == 0) {
 	VERIFY(list->top_link == 0, return false);
@@ -354,8 +356,8 @@ skiplist_verify(const skiplist *list)
     }
     unsigned observed_top_link = 0;
 
-    skip_node *prev = list->head;
-    skip_node *node = list->head->link[0];
+    skip_node* prev = list->head;
+    skip_node* node = list->head->link[0];
     VERIFY(prev->prev == NULL, return false);
     while (node) {
 	if (observed_top_link < node->link_count)
@@ -379,12 +381,12 @@ skiplist_verify(const skiplist *list)
 
 #define VALID(itor) ((itor)->node && (itor)->node != (itor)->list->head)
 
-skiplist_itor *
-skiplist_itor_new(skiplist *list)
+skiplist_itor*
+skiplist_itor_new(skiplist* list)
 {
     ASSERT(list != NULL);
 
-    skiplist_itor *itor = MALLOC(sizeof(*itor));
+    skiplist_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->list = list;
 	itor->node = NULL;
@@ -392,12 +394,12 @@ skiplist_itor_new(skiplist *list)
     return itor;
 }
 
-dict_itor *
-skiplist_dict_itor_new(skiplist *list)
+dict_itor*
+skiplist_dict_itor_new(skiplist* list)
 {
     ASSERT(list != NULL);
 
-    dict_itor *itor = MALLOC(sizeof(*itor));
+    dict_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	if (!(itor->_itor = skiplist_itor_new(list))) {
 	    FREE(itor);
@@ -409,7 +411,7 @@ skiplist_dict_itor_new(skiplist *list)
 }
 
 void
-skiplist_itor_free(skiplist_itor *itor)
+skiplist_itor_free(skiplist_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -417,7 +419,7 @@ skiplist_itor_free(skiplist_itor *itor)
 }
 
 bool
-skiplist_itor_valid(const skiplist_itor *itor)
+skiplist_itor_valid(const skiplist_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -425,7 +427,7 @@ skiplist_itor_valid(const skiplist_itor *itor)
 }
 
 void
-skiplist_itor_invalidate(skiplist_itor *itor)
+skiplist_itor_invalidate(skiplist_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -433,7 +435,7 @@ skiplist_itor_invalidate(skiplist_itor *itor)
 }
 
 bool
-skiplist_itor_next(skiplist_itor *itor)
+skiplist_itor_next(skiplist_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -445,7 +447,7 @@ skiplist_itor_next(skiplist_itor *itor)
 }
 
 bool
-skiplist_itor_prev(skiplist_itor *itor)
+skiplist_itor_prev(skiplist_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -457,7 +459,7 @@ skiplist_itor_prev(skiplist_itor *itor)
 }
 
 bool
-skiplist_itor_nextn(skiplist_itor *itor, size_t count)
+skiplist_itor_nextn(skiplist_itor* itor, size_t count)
 {
     ASSERT(itor != NULL);
 
@@ -468,7 +470,7 @@ skiplist_itor_nextn(skiplist_itor *itor, size_t count)
 }
 
 bool
-skiplist_itor_prevn(skiplist_itor *itor, size_t count)
+skiplist_itor_prevn(skiplist_itor* itor, size_t count)
 {
     ASSERT(itor != NULL);
 
@@ -479,7 +481,7 @@ skiplist_itor_prevn(skiplist_itor *itor, size_t count)
 }
 
 bool
-skiplist_itor_first(skiplist_itor *itor)
+skiplist_itor_first(skiplist_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -488,11 +490,11 @@ skiplist_itor_first(skiplist_itor *itor)
 }
 
 bool
-skiplist_itor_last(skiplist_itor *itor)
+skiplist_itor_last(skiplist_itor* itor)
 {
     ASSERT(itor != NULL);
 
-    skip_node *x = itor->list->head;
+    skip_node* x = itor->list->head;
     for (unsigned k = itor->list->top_link; k-->0;) {
 	while (x->link[k])
 	    x = x->link[k];
@@ -507,12 +509,12 @@ skiplist_itor_last(skiplist_itor *itor)
 }
 
 bool
-skiplist_itor_search(skiplist_itor *itor, const void *key)
+skiplist_itor_search(skiplist_itor* itor, const void* key)
 {
     ASSERT(itor != NULL);
 
-    skiplist *list = itor->list;
-    skip_node *x = list->head;
+    skiplist* list = itor->list;
+    skip_node* x = list->head;
     for (unsigned k = list->top_link+1; k-->0;) {
 	while (x->link[k]) {
 	    int cmp = list->cmp_func(key, x->link[k]->key);
@@ -529,16 +531,16 @@ skiplist_itor_search(skiplist_itor *itor, const void *key)
     return false;
 }
 
-const void *
-skiplist_itor_key(const skiplist_itor *itor)
+const void*
+skiplist_itor_key(const skiplist_itor* itor)
 {
     ASSERT(itor != NULL);
 
     return itor->node ? itor->node->key : NULL;
 }
 
-void *
-skiplist_itor_data(skiplist_itor *itor)
+void*
+skiplist_itor_data(skiplist_itor* itor)
 {
     ASSERT(itor != NULL);
 
@@ -546,7 +548,7 @@ skiplist_itor_data(skiplist_itor *itor)
 }
 
 bool
-skiplist_itor_set_data(skiplist_itor *itor, void *datum, void **prev_datum)
+skiplist_itor_set_data(skiplist_itor* itor, void* datum, void** prev_datum)
 {
     ASSERT(itor != NULL);
 
@@ -560,11 +562,11 @@ skiplist_itor_set_data(skiplist_itor *itor, void *datum, void **prev_datum)
 }
 
 skip_node*
-node_new(void *key, unsigned link_count)
+node_new(void* key, unsigned link_count)
 {
     ASSERT(link_count >= 1);
 
-    skip_node *node = MALLOC(sizeof(*node) +
+    skip_node* node = MALLOC(sizeof(*node) +
 			     sizeof(node->link[0]) * link_count);
     if (node) {
 	node->key = key;
@@ -577,7 +579,7 @@ node_new(void *key, unsigned link_count)
 }
 
 static unsigned
-rand_link_count(skiplist *list)
+rand_link_count(skiplist* list)
 {
     unsigned r = list->randgen = list->randgen * RGEN_A + RGEN_M;
     unsigned count = __builtin_ctz(r) + 1;
