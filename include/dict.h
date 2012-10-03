@@ -50,49 +50,49 @@ BEGIN_DECL
 #define DICT_VERSION_MAJOR	0
 #define DICT_VERSION_MINOR	3
 #define DICT_VERSION_PATCH	0
-extern const char *const kDictVersionString;
+extern const char* const kDictVersionString;
 
 /* A pointer to a function that compares two keys. It needs to return a
  * negative value if k1<k2, a positive value if k1>k2, and zero if the keys are
  * equal. The comparison should be reflexive (k1>k2 implies k1<k2, etc.),
  * symmetric (k1=k1) and transitive (k1>k2 and k2>k3 implies k1>k3). */
-typedef int	    (*dict_compare_func)(const void *, const void *);
+typedef int	    (*dict_compare_func)(const void*, const void*);
 /* A pointer to a function that is called when a key-value pair gets removed
  * from a dictionary. */
-typedef void	    (*dict_delete_func)(void *, void *);
+typedef void	    (*dict_delete_func)(void*, void*);
 /* A pointer to a function used for iterating over dictionary contents. */
-typedef bool	    (*dict_visit_func)(const void *, void *);
+typedef bool	    (*dict_visit_func)(const void*, void*);
 /* A pointer to a function that returns the hash value of a key. */
-typedef unsigned    (*dict_hash_func)(const void *);
+typedef unsigned    (*dict_hash_func)(const void*);
 /* A pointer to a function that returns the priority of a key. */
-typedef unsigned    (*dict_prio_func)(const void *);
+typedef unsigned    (*dict_prio_func)(const void*);
 /* A pointer to a function that clones a key or datum value, given the key-datum
  * pair. */
-typedef void	    (*dict_key_datum_clone_func)(void **key, void **datum);
+typedef void	    (*dict_key_datum_clone_func)(void** key, void** datum);
 /* A pointer to a function that clones a dictionary. */
-typedef void*	    (*dict_clone_func)(void *,
+typedef void*	    (*dict_clone_func)(void*,
 				       dict_key_datum_clone_func clone_func);
 
 
 /* A pointer to a function that libdict will use to allocate memory. */
 void*		    (*dict_malloc_func)(size_t);
 /* A pointer to a function that libdict will use to deallocate memory. */
-void		    (*dict_free_func)(void *);
+void		    (*dict_free_func)(void*);
 
 /* Forward declarations for transparent types dict and dict_itor. */
 typedef struct dict dict;
 typedef struct dict_itor dict_itor;
 
-typedef dict_itor*  (*dict_inew_func)(void *obj);
-typedef size_t      (*dict_dfree_func)(void *obj);
-typedef bool	    (*dict_insert_func)(void *obj, void *key,
-					void ***datum_location);
-typedef void*       (*dict_search_func)(void *obj, const void *key);
-typedef bool	    (*dict_remove_func)(void *obj, const void *key);
-typedef size_t      (*dict_clear_func)(void *obj);
-typedef size_t      (*dict_traverse_func)(void *obj, dict_visit_func visit);
-typedef size_t      (*dict_count_func)(const void *obj);
-typedef bool	    (*dict_verify_func)(const void *obj);
+typedef dict_itor*  (*dict_inew_func)(void* obj);
+typedef size_t      (*dict_dfree_func)(void* obj);
+typedef bool	    (*dict_insert_func)(void* obj, void* key,
+					void*** datum_location);
+typedef void*       (*dict_search_func)(void* obj, const void* key);
+typedef bool	    (*dict_remove_func)(void* obj, const void* key);
+typedef size_t      (*dict_clear_func)(void* obj);
+typedef size_t      (*dict_traverse_func)(void* obj, dict_visit_func visit);
+typedef size_t      (*dict_count_func)(const void* obj);
+typedef bool	    (*dict_verify_func)(const void* obj);
 
 typedef struct {
     dict_inew_func      inew;
@@ -107,21 +107,21 @@ typedef struct {
     dict_clone_func	clone;
 } dict_vtable;
 
-typedef void	    (*dict_ifree_func)(void *itor);
-typedef bool	    (*dict_valid_func)(const void *itor);
-typedef void	    (*dict_invalidate_func)(void *itor);
-typedef bool	    (*dict_next_func)(void *itor);
-typedef bool	    (*dict_prev_func)(void *itor);
-typedef bool	    (*dict_nextn_func)(void *itor, size_t count);
-typedef bool	    (*dict_prevn_func)(void *itor, size_t count);
-typedef bool	    (*dict_first_func)(void *itor);
-typedef bool	    (*dict_last_func)(void *itor);
-typedef void*	    (*dict_key_func)(void *itor);
-typedef void*	    (*dict_data_func)(void *itor);
-typedef bool	    (*dict_set_data_func)(void *itor, void *datum,
-					  void **old_datum);
-typedef bool	    (*dict_iremove_func)(void *itor);
-typedef int	    (*dict_icompare_func)(void *itor1, void *itor2);
+typedef void	    (*dict_ifree_func)(void* itor);
+typedef bool	    (*dict_valid_func)(const void* itor);
+typedef void	    (*dict_invalidate_func)(void* itor);
+typedef bool	    (*dict_next_func)(void* itor);
+typedef bool	    (*dict_prev_func)(void* itor);
+typedef bool	    (*dict_nextn_func)(void* itor, size_t count);
+typedef bool	    (*dict_prevn_func)(void* itor, size_t count);
+typedef bool	    (*dict_first_func)(void* itor);
+typedef bool	    (*dict_last_func)(void* itor);
+typedef void*	    (*dict_key_func)(void* itor);
+typedef void*	    (*dict_data_func)(void* itor);
+typedef bool	    (*dict_set_data_func)(void* itor, void* datum,
+					  void** old_datum);
+typedef bool	    (*dict_iremove_func)(void* itor);
+typedef int	    (*dict_icompare_func)(void* itor1, void* itor2);
 
 typedef struct {
     dict_ifree_func	    ifree;
@@ -154,8 +154,8 @@ struct dict {
 #define dict_verify(dct)	((dct)->_vtable->verify((dct)->_object))
 #define dict_clear(dct)		((dct)->_vtable->clear((dct)->_object))
 #define dict_itor_new(dct)      (dct)->_vtable->inew((dct)->_object)
-size_t dict_free(dict *dct);
-dict* dict_clone(dict *dct, dict_key_datum_clone_func clone_func);
+size_t dict_free(dict* dct);
+dict* dict_clone(dict* dct, dict_key_datum_clone_func clone_func);
 
 struct dict_itor {
     void*	    _itor;
@@ -177,15 +177,15 @@ struct dict_itor {
 #define dict_itor_set_data(i,d,old) \
 				((i)->_vtable->set_data((i)->_itor, (d), (old)))
 #define dict_itor_remove(i)	((i)->_vtable->remove((i)->_itor))
-void dict_itor_free(dict_itor *itor);
+void dict_itor_free(dict_itor* itor);
 
-int dict_int_cmp(const void *k1, const void *k2);
-int dict_uint_cmp(const void *k1, const void *k2);
-int dict_long_cmp(const void *k1, const void *k2);
-int dict_ulong_cmp(const void *k1, const void *k2);
-int dict_ptr_cmp(const void *k1, const void *k2);
-int dict_str_cmp(const void *k1, const void *k2);
-unsigned dict_str_hash(const void *str);
+int dict_int_cmp(const void* k1, const void* k2);
+int dict_uint_cmp(const void* k1, const void* k2);
+int dict_long_cmp(const void* k1, const void* k2);
+int dict_ulong_cmp(const void* k1, const void* k2);
+int dict_ptr_cmp(const void* k1, const void* k2);
+int dict_str_cmp(const void* k1, const void* k2);
+unsigned dict_str_hash(const void* str);
 
 END_DECL
 

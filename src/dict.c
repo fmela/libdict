@@ -35,74 +35,77 @@
 #define XSTRINGIFY(x)	STRINGIFY(x)
 #define STRINGIFY(x)	#x
 
-const char *const kDictVersionString = XSTRINGIFY(DICT_VERSION_MAJOR) "."
+const char* const kDictVersionString = XSTRINGIFY(DICT_VERSION_MAJOR) "."
 				       XSTRINGIFY(DICT_VERSION_MINOR) "."
 				       XSTRINGIFY(DICT_VERSION_PATCH);
 
 void* (*dict_malloc_func)(size_t) = malloc;
-void (*dict_free_func)(void *) = free;
+void (*dict_free_func)(void*) = free;
 
 int
-dict_int_cmp(const void *k1, const void *k2)
+dict_int_cmp(const void* k1, const void* k2)
 {
-    const int *a = k1, *b = k2;
-    return (*a > *b) - (*a < *b);
+    const int a = *(const int*)k1;
+    const int b = *(const int*)k2;
+    return (a > b) - (a < b);
 }
 
 int
-dict_uint_cmp(const void *k1, const void *k2)
+dict_uint_cmp(const void* k1, const void* k2)
 {
-    const unsigned int *a = k1, *b = k2;
-    return (*a > *b) - (*a < *b);
+    const unsigned int a = *(const unsigned int*)k1;
+    const unsigned int b = *(const unsigned int*)k2;
+    return (a > b) - (a < b);
 }
 
 int
-dict_long_cmp(const void *k1, const void *k2)
+dict_long_cmp(const void* k1, const void* k2)
 {
-    const long *a = k1, *b = k2;
-    return (*a > *b) - (*a < *b);
+    const long a = *(const long*)k1;
+    const long b = *(const long*)k2;
+    return (a > b) - (a < b);
 }
 
 int
-dict_ulong_cmp(const void *k1, const void *k2)
+dict_ulong_cmp(const void* k1, const void* k2)
 {
-    const unsigned long *a = k1, *b = k2;
-    return (*a > *b) - (*a < *b);
+    const unsigned long a = *(const unsigned long*)k1;
+    const unsigned long b = *(const unsigned long*)k2;
+    return (a > b) - (a < b);
 }
 
 int
-dict_ptr_cmp(const void *k1, const void *k2)
+dict_ptr_cmp(const void* k1, const void* k2)
 {
     return (k1 > k2) - (k1 < k2);
 }
 
 int
-dict_str_cmp(const void *k1, const void *k2)
+dict_str_cmp(const void* k1, const void* k2)
 {
-    const char *a = k1, *b = k2;
-    char p, q;
+    const char* a = k1;
+    const char* b = k2;
 
     for (;;) {
-	p = *a++; q = *b++;
-	if (p == 0 || p != q)
-	    break;
+	char p = *a++, q = *b++;
+	if (!p || p != q)
+	    return (p > q) - (p < q);
     }
-    return (p > q) - (p < q);
 }
 
 unsigned
-dict_str_hash(const void *k)
+dict_str_hash(const void* k)
 {
     /* FNV 1-a string hash. */
     unsigned hash = 2166136261U;
-    for (const uint8_t *ptr = k; *ptr;) {
+    for (const uint8_t* ptr = k; *ptr;) {
 	hash = (hash ^ *ptr++) * 16777619U;
     }
     return hash;
 }
 
 size_t
-dict_free(dict *dct)
+dict_free(dict* dct)
 {
     ASSERT(dct != NULL);
 
@@ -111,11 +114,12 @@ dict_free(dict *dct)
     return count;
 }
 
-dict* dict_clone(dict *dct, dict_key_datum_clone_func clone_func)
+dict*
+dict_clone(dict* dct, dict_key_datum_clone_func clone_func)
 {
     ASSERT(dct);
 
-    dict *clone = MALLOC(sizeof(*clone));
+    dict* clone = MALLOC(sizeof(*clone));
     if (clone) {
 	clone->_object = dct->_vtable->clone(dct->_object, clone_func);
 	if (!clone->_object) {
@@ -128,7 +132,7 @@ dict* dict_clone(dict *dct, dict_key_datum_clone_func clone_func)
 }
 
 void
-dict_itor_free(dict_itor *itor)
+dict_itor_free(dict_itor* itor)
 {
     ASSERT(itor != NULL);
 
