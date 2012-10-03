@@ -45,42 +45,42 @@ hashtable*	hashtable_new(dict_compare_func cmp_func,
 dict*		hashtable_dict_new(dict_compare_func cmp_func,
 				   dict_hash_func hash_func,
 				   dict_delete_func del_func, unsigned size);
-size_t		hashtable_free(hashtable *table);
-hashtable*	hashtable_clone(hashtable *table,
+size_t		hashtable_free(hashtable* table);
+hashtable*	hashtable_clone(hashtable* table,
 				dict_key_datum_clone_func clone_func);
 
-bool		hashtable_insert(hashtable *table, void *key,
-				 void ***datum_location);
-void*		hashtable_search(hashtable *table, const void *key);
-bool		hashtable_remove(hashtable *table, const void *key);
-size_t		hashtable_clear(hashtable *table);
-size_t		hashtable_traverse(hashtable *table, dict_visit_func visit);
-size_t		hashtable_count(const hashtable *table);
-size_t		hashtable_size(const hashtable *table);
-size_t		hashtable_slots_used(const hashtable *table);
-bool		hashtable_verify(const hashtable *table);
-bool		hashtable_resize(hashtable *table, unsigned size);
+bool		hashtable_insert(hashtable* table, void* key,
+				 void*** datum_location);
+void*		hashtable_search(hashtable* table, const void* key);
+bool		hashtable_remove(hashtable* table, const void* key);
+size_t		hashtable_clear(hashtable* table);
+size_t		hashtable_traverse(hashtable* table, dict_visit_func visit);
+size_t		hashtable_count(const hashtable* table);
+size_t		hashtable_size(const hashtable* table);
+size_t		hashtable_slots_used(const hashtable* table);
+bool		hashtable_verify(const hashtable* table);
+bool		hashtable_resize(hashtable* table, unsigned size);
 
 typedef struct hashtable_itor hashtable_itor;
 
-hashtable_itor* hashtable_itor_new(hashtable *table);
-dict_itor*	hashtable_dict_itor_new(hashtable *table);
-void		hashtable_itor_free(hashtable_itor *);
+hashtable_itor* hashtable_itor_new(hashtable* table);
+dict_itor*	hashtable_dict_itor_new(hashtable* table);
+void		hashtable_itor_free(hashtable_itor* itor);
 
-bool		hashtable_itor_valid(const hashtable_itor *itor);
-void		hashtable_itor_invalidate(hashtable_itor *itor);
-bool		hashtable_itor_next(hashtable_itor *itor);
-bool		hashtable_itor_prev(hashtable_itor *itor);
-bool		hashtable_itor_nextn(hashtable_itor *itor, size_t count);
-bool		hashtable_itor_prevn(hashtable_itor *itor, size_t count);
-bool		hashtable_itor_first(hashtable_itor *itor);
-bool		hashtable_itor_last(hashtable_itor *itor);
-bool		hashtable_itor_search(hashtable_itor *itor, const void *key);
-const void*	hashtable_itor_key(const hashtable_itor *itor);
-void*		hashtable_itor_data(hashtable_itor *itor);
-bool		hashtable_itor_set_data(hashtable_itor *itor,
-					void *datum, void **prev_datum);
-bool		hashtable_itor_remove(hashtable_itor *itor);
+bool		hashtable_itor_valid(const hashtable_itor* itor);
+void		hashtable_itor_invalidate(hashtable_itor* itor);
+bool		hashtable_itor_next(hashtable_itor* itor);
+bool		hashtable_itor_prev(hashtable_itor* itor);
+bool		hashtable_itor_nextn(hashtable_itor* itor, size_t count);
+bool		hashtable_itor_prevn(hashtable_itor* itor, size_t count);
+bool		hashtable_itor_first(hashtable_itor* itor);
+bool		hashtable_itor_last(hashtable_itor* itor);
+bool		hashtable_itor_search(hashtable_itor* itor, const void* key);
+const void*	hashtable_itor_key(const hashtable_itor* itor);
+void*		hashtable_itor_data(hashtable_itor* itor);
+bool		hashtable_itor_set_data(hashtable_itor* itor,
+					void* datum, void** prev_datum);
+bool		hashtable_itor_remove(hashtable_itor* itor);
 
 END_DECL
 
