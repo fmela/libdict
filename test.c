@@ -158,9 +158,9 @@ main(int argc, char **argv)
 	*datum_location = words[i];
     }
     timer_end(&start, &end, &total);
-    printf("   %s container: %.02fkB\n", container_name, malloced_save * 1e-3);
-    printf("      %s memory: %.02fkB\n", container_name, malloced * 1e-3);
-    printf("      %s insert: %.03f s (%9zu cmp, %9zu hash)\n",
+    printf("    %s container: %.02fkB\n", container_name, malloced_save * 1e-3);
+    printf("       %s memory: %.02fkB\n", container_name, malloced * 1e-3);
+    printf("       %s insert: %.03f s (%9zu cmp, %9zu hash)\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
@@ -168,7 +168,7 @@ main(int argc, char **argv)
     total_hash += hash_count; hash_count = 0;
     if (type != 'H' && type != 'S') {
 	tree_base *tree = dict_private(dct);
-	printf("      rotations: %zu\n", tree->rotation_count);
+	printf("insert rotations: %zu\n", tree->rotation_count);
 	total_rotations += tree->rotation_count;
 	tree->rotation_count = 0;
     }
@@ -190,7 +190,7 @@ main(int argc, char **argv)
 	++n;
     } while (dict_itor_next(itor));
     timer_end(&start, &end, &total);
-    printf(" %s fwd iterate: %.03f s\n",
+    printf("  %s fwd iterate: %.03f s\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
     if (n != nwords)
@@ -205,7 +205,7 @@ main(int argc, char **argv)
 	++n;
     } while (dict_itor_prev(itor));
     timer_end(&start, &end, &total);
-    printf(" %s rev iterate: %.03f s\n",
+    printf("  %s rev iterate: %.03f s\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
     if (n != nwords)
@@ -224,7 +224,7 @@ main(int argc, char **argv)
 	    quit("bad data for '%s', got '%s' instead", words[i], p);
     }
     timer_end(&start, &end, &total);
-    printf(" %s good search: %.03f s (%9zu cmp, %9zu hash)\n",
+    printf("  %s good search: %.03f s (%9zu cmp, %9zu hash)\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
@@ -232,7 +232,7 @@ main(int argc, char **argv)
     total_hash += hash_count; hash_count = 0;
     if (type != 'H' && type != 'S') {
 	tree_base *tree = dict_private(dct);
-	printf("      rotations: %zu\n", tree->rotation_count);
+	printf("search rotations: %zu\n", tree->rotation_count);
 	total_rotations += tree->rotation_count;
 	tree->rotation_count = 0;
     }
@@ -245,7 +245,7 @@ main(int argc, char **argv)
 	words[i][rv]--;
     }
     timer_end(&start, &end, &total);
-    printf("  %s bad search: %.03f s (%9zu cmp, %9zu hash)\n",
+    printf("   %s bad search: %.03f s (%9zu cmp, %9zu hash)\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
@@ -260,7 +260,7 @@ main(int argc, char **argv)
 	    quit("removing #%d '%s' failed!\n", i, words[i]);
     }
     timer_end(&start, &end, &total);
-    printf("      %s remove: %.03f s (%9zu cmp, %9zu hash)\n",
+    printf("       %s remove: %.03f s (%9zu cmp, %9zu hash)\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
@@ -268,7 +268,7 @@ main(int argc, char **argv)
     total_hash += hash_count; hash_count = 0;
     if (type != 'H' && type != 'S') {
 	tree_base *tree = dict_private(dct);
-	printf("      rotations: %zu\n", tree->rotation_count);
+	printf("remove rotations: %zu\n", tree->rotation_count);
 	total_rotations += tree->rotation_count;
 	tree->rotation_count = 0;
     }
@@ -280,13 +280,13 @@ main(int argc, char **argv)
 
     dict_free(dct);
 
-    printf("       %s total: %.03f s (%9zu cmp, %9zu hash)\n",
+    printf("        %s total: %.03f s (%9zu cmp, %9zu hash)\n",
 	   container_name,
 	   (total.tv_sec * 1000000 + total.tv_usec) * 1e-6,
 	   total_comp, total_hash);
 
     if (type != 'H' && type != 'S') {
-	printf("total rotations: %zu\n", total_rotations);
+	printf(" total rotations: %zu\n", total_rotations);
     }
 
     FREE(words);
