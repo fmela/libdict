@@ -608,12 +608,12 @@ node_verify(const pr_tree* tree, const pr_node* parent, const pr_node* node)
     ASSERT(tree);
 
     if (!parent) {
-	VERIFY(tree->root == node, return false);
+	VERIFY(tree->root == node);
     } else {
-	VERIFY(parent->llink == node || parent->rlink == node, return false);
+	VERIFY(parent->llink == node || parent->rlink == node);
     }
     if (node) {
-	VERIFY(node->parent == parent, return false);
+	VERIFY(node->parent == parent);
 	pr_node* l = node->llink;
 	pr_node* r = node->rlink;
 	if (!node_verify(tree, node, l) ||
@@ -621,13 +621,13 @@ node_verify(const pr_tree* tree, const pr_node* parent, const pr_node* node)
 	    return false;
 	unsigned lweight = WEIGHT(l);
 	unsigned rweight = WEIGHT(r);
-	VERIFY(node->weight == lweight + rweight, return false);
+	VERIFY(node->weight == lweight + rweight);
 	if (rweight > lweight) {
-	    VERIFY(WEIGHT(r->rlink) <= lweight, return false);
-	    VERIFY(WEIGHT(r->llink) <= lweight, return false);
+	    VERIFY(WEIGHT(r->rlink) <= lweight);
+	    VERIFY(WEIGHT(r->llink) <= lweight);
 	} else if (lweight > rweight) {
-	    VERIFY(WEIGHT(l->llink) <= rweight, return false);
-	    VERIFY(WEIGHT(l->rlink) <= rweight, return false);
+	    VERIFY(WEIGHT(l->llink) <= rweight);
+	    VERIFY(WEIGHT(l->rlink) <= rweight);
 	}
     }
     return true;
@@ -639,9 +639,9 @@ pr_tree_verify(const pr_tree* tree)
     ASSERT(tree);
 
     if (tree->root) {
-	VERIFY(tree->count > 0, return false);
+	VERIFY(tree->count > 0);
     } else {
-	VERIFY(tree->count == 0, return false);
+	VERIFY(tree->count == 0);
     }
     return node_verify(tree, NULL, tree->root);
 }

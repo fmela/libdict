@@ -541,19 +541,19 @@ node_verify(const hb_tree* tree, const hb_node* parent, const hb_node* node,
     ASSERT(tree);
 
     if (!parent) {
-	VERIFY(tree->root == node, return false);
+	VERIFY(tree->root == node);
     } else {
-	VERIFY(parent->llink == node || parent->rlink == node, return false);
+	VERIFY(parent->llink == node || parent->rlink == node);
     }
     if (node) {
-	VERIFY(node->parent == parent, return false);
-	VERIFY(node->bal >= -1, return false);
-	VERIFY(node->bal <= 1, return false);
+	VERIFY(node->parent == parent);
+	VERIFY(node->bal >= -1);
+	VERIFY(node->bal <= 1);
 	unsigned lheight, rheight;
 	if (!node_verify(tree, node, node->llink, &lheight) ||
 	    !node_verify(tree, node, node->rlink, &rheight))
 	    return false;
-	VERIFY(node->bal == (int)rheight - (int)lheight, return false);
+	VERIFY(node->bal == (int)rheight - (int)lheight);
 	if (height)
 	    *height = MAX(lheight, rheight) + 1;
     } else {
@@ -569,9 +569,9 @@ hb_tree_verify(const hb_tree* tree)
     ASSERT(tree);
 
     if (tree->root) {
-	VERIFY(tree->count > 0, return false);
+	VERIFY(tree->count > 0);
     } else {
-	VERIFY(tree->count == 0, return false);
+	VERIFY(tree->count == 0);
     }
     return node_verify(tree, NULL, tree->root, NULL);
 }

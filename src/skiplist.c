@@ -343,39 +343,39 @@ bool
 skiplist_verify(const skiplist* list)
 {
     if (list->count == 0) {
-	VERIFY(list->top_link == 0, return false);
+	VERIFY(list->top_link == 0);
     } else {
-	VERIFY(list->top_link > 0, return false);
+	VERIFY(list->top_link > 0);
     }
-    VERIFY(list->top_link < list->max_link, return false);
+    VERIFY(list->top_link < list->max_link);
     for (unsigned i = 0; i < list->top_link; ++i) {
-	VERIFY(list->head->link[i] != NULL, return false);
+	VERIFY(list->head->link[i] != NULL);
     }
     for (unsigned i = list->top_link; i < list->max_link; ++i) {
-	VERIFY(list->head->link[i] == NULL, return false);
+	VERIFY(list->head->link[i] == NULL);
     }
     unsigned observed_top_link = 0;
 
     skip_node* prev = list->head;
     skip_node* node = list->head->link[0];
-    VERIFY(prev->prev == NULL, return false);
+    VERIFY(prev->prev == NULL);
     while (node) {
 	if (observed_top_link < node->link_count)
 	    observed_top_link = node->link_count;
 
-	VERIFY(node->prev == prev, return false);
-	VERIFY(node->link_count >= 1, return false);
-	VERIFY(node->link_count <= list->top_link, return false);
+	VERIFY(node->prev == prev);
+	VERIFY(node->link_count >= 1);
+	VERIFY(node->link_count <= list->top_link);
 	for (unsigned k = 0; k < node->link_count; k++) {
 	    if (node->link[k]) {
-		VERIFY(node->link[k]->link_count >= k, return false);
+		VERIFY(node->link[k]->link_count >= k);
 	    }
 	}
 
 	prev = node;
 	node = node->link[0];
     }
-    VERIFY(list->top_link == observed_top_link, return false);
+    VERIFY(list->top_link == observed_top_link);
     return true;
 }
 

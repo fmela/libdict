@@ -41,12 +41,12 @@
 # define ASSERT(expr)	(void)(expr)
 #endif
 
-#define VERIFY(expr, fail_expr) \
+#define VERIFY(expr) \
     do { \
 	if (!(expr)) { \
 	    fprintf(stderr, "\n%s:%d (%s) verification failed: %s\n", \
 		    __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
-	    fail_expr; \
+	    return false; \
 	} \
     } while (0)
 

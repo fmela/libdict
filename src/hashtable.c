@@ -394,16 +394,16 @@ hashtable_verify(const hashtable* table)
     for (unsigned slot = 0; slot < table->size; ++slot) {
 	for (hash_node* n = table->table[slot]; n; n = n->next) {
 	    if (n == table->table[slot]) {
-		VERIFY(n->prev == NULL, return false);
+		VERIFY(n->prev == NULL);
 	    } else {
-		VERIFY(n->prev != NULL, return false);
-		VERIFY(n->prev->next == n, return false);
+		VERIFY(n->prev != NULL);
+		VERIFY(n->prev->next == n);
 	    }
 	    if (n->next) {
-		VERIFY(n->next->prev == n, return false);
-		VERIFY(n->hash <= n->next->hash, return false);
+		VERIFY(n->next->prev == n);
+		VERIFY(n->hash <= n->next->hash);
 	    }
-	    VERIFY(n->hash % table->size == slot, return false);
+	    VERIFY(n->hash % table->size == slot);
 	}
     }
     return true;

@@ -538,19 +538,19 @@ node_verify(const wb_tree* tree, const wb_node* parent, const wb_node* node)
     ASSERT(tree);
 
     if (!parent) {
-	VERIFY(tree->root == node, return false);
+	VERIFY(tree->root == node);
     } else {
-	VERIFY(parent->llink == node || parent->rlink == node, return false);
+	VERIFY(parent->llink == node || parent->rlink == node);
     }
     if (node) {
-	VERIFY(node->parent == parent, return false);
+	VERIFY(node->parent == parent);
 	if (!node_verify(tree, node, node->llink) ||
 	    !node_verify(tree, node, node->rlink))
 	    return false;
 	const unsigned lweight = WEIGHT(node->llink);
-	VERIFY(node->weight == lweight + WEIGHT(node->rlink), return false);
-	VERIFY(lweight * 1000U >= node->weight * 292U, return false);
-	VERIFY(lweight * 1000U <= node->weight * 708U, return false);
+	VERIFY(node->weight == lweight + WEIGHT(node->rlink));
+	VERIFY(lweight * 1000U >= node->weight * 292U);
+	VERIFY(lweight * 1000U <= node->weight * 708U);
     }
     return true;
 }
@@ -561,9 +561,9 @@ wb_tree_verify(const wb_tree* tree)
     ASSERT(tree);
 
     if (tree->root) {
-	VERIFY(tree->count > 0, return false);
+	VERIFY(tree->count > 0);
     } else {
-	VERIFY(tree->count == 0, return false);
+	VERIFY(tree->count == 0);
     }
     return node_verify(tree, NULL, tree->root);
 }
