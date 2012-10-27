@@ -92,7 +92,6 @@ static itor_vtable rb_tree_itor_vtable = {
     (dict_last_func)	    rb_itor_last,
     (dict_key_func)	    rb_itor_key,
     (dict_data_func)	    rb_itor_data,
-    (dict_set_data_func)    rb_itor_set_data,
     (dict_iremove_func)	    NULL,/* rb_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* rb_itor_compare not implemented yet */
 };
@@ -894,24 +893,10 @@ rb_itor_key(const rb_itor* itor)
     return itor->node != RB_NULL ? itor->node->key : NULL;
 }
 
-void*
+void**
 rb_itor_data(rb_itor* itor)
 {
     ASSERT(itor != NULL);
 
-    return (itor->node != RB_NULL) ? itor->node->datum : NULL;
-}
-
-bool
-rb_itor_set_data(rb_itor* itor, void* datum, void** old_datum)
-{
-    ASSERT(itor != NULL);
-
-    if (!itor->node)
-	return false;
-
-    if (old_datum)
-	*old_datum = itor->node->datum;
-    itor->node->datum = datum;
-    return true;
+    return (itor->node != RB_NULL) ? &itor->node->datum : NULL;
 }

@@ -87,7 +87,6 @@ static itor_vtable hashtable_itor_vtable = {
     (dict_last_func)	    hashtable_itor_last,
     (dict_key_func)	    hashtable_itor_key,
     (dict_data_func)	    hashtable_itor_data,
-    (dict_set_data_func)    hashtable_itor_set_data,
     (dict_iremove_func)	    NULL,/* hashtable_itor_remove not implemented yet */
     (dict_icompare_func)    NULL/* hashtable_itor_compare not implemented yet */
 };
@@ -600,24 +599,10 @@ hashtable_itor_key(const hashtable_itor* itor)
     return itor->node ? itor->node->key : NULL;
 }
 
-void*
+void**
 hashtable_itor_data(hashtable_itor* itor)
 {
     ASSERT(itor != NULL);
 
-    return itor->node ? itor->node->datum : NULL;
-}
-
-bool
-hashtable_itor_set_data(hashtable_itor* itor, void* datum, void** prev_datum)
-{
-    ASSERT(itor != NULL);
-
-    if (!itor->node)
-	return false;
-
-    if (prev_datum)
-	*prev_datum = itor->node->datum;
-    itor->node->datum = datum;
-    return true;
+    return itor->node ? &itor->node->datum : NULL;
 }

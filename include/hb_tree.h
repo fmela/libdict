@@ -77,8 +77,7 @@ bool		hb_itor_first(hb_itor* itor);
 bool		hb_itor_last(hb_itor* itor);
 bool		hb_itor_search(hb_itor* itor, const void* key);
 const void*	hb_itor_key(const hb_itor* itor);
-void*		hb_itor_data(hb_itor* itor);
-bool		hb_itor_set_data(hb_itor* itor, void* datum, void** old_datum);
+void**		hb_itor_data(hb_itor* itor);
 bool		hb_itor_remove(hb_itor* itor);
 
 END_DECL
