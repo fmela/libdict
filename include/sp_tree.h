@@ -77,8 +77,7 @@ bool		sp_itor_first(sp_itor* itor);
 bool		sp_itor_last(sp_itor* itor);
 bool		sp_itor_search(sp_itor* itor, const void* key);
 const void*	sp_itor_key(const sp_itor* itor);
-void*		sp_itor_data(sp_itor* itor);
-bool		sp_itor_set_data(sp_itor* itor, void* datum, void** old_datum);
+void**		sp_itor_data(sp_itor* itor);
 bool		sp_itor_remove(sp_itor* itor);
 
 END_DECL

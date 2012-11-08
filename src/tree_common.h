@@ -91,8 +91,6 @@ bool	    tree_iterator_first(void *iterator);
 bool	    tree_iterator_last(void *iterator);
 bool	    tree_iterator_search(void *iterator, const void *key);
 const void* tree_iterator_key(const void *iterator);
-void*	    tree_iterator_data(void *iterator);
-bool	    tree_iterator_set_data(void *iterator, void *datum,
-				   void **old_datum);
+void**	    tree_iterator_data(void *iterator);
 
 #endif /* !defined(_TREE_COMMON_H_) */

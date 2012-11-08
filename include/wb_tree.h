@@ -77,9 +77,7 @@ bool		wb_itor_first(wb_itor* itor);
 bool		wb_itor_last(wb_itor* itor);
 bool		wb_itor_search(wb_itor* itor, const void* key);
 const void*	wb_itor_key(const wb_itor* itor);
-void*		wb_itor_data(wb_itor* itor);
-const void*	wb_itor_cdata(const wb_itor* itor);
-bool		wb_itor_set_data(wb_itor* itor, void* datum, void** old_datum);
+void**		wb_itor_data(wb_itor* itor);
 bool		wb_itor_remove(wb_itor* itor);
 
 END_DECL

@@ -91,7 +91,6 @@ static itor_vtable sp_tree_itor_vtable = {
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
     (dict_data_func)	    tree_iterator_data,
-    (dict_set_data_func)    tree_iterator_set_data,
     (dict_iremove_func)	    NULL,/* sp_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* sp_itor_compare not implemented yet */
 };
@@ -693,18 +692,10 @@ sp_itor_key(const sp_itor* itor)
     return tree_iterator_key(itor);
 }
 
-void*
+void**
 sp_itor_data(sp_itor* itor)
 {
     ASSERT(itor != NULL);
 
     return tree_iterator_data(itor);
-}
-
-bool
-sp_itor_set_data(sp_itor* itor, void* datum, void** old_datum)
-{
-    ASSERT(itor != NULL);
-
-    return tree_iterator_set_data(itor, datum, old_datum);
 }

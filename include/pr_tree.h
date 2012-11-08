@@ -77,8 +77,7 @@ bool		pr_itor_first(pr_itor* itor);
 bool		pr_itor_last(pr_itor* itor);
 bool		pr_itor_search(pr_itor* itor, const void* key);
 const void*	pr_itor_key(const pr_itor* itor);
-void*		pr_itor_data(pr_itor* itor);
-bool		pr_itor_set_data(pr_itor* itor, void* datum, void** old_datum);
+void**		pr_itor_data(pr_itor* itor);
 bool		pr_itor_remove(pr_itor* itor);
 
 END_DECL

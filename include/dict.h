@@ -116,9 +116,7 @@ typedef bool	    (*dict_prevn_func)(void* itor, size_t count);
 typedef bool	    (*dict_first_func)(void* itor);
 typedef bool	    (*dict_last_func)(void* itor);
 typedef void*	    (*dict_key_func)(void* itor);
-typedef void*	    (*dict_data_func)(void* itor);
-typedef bool	    (*dict_set_data_func)(void* itor, void* datum,
-					  void** old_datum);
+typedef void**	    (*dict_data_func)(void* itor);
 typedef bool	    (*dict_iremove_func)(void* itor);
 typedef int	    (*dict_icompare_func)(void* itor1, void* itor2);
 
@@ -134,7 +132,6 @@ typedef struct {
     dict_last_func	    last;
     dict_key_func	    key;
     dict_data_func	    data;
-    dict_set_data_func      set_data;
     dict_iremove_func       remove;
     dict_icompare_func      compare;
 } itor_vtable;
@@ -173,8 +170,6 @@ struct dict_itor {
 #define dict_itor_search(i,k)   ((i)->_vtable->search((i)->_itor, (k)))
 #define dict_itor_key(i)	((i)->_vtable->key((i)->_itor))
 #define dict_itor_data(i)       ((i)->_vtable->data((i)->_itor))
-#define dict_itor_set_data(i,d,old) \
-				((i)->_vtable->set_data((i)->_itor, (d), (old)))
 #define dict_itor_remove(i)	((i)->_vtable->remove((i)->_itor))
 void dict_itor_free(dict_itor* itor);
 

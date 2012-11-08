@@ -91,7 +91,6 @@ static itor_vtable skiplist_itor_vtable = {
     (dict_last_func)	    skiplist_itor_last,
     (dict_key_func)	    skiplist_itor_key,
     (dict_data_func)	    skiplist_itor_data,
-    (dict_set_data_func)    skiplist_itor_set_data,
     (dict_iremove_func)	    NULL,/* skiplist_itor_remove not implemented yet */
     (dict_icompare_func)    NULL/* skiplist_itor_compare not implemented yet */
 };
@@ -539,26 +538,12 @@ skiplist_itor_key(const skiplist_itor* itor)
     return itor->node ? itor->node->key : NULL;
 }
 
-void*
+void**
 skiplist_itor_data(skiplist_itor* itor)
 {
     ASSERT(itor != NULL);
 
-    return itor->node ? itor->node->datum : NULL;
-}
-
-bool
-skiplist_itor_set_data(skiplist_itor* itor, void* datum, void** prev_datum)
-{
-    ASSERT(itor != NULL);
-
-    if (!itor->node)
-	return false;
-
-    if (prev_datum)
-	*prev_datum = itor->node->datum;
-    itor->node->datum = datum;
-    return true;
+    return itor->node ? &itor->node->datum : NULL;
 }
 
 skip_node*

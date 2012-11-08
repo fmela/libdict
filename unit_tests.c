@@ -221,13 +221,26 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     for (dict_itor_first(itor); dict_itor_valid(itor); dict_itor_next(itor)) {
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_key(itor));
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_data(itor));
-	++n;
+
+	char *key = dict_itor_key(itor);
+	bool key_matched = false;
+	for (unsigned i = 0; i < nkeys; ++i) {
+	    if (keys[i].key == key) {
+		CU_ASSERT_EQUAL(*dict_itor_data(itor), keys[i].value);
+		key_matched = true;
+		break;
+	    }
+	}
+	CU_ASSERT_TRUE(key_matched);
+
 	if (dct->_vtable->insert != (dict_insert_func)hashtable_insert) {
 	    if (last_key) {
 		CU_ASSERT_TRUE(strcmp(last_key, dict_itor_key(itor)) < 0);
 	    }
 	    last_key = dict_itor_key(itor);
 	}
+
+	++n;
     }
     CU_ASSERT_EQUAL(n, nkeys);
     last_key = NULL;
@@ -235,13 +248,26 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     for (dict_itor_last(itor); dict_itor_valid(itor); dict_itor_prev(itor)) {
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_key(itor));
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_data(itor));
-	++n;
+
+	char *key = dict_itor_key(itor);
+	bool key_matched = false;
+	for (unsigned i = 0; i < nkeys; ++i) {
+	    if (keys[i].key == key) {
+		CU_ASSERT_EQUAL(*dict_itor_data(itor), keys[i].value);
+		key_matched = true;
+		break;
+	    }
+	}
+	CU_ASSERT_TRUE(key_matched);
+
 	if (dct->_vtable->insert != (dict_insert_func)hashtable_insert) {
 	    if (last_key) {
 		CU_ASSERT_TRUE(strcmp(last_key, dict_itor_key(itor)) > 0);
 	    }
 	    last_key = dict_itor_key(itor);
 	}
+
+	++n;
     }
     CU_ASSERT_EQUAL(n, nkeys);
     dict_itor_free(itor);

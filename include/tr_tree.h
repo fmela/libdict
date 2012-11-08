@@ -79,8 +79,7 @@ bool		tr_itor_first(tr_itor* itor);
 bool		tr_itor_last(tr_itor* itor);
 bool		tr_itor_search(tr_itor* itor, const void* key);
 const void*	tr_itor_key(const tr_itor* itor);
-void*		tr_itor_data(tr_itor* itor);
-bool		tr_itor_set_data(tr_itor* itor, void* datum, void** old_datum);
+void**		tr_itor_data(tr_itor* itor);
 bool		tr_itor_remove(tr_itor* itor);
 
 END_DECL

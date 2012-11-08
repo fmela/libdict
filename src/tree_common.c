@@ -440,26 +440,11 @@ tree_iterator_key(const void* Iterator)
     return iterator->node ? iterator->node->key : NULL;
 }
 
-void*
+void**
 tree_iterator_data(void* Iterator)
 {
     tree_iterator* iterator = Iterator;
     ASSERT(iterator != NULL);
     ASSERT(iterator->tree != NULL);
-    return iterator->node ? iterator->node->datum : NULL;
-}
-
-bool
-tree_iterator_set_data(void* Iterator, void* datum, void** old_datum)
-{
-    const tree_iterator* iterator = Iterator;
-    ASSERT(iterator != NULL);
-    ASSERT(iterator->tree != NULL);
-    if (iterator->node) {
-	if (old_datum)
-	    *old_datum = iterator->node->datum;
-	iterator->node->datum = datum;
-	return true;
-    }
-    return false;
+    return iterator->node ? &iterator->node->datum : NULL;
 }

@@ -77,7 +77,6 @@ static itor_vtable pr_tree_itor_vtable = {
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
     (dict_data_func)	    tree_iterator_data,
-    (dict_set_data_func)    tree_iterator_set_data,
     (dict_iremove_func)	    NULL,/* pr_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* pr_itor_compare not implemented yet */
 };
@@ -799,24 +798,10 @@ pr_itor_key(const pr_itor* itor)
     return itor->node ? itor->node->key : NULL;
 }
 
-void*
+void**
 pr_itor_data(pr_itor* itor)
 {
     ASSERT(itor != NULL);
 
-    return itor->node ? itor->node->datum : NULL;
-}
-
-bool
-pr_itor_set_data(pr_itor* itor, void* datum, void** old_datum)
-{
-    ASSERT(itor != NULL);
-
-    if (!itor->node)
-	return false;
-
-    if (old_datum)
-	*old_datum = itor->node->datum;
-    itor->node->datum = datum;
-    return true;
+    return itor->node ? &itor->node->datum : NULL;
 }
