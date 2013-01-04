@@ -39,10 +39,6 @@ key_val_free(void *key, void *datum)
 int
 main(int argc, char **argv)
 {
-    char buf[512], *p, *ptr, *ptr2;
-    int rv;
-    dict *dct;
-
     if (argc != 2)
 	quit("usage: %s [type]", appname);
 
@@ -50,6 +46,7 @@ main(int argc, char **argv)
 
     dict_malloc_func = xmalloc;
 
+    dict *dct = NULL;
     ++argv;
     switch (argv[0][0]) {
 	case 'h':
@@ -85,8 +82,12 @@ main(int argc, char **argv)
     for (;;) {
 	printf("> ");
 	fflush(stdout);
+
+	char buf[512];
 	if (fgets(buf, sizeof(buf), stdin) == NULL)
 	    break;
+
+	char *p, *ptr, *ptr2;
 	if ((p = strchr(buf, '\n')) != NULL)
 	    *p = 0;
 	for (p = buf; isspace(*p); p++)
@@ -101,8 +102,9 @@ main(int argc, char **argv)
 		printf("usage: insert <key> <data>\n");
 		continue;
 	    }
-	    void **datum_location;
-	    if (dict_insert(dct, xstrdup(ptr), &datum_location)) {
+	    bool inserted = false;
+	    void **datum_location = dict_insert(dct, xstrdup(ptr), &inserted);
+	    if (inserted) {
 		*datum_location = xstrdup(ptr2);
 		printf("inserted '%s': '%s'\n",
 		       ptr, *datum_location);
@@ -125,8 +127,7 @@ main(int argc, char **argv)
 		printf("usage: remove <key>\n");
 		continue;
 	    }
-	    rv = dict_remove(dct, ptr);
-	    if (rv == 0)
+	    if (dict_remove(dct, ptr))
 		printf("removed '%s' from dict\n", ptr);
 	    else
 		printf("key '%s' not in dict!\n", ptr);
@@ -140,7 +141,7 @@ main(int argc, char **argv)
 	    for (; dict_itor_valid(itor); dict_itor_next(itor))
 		printf("'%s': '%s'\n",
 		       (char *)dict_itor_key(itor),
-		       (char *)dict_itor_data(itor));
+		       (char *)*dict_itor_data(itor));
 	    dict_itor_free(itor);
 	} else if (strcmp(buf, "reverse") == 0) {
 	    if (ptr) {
@@ -152,7 +153,7 @@ main(int argc, char **argv)
 	    for (; dict_itor_valid(itor); dict_itor_prev(itor))
 		printf("'%s': '%s'\n",
 		       (char *)dict_itor_key(itor),
-		       (char *)dict_itor_data(itor));
+		       (char *)*dict_itor_data(itor));
 	    dict_itor_free(itor);
 	} else if (strcmp(buf, "clear") == 0) {
 	    if (ptr) {
