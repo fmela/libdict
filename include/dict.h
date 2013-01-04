@@ -79,8 +79,7 @@ void*		    (*dict_malloc_func)(size_t);
 /* A pointer to a function that libdict will use to deallocate memory. */
 void		    (*dict_free_func)(void*);
 
-/* Forward declarations for transparent types dict and dict_itor. */
-typedef struct dict dict;
+/* Forward declarations for transparent type dict_itor. */
 typedef struct dict_itor dict_itor;
 
 typedef dict_itor*  (*dict_inew_func)(void* obj);
@@ -136,10 +135,10 @@ typedef struct {
     dict_icompare_func      compare;
 } itor_vtable;
 
-struct dict {
+typedef struct {
     void*	    _object;
     dict_vtable*    _vtable;
-};
+} dict;
 
 #define dict_private(dct)       ((dct)->_object)
 #define dict_insert(dct,k,d)	((dct)->_vtable->insert((dct)->_object,(k),(d)))

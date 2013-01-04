@@ -10,20 +10,17 @@
 #include <string.h>
 #include "dict_private.h"
 
-typedef struct tree_node tree_node;
-struct tree_node {
-    TREE_NODE_FIELDS(tree_node);
-};
+typedef struct tree_node {
+    TREE_NODE_FIELDS(struct tree_node);
+} tree_node;
 
-typedef struct tree tree;
-struct tree {
+typedef struct {
     TREE_FIELDS(tree_node);
-};
+} tree;
 
-typedef struct tree_iterator tree_iterator;
-struct tree_iterator {
+typedef struct {
     TREE_ITERATOR_FIELDS(tree, tree_node);
-};
+} tree_iterator;
 
 void
 tree_node_rot_left(void* Tree, void* Node)
