@@ -5,3 +5,4 @@ algorithms/*.log
 algorithms/*.pdf
 algorithms/*.aux
 .*.swp
+*.pdf
