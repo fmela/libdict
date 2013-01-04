@@ -70,7 +70,7 @@ $(OUTPUT_DIR)/%: %.c $(STATIC_LIB) GNUmakefile
 
 .PHONY: clean
 clean:
-	rm -r $(OUTPUT_DIR)
+	if test -d $(OUTPUT_DIR); then rm -r $(OUTPUT_DIR); fi
 
 .PHONY: analyze
 analyze:
