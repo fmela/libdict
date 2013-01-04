@@ -163,8 +163,8 @@ tr_tree_clear(tr_tree* tree)
     return tree_clear(tree);
 }
 
-bool
-tr_tree_insert(tr_tree* tree, void* key, void*** datum_location)
+void**
+tr_tree_insert(tr_tree* tree, void* key, bool* inserted)
 {
     ASSERT(tree != NULL);
 
@@ -178,19 +178,16 @@ tr_tree_insert(tr_tree* tree, void* key, void*** datum_location)
 	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
-	    if (datum_location)
-		*datum_location = &node->datum;
-	    return false;
+	    if (inserted)
+		*inserted = false;
+	    return &node->datum;
 	}
     }
 
-    if (!(node = node_new(key))) {
-	if (datum_location)
-	    *datum_location = NULL;
-	return false;
-    }
-    if (datum_location)
-	*datum_location = &node->datum;
+    if (!(node = node_new(key)))
+	return NULL;
+    if (inserted)
+	*inserted = true;
     node->prio = tree->prio_func ? tree->prio_func(key) :
 	(tree->randgen = tree->randgen * RGEN_A + RGEN_M);
 
@@ -216,7 +213,7 @@ tr_tree_insert(tr_tree* tree, void* key, void*** datum_location)
 	tree->rotation_count += rotations;
     }
     ++tree->count;
-    return true;
+    return &node->datum;
 }
 
 bool

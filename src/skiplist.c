@@ -96,8 +96,7 @@ static itor_vtable skiplist_itor_vtable = {
 };
 
 static skip_node*   node_new(void* key, unsigned link_count);
-static bool	    node_insert(skiplist* list, void* key,
-				void*** datum_location, skip_node** update);
+static void**	    node_insert(skiplist* list, void* key, skip_node** update);
 static unsigned	    rand_link_count(skiplist* list);
 
 skiplist*
@@ -161,8 +160,9 @@ skiplist_clone(skiplist* list, dict_key_datum_clone_func clone_func)
     if (clone) {
 	skip_node* node = list->head->link[0];
 	while (node) {
-	    void** datum = NULL;
-	    if (!skiplist_insert(clone, node->key, &datum) || !datum) {
+	    bool inserted = false;
+	    void** datum = skiplist_insert(clone, node->key, &inserted);
+	    if (!datum || !inserted) {
 		skiplist_free(clone);
 		return NULL;
 	    }
@@ -180,20 +180,15 @@ skiplist_clone(skiplist* list, dict_key_datum_clone_func clone_func)
     return clone;
 }
 
-static bool
-node_insert(skiplist* list, void* key, void*** datum_location,
-	    skip_node** update)
+static void**
+node_insert(skiplist* list, void* key, skip_node** update)
 {
     const unsigned nlinks = rand_link_count(list);
     ASSERT(nlinks < list->max_link);
     skip_node* x = node_new(key, nlinks);
     if (!x) {
-	if (datum_location)
-	    *datum_location = NULL;
-	return false;
+	return NULL;
     }
-    if (datum_location)
-	*datum_location = &x->datum;
 
     if (list->top_link < nlinks) {
 	for (unsigned k = list->top_link+1; k <= nlinks; k++) {
@@ -212,11 +207,11 @@ node_insert(skiplist* list, void* key, void*** datum_location,
 	update[k]->link[k] = x;
     }
     ++list->count;
-    return true;
+    return &x->datum;
 }
 
-bool
-skiplist_insert(skiplist* list, void* key, void*** datum_location)
+void**
+skiplist_insert(skiplist* list, void* key, bool* inserted)
 {
     ASSERT(list != NULL);
 
@@ -230,11 +225,15 @@ skiplist_insert(skiplist* list, void* key, void*** datum_location)
     }
     x = x->link[0];
     if (x && list->cmp_func(key, x->key) == 0) {
-	if (datum_location)
-	    *datum_location = &x->datum;
-	return false;
+	if (inserted)
+	    *inserted = false;
+	return &x->datum;
     }
-    return node_insert(list, key, datum_location, update);
+    void **datum = node_insert(list, key, update);
+    if (datum) {
+	*inserted = true;
+    }
+    return datum;
 }
 
 void*

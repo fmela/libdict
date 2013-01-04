@@ -201,8 +201,8 @@ rb_tree_search(rb_tree* tree, const void* key)
     return NULL;
 }
 
-bool
-rb_tree_insert(rb_tree* tree, void* key, void*** datum_location)
+void**
+rb_tree_insert(rb_tree* tree, void* key, bool* inserted)
 {
     ASSERT(tree != NULL);
 
@@ -216,19 +216,17 @@ rb_tree_insert(rb_tree* tree, void* key, void*** datum_location)
 	else if (cmp)
 	    parent = node, node = RLINK(node);
 	else {
-	    if (datum_location)
-		*datum_location = &node->datum;
-	    return false;
+	    if (inserted)
+		*inserted = false;
+	    return &node->datum;
 	}
     }
 
     if (!(node = node_new(key))) {
-	if (datum_location)
-	    *datum_location = NULL;
-	return false;
+	return NULL;
     }
-    if (datum_location)
-	*datum_location = &node->datum;
+    if (inserted)
+	*inserted = true;
     if ((node->parent = parent) == RB_NULL) {
 	tree->root = node;
 	ASSERT(tree->count == 0);
@@ -242,7 +240,7 @@ rb_tree_insert(rb_tree* tree, void* key, void*** datum_location)
 	tree->rotation_count += insert_fixup(tree, node);
     }
     ++tree->count;
-    return true;
+    return &node->datum;
 }
 
 static unsigned

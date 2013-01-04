@@ -162,9 +162,11 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     CU_ASSERT_TRUE(dict_verify(dct));
 
     for (unsigned i = 0; i < nkeys; ++i) {
-	void **datum_location = NULL;
-	CU_ASSERT_TRUE(dict_insert(dct, keys[i].key, &datum_location));
+	bool inserted = false;
+	void **datum_location = dict_insert(dct, keys[i].key, &inserted);
+	CU_ASSERT_TRUE(inserted);
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
+	CU_ASSERT_PTR_NULL(*datum_location);
 	*datum_location = keys[i].value;
 
 	CU_ASSERT_TRUE(dict_verify(dct));
@@ -205,8 +207,9 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), keys[i].value);
 
     for (unsigned i = 0; i < nkeys; ++i) {
-	void **datum_location = NULL;
-	CU_ASSERT_FALSE(dict_insert(dct, keys[i].key, &datum_location));
+	bool inserted = false;
+	void **datum_location = dict_insert(dct, keys[i].key, &inserted);
+	CU_ASSERT_FALSE(inserted);
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
 	CU_ASSERT_EQUAL(*datum_location, keys[i].value);
 
@@ -221,6 +224,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     for (dict_itor_first(itor); dict_itor_valid(itor); dict_itor_next(itor)) {
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_key(itor));
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_data(itor));
+	CU_ASSERT_PTR_NOT_NULL(*dict_itor_data(itor));
 
 	char *key = dict_itor_key(itor);
 	bool key_matched = false;
@@ -248,6 +252,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     for (dict_itor_last(itor); dict_itor_valid(itor); dict_itor_prev(itor)) {
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_key(itor));
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_data(itor));
+	CU_ASSERT_PTR_NOT_NULL(*dict_itor_data(itor));
 
 	char *key = dict_itor_key(itor);
 	bool key_matched = false;
@@ -273,9 +278,11 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     dict_itor_free(itor);
 
     for (unsigned i = 0; i < nkeys; ++i) {
-	void **datum_location = NULL;
-	CU_ASSERT_FALSE(dict_insert(dct, keys[i].key, &datum_location));
+	bool inserted = false;
+	void **datum_location = dict_insert(dct, keys[i].key, &inserted);
+	CU_ASSERT_FALSE(inserted);
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
+	CU_ASSERT_PTR_NOT_NULL(*datum_location);
 	*datum_location = keys[i].alt;
 
 	CU_ASSERT_TRUE(dict_verify(dct));
@@ -300,9 +307,11 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     }
 
     for (unsigned i = 0; i < nkeys; ++i) {
-	void **datum_location = NULL;
-	CU_ASSERT_TRUE(dict_insert(dct, keys[i].key, &datum_location));
+	bool inserted = false;
+	void **datum_location = dict_insert(dct, keys[i].key, &inserted);
+	CU_ASSERT_TRUE(inserted);
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
+	CU_ASSERT_PTR_NULL(*datum_location);
 	*datum_location = keys[i].value;
 
 	CU_ASSERT_TRUE(dict_verify(dct));
@@ -311,9 +320,11 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     CU_ASSERT_EQUAL(dict_clear(dct), nkeys);
 
     for (unsigned i = 0; i < nkeys; ++i) {
-	void **datum_location = NULL;
-	CU_ASSERT_TRUE(dict_insert(dct, keys[i].key, &datum_location));
+	bool inserted = false;
+	void **datum_location = dict_insert(dct, keys[i].key, &inserted);
+	CU_ASSERT_TRUE(inserted);
 	CU_ASSERT_PTR_NOT_NULL(datum_location);
+	CU_ASSERT_PTR_NULL(*datum_location);
 	*datum_location = keys[i].value;
 
 	CU_ASSERT_TRUE(dict_verify(dct));

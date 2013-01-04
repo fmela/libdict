@@ -287,8 +287,8 @@ splay(sp_tree* t, sp_node* n)
     t->rotation_count += rotations;
 }
 
-bool
-sp_tree_insert(sp_tree* tree, void* key, void*** datum_location)
+void**
+sp_tree_insert(sp_tree* tree, void* key, bool* inserted)
 {
     ASSERT(tree != NULL);
 
@@ -302,19 +302,16 @@ sp_tree_insert(sp_tree* tree, void* key, void*** datum_location)
 	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
-	    if (datum_location)
-		*datum_location = &node->datum;
-	    return false;
+	    if (inserted)
+		*inserted = false;
+	    return &node->datum;
 	}
     }
 
-    if (!(node = node_new(key))) {
-	if (datum_location)
-	    *datum_location = NULL;
-	return false;
-    }
-    if (datum_location)
-	*datum_location = &node->datum;
+    if (!(node = node_new(key)))
+	return NULL;
+    if (inserted)
+	*inserted = true;
     if (!(node->parent = parent)) {
 	ASSERT(tree->count == 0);
 	ASSERT(tree->root == NULL);
@@ -329,7 +326,7 @@ sp_tree_insert(sp_tree* tree, void* key, void*** datum_location)
 	++tree->count;
     }
     ASSERT(tree->root == node);
-    return true;
+    return &node->datum;
 }
 
 void*

@@ -182,8 +182,8 @@ hashtable_free(hashtable* table)
     return count;
 }
 
-bool
-hashtable_insert(hashtable* table, void* key, void*** datum_location)
+void**
+hashtable_insert(hashtable* table, void* key, bool* inserted)
 {
     ASSERT(table != NULL);
 
@@ -193,9 +193,9 @@ hashtable_insert(hashtable* table, void* key, void*** datum_location)
     hash_node* prev = NULL;
     while (node && hash >= node->hash) {
 	if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
-	    if (datum_location)
-		*datum_location = &node->datum;
-	    return false;
+	    if (inserted)
+		*inserted = false;
+	    return &node->datum;
 	}
 	prev = node;
 	node = node->next;
@@ -203,15 +203,13 @@ hashtable_insert(hashtable* table, void* key, void*** datum_location)
 
     hash_node* add = MALLOC(sizeof(*add));
     if (!add) {
-	if (datum_location)
-	    *datum_location = NULL;
-	return false;
+	return NULL;
     }
+    if (inserted)
+	*inserted = true;
 
     add->key = key;
     add->datum = NULL;
-    if (datum_location)
-	*datum_location = &add->datum;
     add->hash = hash;
     add->prev = prev;
     if (prev)
@@ -223,7 +221,7 @@ hashtable_insert(hashtable* table, void* key, void*** datum_location)
 	node->prev = add;
 
     table->count++;
-    return true;
+    return &add->datum;
 }
 
 void*

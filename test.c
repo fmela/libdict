@@ -150,8 +150,9 @@ main(int argc, char **argv)
 
     timer_start(&start);
     for (unsigned i = 0; i < nwords; i++) {
-	void **datum_location = NULL;
-	if (!dict_insert(dct, words[i], &datum_location))
+	bool inserted = false;
+	void **datum_location = dict_insert(dct, words[i], &inserted);
+	if (!inserted)
 	    quit("insert #%d failed for '%s'", i, words[i]);
 	ASSERT(datum_location != NULL);
 	ASSERT(*datum_location == NULL);

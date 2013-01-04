@@ -287,8 +287,8 @@ fixup(pr_tree* tree, pr_node* node)
     return rotations;
 }
 
-bool
-pr_tree_insert(pr_tree* tree, void* key, void*** datum_location)
+void**
+pr_tree_insert(pr_tree* tree, void* key, bool* inserted)
 {
     ASSERT(tree != NULL);
 
@@ -302,40 +302,37 @@ pr_tree_insert(pr_tree* tree, void* key, void*** datum_location)
 	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
-	    if (datum_location)
-		*datum_location = &node->datum;
-	    return false;
+	    if (inserted)
+		*inserted = false;
+	    return &node->datum;
 	}
     }
 
-    if (!(node = node_new(key))) {
-	if (datum_location)
-	    *datum_location = NULL;
-	return -1;
-    }
-    if (datum_location)
-	*datum_location = &node->datum;
-    if (!(node->parent = parent)) {
+    pr_node *add = node_new(key);
+    if (!add)
+	return NULL;
+    if (inserted)
+	*inserted = true;
+    if (!(add->parent = parent)) {
 	ASSERT(tree->count == 0);
-	tree->root = node;
-	tree->count = 1;
-	return true;
-    }
-    if (cmp < 0)
-	parent->llink = node;
-    else
-	parent->rlink = node;
+	ASSERT(tree->root == NULL);
+	tree->root = add;
+    } else {
+	if (cmp < 0)
+	    parent->llink = add;
+	else
+	    parent->rlink = add;
 
-    unsigned rotations = 0;
-    while ((node = parent) != NULL) {
-	parent = parent->parent;
-	++node->weight;
-	rotations += fixup(tree, node);
+	unsigned rotations = 0;
+	while ((node = parent) != NULL) {
+	    parent = parent->parent;
+	    ++node->weight;
+	    rotations += fixup(tree, node);
+	}
+	tree->rotation_count += rotations;
     }
-
     ++tree->count;
-    tree->rotation_count += rotations;
-    return true;
+    return &add->datum;
 }
 
 bool

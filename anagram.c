@@ -57,15 +57,9 @@ main(int argc, char *argv[])
 	}
 	*p = 0;
 
-	WordList *word = xmalloc(sizeof(*word));
+	WordList* word = xmalloc(sizeof(*word));
 	word->word = xstrdup(buf);
-	WordList **wordp = NULL;
-	if (rb_tree_insert(tree, xstrdup(name), (void ***)&wordp)) {
-	    ASSERT(*wordp == NULL);
-	} else {
-	    /* Key already exists. */
-	    ASSERT(wordp != NULL);
-	}
+	WordList** wordp = (WordList**)rb_tree_insert(tree, xstrdup(name), NULL);
 	word->next = *wordp;
 	*wordp = word;
     }

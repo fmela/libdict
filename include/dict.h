@@ -85,8 +85,7 @@ typedef struct dict_itor dict_itor;
 
 typedef dict_itor*  (*dict_inew_func)(void* obj);
 typedef size_t      (*dict_dfree_func)(void* obj);
-typedef bool	    (*dict_insert_func)(void* obj, void* key,
-					void*** datum_location);
+typedef void**	    (*dict_insert_func)(void* obj, void* key, bool* inserted);
 typedef void*       (*dict_search_func)(void* obj, const void* key);
 typedef bool	    (*dict_remove_func)(void* obj, const void* key);
 typedef size_t      (*dict_clear_func)(void* obj);

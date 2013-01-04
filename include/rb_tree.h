@@ -47,8 +47,7 @@ size_t		rb_tree_free(rb_tree* tree);
 rb_tree*	rb_tree_clone(rb_tree* tree,
 			      dict_key_datum_clone_func clone_func);
 
-bool		rb_tree_insert(rb_tree* tree, void* key,
-			       void*** datum_location);
+void**		rb_tree_insert(rb_tree* tree, void* key, bool* inserted);
 void*		rb_tree_search(rb_tree* tree, const void* key);
 bool		rb_tree_remove(rb_tree* tree, const void* key);
 size_t		rb_tree_clear(rb_tree* tree);

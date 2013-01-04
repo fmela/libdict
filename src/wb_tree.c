@@ -253,8 +253,8 @@ fixup(wb_tree* tree, wb_node* n) {
     return rotations;
 }
 
-bool
-wb_tree_insert(wb_tree* tree, void* key, void*** datum_location)
+void**
+wb_tree_insert(wb_tree* tree, void* key, bool* inserted)
 {
     int cmp = 0;
 
@@ -269,19 +269,17 @@ wb_tree_insert(wb_tree* tree, void* key, void*** datum_location)
 	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
-	    if (datum_location)
-		*datum_location = &node->datum;
-	    return false;
+	    if (inserted)
+		*inserted = false;
+	    return &node->datum;
 	}
     }
 
-    if (!(node = node_new(key))) {
-	if (datum_location)
-	    *datum_location = NULL;
-	return false;
-    }
-    if (datum_location)
-	*datum_location = &node->datum;
+    wb_node *add = node = node_new(key);
+    if (!add)
+	return NULL;
+    if (inserted)
+	*inserted = true;
     if (!(node->parent = parent)) {
 	ASSERT(tree->count == 0);
 	ASSERT(tree->root == NULL);
@@ -301,7 +299,7 @@ wb_tree_insert(wb_tree* tree, void* key, void*** datum_location)
 	tree->rotation_count += rotations;
     }
     ++tree->count;
-    return true;
+    return &add->datum;
 }
 
 bool

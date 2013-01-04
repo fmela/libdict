@@ -179,8 +179,8 @@ hb_tree_search(hb_tree* tree, const void* key)
     return tree_search(tree, key);
 }
 
-bool
-hb_tree_insert(hb_tree* tree, void* key, void*** datum_location)
+void**
+hb_tree_insert(hb_tree* tree, void* key, bool* inserted)
 {
     ASSERT(tree != NULL);
 
@@ -195,21 +195,20 @@ hb_tree_insert(hb_tree* tree, void* key, void*** datum_location)
 	else if (cmp)
 	    parent = node, node = node->rlink;
 	else {
-	    if (datum_location)
-		*datum_location = &node->datum;
-	    return false;
+	    if (inserted)
+		*inserted = false;
+	    return &node->datum;
 	}
 	if (parent->bal)
 	    q = parent;
     }
 
-    if (!(node = node_new(key))) {
-	if (datum_location)
-	    *datum_location = NULL;
-	return false;
+    hb_node *add = node = node_new(key);
+    if (!node) {
+	return NULL;
     }
-    if (datum_location)
-	*datum_location = &node->datum;
+    if (inserted)
+	*inserted = true;
     if (!(node->parent = parent)) {
 	tree->root = node;
 	ASSERT(tree->count == 0);
@@ -249,7 +248,7 @@ hb_tree_insert(hb_tree* tree, void* key, void*** datum_location)
 	tree->rotation_count += rotations;
     }
     ++tree->count;
-    return true;
+    return &add->datum;
 }
 
 bool
