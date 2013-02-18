@@ -601,7 +601,7 @@ rot_right(pr_tree* tree, pr_node* node)
 static bool
 node_verify(const pr_tree* tree, const pr_node* parent, const pr_node* node)
 {
-    ASSERT(tree);
+    ASSERT(tree != NULL);
 
     if (!parent) {
 	VERIFY(tree->root == node);
@@ -632,7 +632,7 @@ node_verify(const pr_tree* tree, const pr_node* parent, const pr_node* node)
 bool
 pr_tree_verify(const pr_tree* tree)
 {
-    ASSERT(tree);
+    ASSERT(tree != NULL);
 
     if (tree->root) {
 	VERIFY(tree->count > 0);

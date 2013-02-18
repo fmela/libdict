@@ -532,7 +532,7 @@ wb_dict_itor_new(wb_tree* tree)
 static bool
 node_verify(const wb_tree* tree, const wb_node* parent, const wb_node* node)
 {
-    ASSERT(tree);
+    ASSERT(tree != NULL);
 
     if (!parent) {
 	VERIFY(tree->root == node);
@@ -555,7 +555,7 @@ node_verify(const wb_tree* tree, const wb_node* parent, const wb_node* node)
 bool
 wb_tree_verify(const wb_tree* tree)
 {
-    ASSERT(tree);
+    ASSERT(tree != NULL);
 
     if (tree->root) {
 	VERIFY(tree->count > 0);

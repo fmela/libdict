@@ -701,7 +701,7 @@ node_min(rb_node* node)
 static bool
 node_verify(const rb_tree* tree, const rb_node* parent, const rb_node* node)
 {
-    ASSERT(tree);
+    ASSERT(tree != NULL);
 
     if (parent == RB_NULL) {
 	VERIFY(tree->root == node);
@@ -729,7 +729,7 @@ node_verify(const rb_tree* tree, const rb_node* parent, const rb_node* node)
 bool
 rb_tree_verify(const rb_tree* tree)
 {
-    ASSERT(tree);
+    ASSERT(tree != NULL);
 
     if (tree->root != RB_NULL) {
 	VERIFY(tree->count > 0);

@@ -380,7 +380,7 @@ node_pathlen(const tr_node* node, size_t level)
 static bool
 node_verify(const tr_tree* tree, const tr_node* parent, const tr_node* node)
 {
-    ASSERT(tree);
+    ASSERT(tree != NULL);
 
     if (!parent) {
 	VERIFY(tree->root == node);
@@ -402,7 +402,7 @@ node_verify(const tr_tree* tree, const tr_node* parent, const tr_node* node)
 bool
 tr_tree_verify(const tr_tree* tree)
 {
-    ASSERT(tree);
+    ASSERT(tree != NULL);
 
     if (tree->root) {
 	VERIFY(tree->count > 0);

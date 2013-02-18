@@ -117,7 +117,7 @@ dict_free(dict* dct)
 dict*
 dict_clone(dict* dct, dict_key_datum_clone_func clone_func)
 {
-    ASSERT(dct);
+    ASSERT(dct != NULL);
 
     dict* clone = MALLOC(sizeof(*clone));
     if (clone) {

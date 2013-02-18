@@ -21,7 +21,7 @@
 # if defined(__GNUC__)
 #  define ASSERT(expr) \
     do { \
-	if (!(expr)) { \
+	if (!__builtin_expect((expr), 0)) { \
 	    fprintf(stderr, "\n%s:%d (%s) assertion failed: %s\n", \
 		    __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
 	    abort(); \

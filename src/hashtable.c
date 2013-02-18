@@ -118,7 +118,7 @@ hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func,
 hashtable*
 hashtable_clone(hashtable* table, dict_key_datum_clone_func clone_func)
 {
-    ASSERT(table);
+    ASSERT(table != NULL);
 
     hashtable* clone = hashtable_new(table->cmp_func, table->hash_func,
 				     table->del_func, table->size);

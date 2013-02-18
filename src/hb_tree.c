@@ -536,7 +536,7 @@ static bool
 node_verify(const hb_tree* tree, const hb_node* parent, const hb_node* node,
 	    unsigned* height)
 {
-    ASSERT(tree);
+    ASSERT(tree != NULL);
 
     if (!parent) {
 	VERIFY(tree->root == node);
@@ -564,7 +564,7 @@ node_verify(const hb_tree* tree, const hb_node* parent, const hb_node* node,
 bool
 hb_tree_verify(const hb_tree* tree)
 {
-    ASSERT(tree);
+    ASSERT(tree != NULL);
 
     if (tree->root) {
 	VERIFY(tree->count > 0);
