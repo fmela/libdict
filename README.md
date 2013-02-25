@@ -15,12 +15,4 @@ A generic object-oriented interface is provided, but is not required.
 
 libdict is released under the simplified BSD [license](https://github.com/fmela/libdict/blob/master/LICENSE).
 
-## Getting libdict
-
-The source code for libdict is available at http://github.com/fmela/libdict.
-
-You can get your own copy of the code with the following command:
-
-	git clone git://github.com/fmela/libdict.git
-
 **Please submit comments and bug reports via github.**
