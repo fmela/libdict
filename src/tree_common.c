@@ -179,7 +179,7 @@ tree_traverse(void* Tree, dict_visit_func visit)
 
     size_t count = 0;
     if (tree->root) {
-	tree_node* node = tree_node_min(tree);
+	tree_node* node = tree_node_min(tree->root);
 	do {
 	    ++count;
 	    if (!visit(node->key, node->datum))
