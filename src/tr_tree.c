@@ -96,7 +96,7 @@ static itor_vtable tr_tree_itor_vtable = {
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
     (dict_data_func)	    tree_iterator_data,
-    (dict_isearch_func)	    tr_itor_search,
+    (dict_isearch_func)	    tree_iterator_search,
     (dict_iremove_func)	    NULL,/* tr_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* tr_itor_compare not implemented yet */
 };
@@ -538,26 +538,6 @@ tr_itor_last(tr_itor* itor)
 	itor->node = NULL;
 	return false;
     }
-}
-
-bool
-tr_itor_search(tr_itor* itor, const void* key)
-{
-    ASSERT(itor != NULL);
-
-    for (tr_node* node = itor->tree->root; node;) {
-	int cmp = itor->tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    node = node->llink;
-	else if (cmp)
-	    node = node->rlink;
-	else {
-	    itor->node = node;
-	    return true;
-	}
-    }
-    itor->node = NULL;
-    return false;
 }
 
 const void*

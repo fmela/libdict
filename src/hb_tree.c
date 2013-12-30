@@ -75,7 +75,7 @@ static itor_vtable hb_tree_itor_vtable = {
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
     (dict_data_func)	    tree_iterator_data,
-    (dict_isearch_func)	    hb_itor_search,
+    (dict_isearch_func)	    tree_iterator_search,
     (dict_iremove_func)	    NULL,/* hb_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* hb_itor_compare not implemented yet */
 };
@@ -690,27 +690,6 @@ hb_itor_last(hb_itor* itor)
 
     itor->node = itor->tree->root ? tree_node_max(itor->tree->root) : NULL;
     return itor->node != NULL;
-}
-
-bool
-hb_itor_search(hb_itor* itor, const void* key)
-{
-    ASSERT(itor != NULL);
-
-    hb_node* node = itor->tree->root;
-    while (node) {
-	int cmp = itor->tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    node = node->llink;
-	else if (cmp)
-	    node = node->rlink;
-	else {
-	    itor->node = node;
-	    return true;
-	}
-    }
-    itor->node = NULL;
-    return false;
 }
 
 const void*

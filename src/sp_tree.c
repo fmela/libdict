@@ -679,6 +679,7 @@ sp_itor_search(sp_itor* itor, const void* key)
 {
     ASSERT(itor != NULL);
 
+    /* TODO: use algorithm from sp_tree_search() */
     return tree_iterator_search(itor, key);
 }
 
