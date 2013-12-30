@@ -139,20 +139,7 @@ pr_tree_clone(pr_tree* tree, dict_key_datum_clone_func clone_func)
 void*
 pr_tree_search(pr_tree* tree, const void* key)
 {
-    ASSERT(tree != NULL);
-
-    pr_node* node = tree->root;
-    while (node) {
-	int cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    node = node->llink;
-	else if (cmp)
-	    node = node->rlink;
-	else
-	    return node->datum;
-    }
-
-    return NULL;
+    return tree_search(tree, key);
 }
 
 static unsigned
