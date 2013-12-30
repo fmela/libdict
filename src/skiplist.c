@@ -91,6 +91,7 @@ static itor_vtable skiplist_itor_vtable = {
     (dict_last_func)	    skiplist_itor_last,
     (dict_key_func)	    skiplist_itor_key,
     (dict_data_func)	    skiplist_itor_data,
+    (dict_isearch_func)	    skiplist_itor_search,
     (dict_iremove_func)	    NULL,/* skiplist_itor_remove not implemented yet */
     (dict_icompare_func)    NULL/* skiplist_itor_compare not implemented yet */
 };

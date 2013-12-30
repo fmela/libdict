@@ -91,6 +91,7 @@ static itor_vtable sp_tree_itor_vtable = {
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
     (dict_data_func)	    tree_iterator_data,
+    (dict_isearch_func)	    sp_itor_search,
     (dict_iremove_func)	    NULL,/* sp_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* sp_itor_compare not implemented yet */
 };

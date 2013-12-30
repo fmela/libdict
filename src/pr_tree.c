@@ -77,6 +77,7 @@ static itor_vtable pr_tree_itor_vtable = {
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
     (dict_data_func)	    tree_iterator_data,
+    (dict_isearch_func)	    pr_itor_search,
     (dict_iremove_func)	    NULL,/* pr_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* pr_itor_compare not implemented yet */
 };

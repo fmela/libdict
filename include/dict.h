@@ -116,6 +116,7 @@ typedef bool	    (*dict_first_func)(void* itor);
 typedef bool	    (*dict_last_func)(void* itor);
 typedef void*	    (*dict_key_func)(void* itor);
 typedef void**	    (*dict_data_func)(void* itor);
+typedef bool	    (*dict_isearch_func)(void* itor, const void* key);
 typedef bool	    (*dict_iremove_func)(void* itor);
 typedef int	    (*dict_icompare_func)(void* itor1, void* itor2);
 
@@ -131,6 +132,7 @@ typedef struct {
     dict_last_func	    last;
     dict_key_func	    key;
     dict_data_func	    data;
+    dict_isearch_func       search;
     dict_iremove_func       remove;
     dict_icompare_func      compare;
 } itor_vtable;
