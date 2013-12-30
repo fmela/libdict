@@ -584,6 +584,7 @@ hashtable_itor_search(hashtable_itor* itor, const void* key)
 	    itor->slot = mhash;
 	    return true;
 	}
+	node = node->next;
     }
     itor->node = NULL;
     itor->slot = 0;
