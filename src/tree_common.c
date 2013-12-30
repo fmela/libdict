@@ -127,7 +127,7 @@ tree_node_max(void* Node)
 }
 
 void*
-tree_search(void* Tree, const void* key)
+tree_search_node(void* Tree, const void* key)
 {
     tree* tree = Tree;
     ASSERT(tree != NULL);
@@ -139,9 +139,17 @@ tree_search(void* Tree, const void* key)
 	else if (cmp)
 	    node = node->rlink;
 	else
-	    return node->datum;
+	    return node;
     }
     return NULL;
+}
+
+void*
+tree_search(void* Tree, const void* key)
+{
+    tree_node* node = tree_search_node(Tree, key);
+
+    return node ? node->datum : NULL;
 }
 
 const void*
@@ -428,7 +436,7 @@ tree_iterator_search(void* Iterator, const void* key)
     tree_iterator* iterator = Iterator;
     ASSERT(iterator != NULL);
     ASSERT(iterator->tree != NULL);
-    return (iterator->node = tree_search(iterator->tree, key)) != NULL;
+    return (iterator->node = tree_search_node(iterator->tree, key)) != NULL;
 }
 
 const void*

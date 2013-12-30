@@ -56,6 +56,8 @@ void*	    tree_node_min(void *node);
 void*	    tree_node_max(void *node);
 /* Return the data associated with the key, or NULL if not found. */
 void*	    tree_search(void *tree, const void *key);
+/* Return the node has the key, or NULL if not found. */
+void*	    tree_search_node(void *tree, const void *key);
 /* Return the minimal key in the tree, or NULL if the tree is empty. */
 const void* tree_min(const void *tree);
 /* Return the maximal key in the tree, or NULL if the tree is empty. */
