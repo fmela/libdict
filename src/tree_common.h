@@ -58,6 +58,22 @@ void*	    tree_node_max(void *node);
 void*	    tree_search(void *tree, const void *key);
 /* Return the node has the key, or NULL if not found. */
 void*	    tree_search_node(void *tree, const void *key);
+/* Return the data/node associated with the first key less than or
+ * equal to the specified key, or NULL if not found. */
+void*	    tree_search_le(void *tree, const void *key);
+void*	    tree_search_le_node(void *tree, const void *key);
+/* Return the data/node associated with the first key less than the
+ * specified key, or NULL if not found. */
+void*	    tree_search_lt(void *tree, const void *key);
+void*	    tree_search_lt_node(void *tree, const void *key);
+/* Return the data/node associated with the first key greater than or
+ * equal to the specified key, or NULL if not found. */
+void*	    tree_search_ge(void *tree, const void *key);
+void*	    tree_search_ge_node(void *tree, const void *key);
+/* Return the data/node associated with the first key greater than the
+ * specified key, or NULL if not found. */
+void*	    tree_search_gt(void *tree, const void *key);
+void*	    tree_search_gt_node(void *tree, const void *key);
 /* Return the minimal key in the tree, or NULL if the tree is empty. */
 const void* tree_min(const void *tree);
 /* Return the maximal key in the tree, or NULL if the tree is empty. */
@@ -92,6 +108,10 @@ bool	    tree_iterator_prev_n(void *iterator, size_t count);
 bool	    tree_iterator_first(void *iterator);
 bool	    tree_iterator_last(void *iterator);
 bool	    tree_iterator_search(void *iterator, const void *key);
+bool	    tree_iterator_search_le(void *iterator, const void *key);
+bool	    tree_iterator_search_lt(void *iterator, const void *key);
+bool	    tree_iterator_search_ge(void *iterator, const void *key);
+bool	    tree_iterator_search_gt(void *iterator, const void *key);
 const void* tree_iterator_key(const void *iterator);
 void**	    tree_iterator_data(void *iterator);
 
