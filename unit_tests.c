@@ -158,7 +158,24 @@ static const struct key_info keys2[] = {
 };
 #define NKEYS2 (sizeof(keys2) / sizeof(keys2[0]))
 
+void
+test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
+{
+    CU_ASSERT_EQUAL(dict_search(dct, key), value);
+    if (itor != NULL) {
+	if (value == NULL) {
+	    CU_ASSERT_EQUAL(dict_itor_search(itor, key), false);
+	} else {
+	    CU_ASSERT_EQUAL(dict_itor_search(itor, key), true);
+	    CU_ASSERT_EQUAL(dict_itor_key(itor), key);
+	    CU_ASSERT_EQUAL(*dict_itor_data(itor), value);
+	}
+    }
+}
+
 void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
+    dict_itor *itor = dict_itor_new(dct);
+
     CU_ASSERT_TRUE(dict_verify(dct));
 
     for (unsigned i = 0; i < nkeys; ++i) {
@@ -172,9 +189,9 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 	CU_ASSERT_TRUE(dict_verify(dct));
 
 	for (unsigned j = 0; j <= i; ++j)
-	    CU_ASSERT_EQUAL(dict_search(dct, keys[j].key), keys[j].value);
+	    test_search(dct, itor, keys[j].key, keys[j].value);
 	for (unsigned j = i + 1; j < nkeys; ++j)
-	    CU_ASSERT_EQUAL(dict_search(dct, keys[j].key), NULL);
+	    test_search(dct, itor, keys[j].key, NULL);
     }
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
 
@@ -185,7 +202,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 	CU_ASSERT_TRUE(hashtable_resize(dict_private(clone), 3));
 	CU_ASSERT_TRUE(dict_verify(dct));
 	for (unsigned j = 0; j < nkeys; ++j)
-	    CU_ASSERT_EQUAL(dict_search(clone, keys[j].key), keys[j].value);
+	    test_search(clone, NULL, keys[j].key, keys[j].value);
 	dict_free(clone);
     }
 
@@ -195,7 +212,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 	CU_ASSERT_TRUE(dict_verify(clone));
 	CU_ASSERT_EQUAL(dict_count(clone), nkeys);
 	for (unsigned i = 0; i < nkeys; ++i) {
-	    CU_ASSERT_EQUAL(dict_search(clone, keys[i].key), keys[i].value);
+	    test_search(clone, itor, keys[i].key, keys[i].value);
 	}
 	for (unsigned i = 0; i < nkeys; ++i) {
 	    CU_ASSERT_TRUE(dict_remove(clone, keys[i].key));
@@ -204,7 +221,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     }
 
     for (unsigned i = 0; i < nkeys; ++i)
-	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), keys[i].value);
+	test_search(dct, itor, keys[i].key, keys[i].value);
 
     for (unsigned i = 0; i < nkeys; ++i) {
 	bool inserted = false;
@@ -217,7 +234,6 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     }
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
 
-    dict_itor *itor = dict_itor_new(dct);
     CU_ASSERT_PTR_NOT_NULL(itor);
     char *last_key = NULL;
     unsigned n = 0;
@@ -275,7 +291,6 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 	++n;
     }
     CU_ASSERT_EQUAL(n, nkeys);
-    dict_itor_free(itor);
 
     for (unsigned i = 0; i < nkeys; ++i) {
 	bool inserted = false;
@@ -290,19 +305,19 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
 
     for (unsigned i = 0; i < nkeys; ++i)
-	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), keys[i].alt);
+	test_search(dct, itor, keys[i].key, keys[i].alt);
 
     for (unsigned i = 0; i < nkeys; ++i) {
-	CU_ASSERT_EQUAL(dict_search(dct, keys[i].key), keys[i].alt);
+	test_search(dct, itor, keys[i].key, keys[i].alt);
 	CU_ASSERT_TRUE(dict_remove(dct, keys[i].key));
 	CU_ASSERT_TRUE(dict_verify(dct));
 
 	CU_ASSERT_EQUAL(dict_remove(dct, keys[i].key), false);
 	for (unsigned j = 0; j <= i; ++j) {
-	    CU_ASSERT_EQUAL(dict_search(dct, keys[j].key), NULL);
+	    test_search(dct, itor, keys[j].key, NULL);
 	}
 	for (unsigned j = i + 1; j < nkeys; ++j) {
-	    CU_ASSERT_EQUAL(dict_search(dct, keys[j].key), keys[j].alt);
+	    test_search(dct, itor, keys[j].key, keys[j].alt);
 	}
     }
 
@@ -329,6 +344,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 
 	CU_ASSERT_TRUE(dict_verify(dct));
     }
+    dict_itor_free(itor);
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
     CU_ASSERT_EQUAL(dict_free(dct), nkeys);
 }
