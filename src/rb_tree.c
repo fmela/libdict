@@ -72,6 +72,10 @@ static dict_vtable rb_tree_vtable = {
     (dict_dfree_func)	    rb_tree_free,
     (dict_insert_func)	    rb_tree_insert,
     (dict_search_func)	    rb_tree_search,
+    (dict_search_func)	    NULL,/* search_le: not implemented */
+    (dict_search_func)	    NULL,/* search_lt: not implemented */
+    (dict_search_func)	    NULL,/* search_ge: not implemented */
+    (dict_search_func)	    NULL,/* search_gt: not implemented */
     (dict_remove_func)	    rb_tree_remove,
     (dict_clear_func)	    rb_tree_clear,
     (dict_traverse_func)    rb_tree_traverse,
@@ -93,6 +97,10 @@ static itor_vtable rb_tree_itor_vtable = {
     (dict_key_func)	    rb_itor_key,
     (dict_data_func)	    rb_itor_data,
     (dict_isearch_func)	    rb_itor_search,
+    (dict_isearch_func)	    NULL,/* itor_search_le: not implemented */
+    (dict_isearch_func)	    NULL,/* itor_search_lt: not implemented */
+    (dict_isearch_func)	    NULL,/* itor_search_ge: not implemented */
+    (dict_isearch_func)	    NULL,/* itor_search_gt: not implemented */
     (dict_iremove_func)	    NULL,/* rb_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* rb_itor_compare not implemented yet */
 };
