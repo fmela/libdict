@@ -20,7 +20,17 @@ struct key_info {
     char *key, *value, *alt;
 };
 
-void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys);
+struct closest_lookup_info {
+    const char *key;
+    const char *le_key, *le_val;
+    const char *lt_key, *lt_val;
+    const char *ge_key, *ge_val;
+    const char *gt_key, *gt_val;
+};
+
+void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
+		const struct closest_lookup_info *cl_infos,
+		unsigned n_cl_infos);
 void test_basic_hashtable_1bucket();
 void test_basic_hashtable_nbuckets();
 void test_basic_height_balanced_tree();
@@ -158,6 +168,45 @@ static const struct key_info keys2[] = {
 };
 #define NKEYS2 (sizeof(keys2) / sizeof(keys2[0]))
 
+static const struct closest_lookup_info cl_infos[] = {
+    {.key = "_",
+     .ge_key = "a", .ge_val = "A",
+     .gt_key = "a", .gt_val = "A"},
+    {.key = "a",
+     .le_key = "a", .le_val = "A",
+     .ge_key = "a", .ge_val = "A",
+     .gt_key = "aa", .gt_val = "AA"},
+    {.key = "aa",
+     .le_key = "aa", .le_val = "AA",
+     .lt_key = "a", .lt_val = "A",
+     .ge_key = "aa", .ge_val = "AA",
+     .gt_key = "b", .gt_val = "B"},
+    {.key = "ab",
+     .le_key = "aa", .le_val = "AA",
+     .lt_key = "aa", .lt_val = "AA",
+     .ge_key = "b", .ge_val = "B",
+     .gt_key = "b", .gt_val = "B"},
+    {.key = "m",
+     .le_key = "m", .le_val = "M",
+     .lt_key = "la", .lt_val = "LA",
+     .ge_key = "m", .ge_val = "M",
+     .gt_key = "ma", .gt_val = "MA"},
+    {.key = "n",
+     .le_key = "ma", .le_val = "MA",
+     .lt_key = "ma", .lt_val = "MA",
+     .ge_key = "p", .ge_val = "P",
+     .gt_key = "p", .gt_val = "P"},
+    {.key = "za",
+     .le_key = "za", .le_val = "ZA",
+     .lt_key = "z", .lt_val = "Z",
+     .ge_key = "za", .ge_val = "ZA"},
+    {.key = "zb",
+     .le_key = "za", .le_val = "ZA",
+     .lt_key = "za", .lt_val = "ZA"},
+};
+
+#define N_CL_INFOS (sizeof(cl_infos) / sizeof(cl_infos[0]))
+
 void
 test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
 {
@@ -173,7 +222,73 @@ test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
     }
 }
 
-void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
+static void
+test_closest_lookup(
+    dict *dct, const struct closest_lookup_info *cl_infos, unsigned n_cl_infos)
+{
+    dict_itor *itor;
+    unsigned i;
+
+    if (dct->_vtable->search_le == NULL)
+	return;
+
+    itor = dict_itor_new(dct);
+    for (i = 0; i < n_cl_infos; i++) {
+	if (cl_infos[i].le_key) {
+	    CU_ASSERT_STRING_EQUAL(dict_search_le(dct, cl_infos[i].key),
+				   cl_infos[i].le_val);
+	    CU_ASSERT_EQUAL(dict_itor_search_le(itor, cl_infos[i].key), true);
+	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].le_key);
+	    CU_ASSERT_STRING_EQUAL(*dict_itor_data(itor), cl_infos[i].le_val);
+	} else {
+	    CU_ASSERT_PTR_NULL(dict_search_le(dct, cl_infos[i].key));
+	    CU_ASSERT_EQUAL(dict_itor_search_le(itor, cl_infos[i].key), false);
+	    CU_ASSERT_PTR_NULL(dict_itor_key(itor));
+	    CU_ASSERT_PTR_NULL(dict_itor_data(itor));
+	}
+	if (cl_infos[i].lt_key) {
+	    CU_ASSERT_STRING_EQUAL(dict_search_lt(dct, cl_infos[i].key),
+				   cl_infos[i].lt_val);
+	    CU_ASSERT_EQUAL(dict_itor_search_lt(itor, cl_infos[i].key), true);
+	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].lt_key);
+	    CU_ASSERT_STRING_EQUAL(*dict_itor_data(itor), cl_infos[i].lt_val);
+	} else {
+	    CU_ASSERT_PTR_NULL(dict_search_lt(dct, cl_infos[i].key));
+	    CU_ASSERT_EQUAL(dict_itor_search_lt(itor, cl_infos[i].key), false);
+	    CU_ASSERT_PTR_NULL(dict_itor_key(itor));
+	    CU_ASSERT_PTR_NULL(dict_itor_data(itor));
+	}
+	if (cl_infos[i].ge_key) {
+	    CU_ASSERT_STRING_EQUAL(dict_search_ge(dct, cl_infos[i].key),
+				   cl_infos[i].ge_val);
+	    CU_ASSERT_EQUAL(dict_itor_search_ge(itor, cl_infos[i].key), true);
+	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].ge_key);
+	    CU_ASSERT_STRING_EQUAL(*dict_itor_data(itor), cl_infos[i].ge_val);
+	} else {
+	    CU_ASSERT_PTR_NULL(dict_search_ge(dct, cl_infos[i].key));
+	    CU_ASSERT_EQUAL(dict_itor_search_ge(itor, cl_infos[i].key), false);
+	    CU_ASSERT_PTR_NULL(dict_itor_key(itor));
+	    CU_ASSERT_PTR_NULL(dict_itor_data(itor));
+	}
+	if (cl_infos[i].gt_key) {
+	    CU_ASSERT_STRING_EQUAL(dict_search_gt(dct, cl_infos[i].key),
+				   cl_infos[i].gt_val);
+	    CU_ASSERT_EQUAL(dict_itor_search_gt(itor, cl_infos[i].key), true);
+	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].gt_key);
+	    CU_ASSERT_STRING_EQUAL(*dict_itor_data(itor), cl_infos[i].gt_val);
+	} else {
+	    CU_ASSERT_PTR_NULL(dict_search_gt(dct, cl_infos[i].key));
+	    CU_ASSERT_EQUAL(dict_itor_search_gt(itor, cl_infos[i].key), false);
+	    CU_ASSERT_PTR_NULL(dict_itor_key(itor));
+	    CU_ASSERT_PTR_NULL(dict_itor_data(itor));
+	}
+    }
+    dict_itor_free(itor);
+}
+
+void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
+		const struct closest_lookup_info *cl_infos,
+		unsigned n_cl_infos) {
     dict_itor *itor = dict_itor_new(dct);
 
     CU_ASSERT_TRUE(dict_verify(dct));
@@ -344,6 +459,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys) {
 
 	CU_ASSERT_TRUE(dict_verify(dct));
     }
+    test_closest_lookup(dct, cl_infos, n_cl_infos);
     dict_itor_free(itor);
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
     CU_ASSERT_EQUAL(dict_free(dct), nkeys);
@@ -362,59 +478,73 @@ strhash(const void *p)
 void test_basic_hashtable_1bucket()
 {
     test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 1),
-	       keys1, NKEYS1);
+	       keys1, NKEYS1, cl_infos, N_CL_INFOS);
     test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 1),
-	       keys2, NKEYS2);
+	       keys2, NKEYS2, cl_infos, N_CL_INFOS);
 }
 
 void test_basic_hashtable_nbuckets()
 {
     test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 7),
-	       keys1, NKEYS1);
+	       keys1, NKEYS1, cl_infos, N_CL_INFOS);
     test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 7),
-	       keys2, NKEYS2);
+	       keys2, NKEYS2, cl_infos, N_CL_INFOS);
 }
 
 void test_basic_height_balanced_tree()
 {
-    test_basic(hb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
-    test_basic(hb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
+    test_basic(hb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
+	       cl_infos, N_CL_INFOS);
+    test_basic(hb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
+	       cl_infos, N_CL_INFOS);
 }
 
 void test_basic_path_reduction_tree()
 {
-    test_basic(pr_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
-    test_basic(pr_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
+    test_basic(pr_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
+	       cl_infos, N_CL_INFOS);
+    test_basic(pr_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
+	       cl_infos, N_CL_INFOS);
 }
 
 void test_basic_red_black_tree()
 {
-    test_basic(rb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
-    test_basic(rb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
+    test_basic(rb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
+	       cl_infos, N_CL_INFOS);
+    test_basic(rb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
+	       cl_infos, N_CL_INFOS);
 }
 
 void test_basic_skiplist()
 {
-    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 13), keys1, NKEYS1);
-    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 13), keys2, NKEYS2);
+    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 13), keys1, NKEYS1,
+	       cl_infos, N_CL_INFOS);
+    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 13), keys2, NKEYS2,
+	       cl_infos, N_CL_INFOS);
 }
 
 void test_basic_splay_tree()
 {
-    test_basic(sp_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
-    test_basic(sp_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
+    test_basic(sp_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
+	       cl_infos, N_CL_INFOS);
+    test_basic(sp_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
+	       cl_infos, N_CL_INFOS);
 }
 
 void test_basic_treap()
 {
-    test_basic(tr_dict_new(dict_str_cmp, NULL, NULL), keys1, NKEYS1);
-    test_basic(tr_dict_new(dict_str_cmp, NULL, NULL), keys2, NKEYS2);
+    test_basic(tr_dict_new(dict_str_cmp, NULL, NULL), keys1, NKEYS1,
+	       cl_infos, N_CL_INFOS);
+    test_basic(tr_dict_new(dict_str_cmp, NULL, NULL), keys2, NKEYS2,
+	       cl_infos, N_CL_INFOS);
 }
 
 void test_basic_weight_balanced_tree()
 {
-    test_basic(wb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1);
-    test_basic(wb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2);
+    test_basic(wb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
+	       cl_infos, N_CL_INFOS);
+    test_basic(wb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
+	       cl_infos, N_CL_INFOS);
 }
 
 void test_version_string()
