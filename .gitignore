@@ -1,8 +1,8 @@
 words-*
 shuffle.pl
 bin/*
-algorithms/*.log
-algorithms/*.pdf
-algorithms/*.aux
+*.log
+*.pdf
+*.aux
 .*.swp
 *.pdf
