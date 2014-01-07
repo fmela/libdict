@@ -25,11 +25,10 @@ typedef struct {
 void
 tree_node_rot_left(void* Tree, void* Node)
 {
-    tree* t = Tree;
-    tree_node* n = Node;
+    ASSERT(Tree != NULL);
+    ASSERT(Node != NULL);
 
-    ASSERT(t != NULL);
-    ASSERT(n != NULL);
+    tree_node* n = Node;
     tree_node* nr = n->rlink;
     ASSERT(nr != NULL);
     if ((n->rlink = nr->llink) != NULL)
@@ -44,18 +43,17 @@ tree_node_rot_left(void* Tree, void* Node)
 	else
 	    p->rlink = nr;
     } else {
-	t->root = nr;
+	((tree *)Tree)->root = nr;
     }
 }
 
 void
 tree_node_rot_right(void* Tree, void* Node)
 {
-    tree* t = Tree;
-    tree_node* n = Node;
+    ASSERT(Tree != NULL);
+    ASSERT(Node != NULL);
 
-    ASSERT(t != NULL);
-    ASSERT(n != NULL);
+    tree_node* n = Node;
     tree_node* nl = n->llink;
     ASSERT(nl != NULL);
     if ((n->llink = nl->rlink) != NULL)
@@ -70,7 +68,7 @@ tree_node_rot_right(void* Tree, void* Node)
 	else
 	    p->rlink = nl;
     } else {
-	t->root = nl;
+	((tree *)Tree)->root = nl;
     }
 }
 
@@ -129,10 +127,10 @@ tree_node_max(void* Node)
 void*
 tree_search(void* Tree, const void* key)
 {
+    ASSERT(Tree != NULL);
+
     tree* tree = Tree;
-    ASSERT(tree != NULL);
-    tree_node* node = tree->root;
-    while (node) {
+    for (tree_node* node = tree->root; node;) {
 	int cmp = tree->cmp_func(key, node->key);
 	if (cmp < 0)
 	    node = node->llink;
@@ -147,8 +145,9 @@ tree_search(void* Tree, const void* key)
 const void*
 tree_min(const void* Tree)
 {
+    ASSERT(Tree != NULL);
+
     const tree* tree = Tree;
-    ASSERT(tree != NULL);
     if (!tree->root)
 	return NULL;
     const tree_node* node = tree->root;
@@ -160,8 +159,9 @@ tree_min(const void* Tree)
 const void*
 tree_max(const void* Tree)
 {
+    ASSERT(Tree != NULL);
+
     const tree* tree = Tree;
-    ASSERT(tree != NULL);
     if (!tree->root)
 	return NULL;
     const tree_node* node = tree->root;
@@ -173,10 +173,10 @@ tree_max(const void* Tree)
 size_t
 tree_traverse(void* Tree, dict_visit_func visit)
 {
-    tree* tree = Tree;
-    ASSERT(tree != NULL);
+    ASSERT(Tree != NULL);
     ASSERT(visit != NULL);
 
+    tree* tree = Tree;
     size_t count = 0;
     if (tree->root) {
 	tree_node* node = tree_node_min(tree->root);
@@ -209,17 +209,16 @@ tree_node_free(tree* tree, tree_node* node)
 size_t
 tree_count(const void* Tree)
 {
-    const tree* tree = Tree;
-    ASSERT(tree != NULL);
-    return tree->count;
+    ASSERT(Tree != NULL);
+    return ((tree *)Tree)->count;
 }
 
 size_t
 tree_clear(void* Tree)
 {
-    tree* tree = Tree;
-    ASSERT(tree != NULL);
+    ASSERT(Tree != NULL);
 
+    tree* tree = Tree;
     const size_t count = tree->count;
     if (tree->root) {
 	tree_node_free(tree, tree->root);
@@ -232,11 +231,10 @@ tree_clear(void* Tree)
 size_t
 tree_free(void* Tree)
 {
-    tree* tree = Tree;
-    ASSERT(tree != NULL);
+    ASSERT(Tree != NULL);
 
-    const size_t count = tree_clear(tree);
-    FREE(tree);
+    const size_t count = tree_clear(Tree);
+    FREE(Tree);
     return count;
 }
 
@@ -336,8 +334,8 @@ tree_iterator_valid(const void* Iterator)
 void
 tree_iterator_invalidate(void* Iterator)
 {
+    ASSERT(Iterator != NULL);
     tree_iterator* iterator = Iterator;
-    ASSERT(iterator != NULL);
     ASSERT(iterator->tree != NULL);
     iterator->node = NULL;
 }
@@ -345,8 +343,8 @@ tree_iterator_invalidate(void* Iterator)
 void
 tree_iterator_free(void* Iterator)
 {
+    ASSERT(Iterator != NULL);
     tree_iterator* iterator = Iterator;
-    ASSERT(iterator != NULL);
     ASSERT(iterator->tree != NULL);
     tree_iterator_invalidate(iterator);
     FREE(iterator);
@@ -355,8 +353,8 @@ tree_iterator_free(void* Iterator)
 bool
 tree_iterator_next(void* Iterator)
 {
+    ASSERT(Iterator != NULL);
     tree_iterator* iterator = Iterator;
-    ASSERT(iterator != NULL);
     ASSERT(iterator->tree != NULL);
     if (iterator->node)
 	return (iterator->node = tree_node_next(iterator->node)) != NULL;
@@ -366,8 +364,8 @@ tree_iterator_next(void* Iterator)
 bool
 tree_iterator_prev(void* Iterator)
 {
+    ASSERT(Iterator != NULL);
     tree_iterator* iterator = Iterator;
-    ASSERT(iterator != NULL);
     ASSERT(iterator->tree != NULL);
     if (iterator->node)
 	return (iterator->node = tree_node_prev(iterator->node)) != NULL;
@@ -377,8 +375,8 @@ tree_iterator_prev(void* Iterator)
 bool
 tree_iterator_next_n(void* Iterator, size_t count)
 {
+    ASSERT(Iterator != NULL);
     tree_iterator* iterator = Iterator;
-    ASSERT(iterator != NULL);
     ASSERT(iterator->tree != NULL);
     while (iterator->node && count--)
 	iterator->node = tree_node_next(iterator->node);
@@ -388,8 +386,8 @@ tree_iterator_next_n(void* Iterator, size_t count)
 bool
 tree_iterator_prev_n(void* Iterator, size_t count)
 {
+    ASSERT(Iterator != NULL);
     tree_iterator* iterator = Iterator;
-    ASSERT(iterator != NULL);
     ASSERT(iterator->tree != NULL);
     while (iterator->node && count--)
 	iterator->node = tree_node_prev(iterator->node);
@@ -399,8 +397,8 @@ tree_iterator_prev_n(void* Iterator, size_t count)
 bool
 tree_iterator_first(void* Iterator)
 {
+    ASSERT(Iterator != NULL);
     tree_iterator* iterator = Iterator;
-    ASSERT(iterator != NULL);
     ASSERT(iterator->tree != NULL);
     if (iterator->tree->root) {
 	iterator->node = tree_node_min(iterator->tree->root);
@@ -412,8 +410,8 @@ tree_iterator_first(void* Iterator)
 bool
 tree_iterator_last(void* Iterator)
 {
+    ASSERT(Iterator != NULL);
     tree_iterator* iterator = Iterator;
-    ASSERT(iterator != NULL);
     ASSERT(iterator->tree != NULL);
     if (iterator->tree->root) {
 	iterator->node = tree_node_max(iterator->tree->root);
@@ -425,8 +423,8 @@ tree_iterator_last(void* Iterator)
 bool
 tree_iterator_search(void* Iterator, const void* key)
 {
+    ASSERT(Iterator != NULL);
     tree_iterator* iterator = Iterator;
-    ASSERT(iterator != NULL);
     ASSERT(iterator->tree != NULL);
     return (iterator->node = tree_search(iterator->tree, key)) != NULL;
 }
@@ -434,8 +432,8 @@ tree_iterator_search(void* Iterator, const void* key)
 const void*
 tree_iterator_key(const void* Iterator)
 {
+    ASSERT(Iterator != NULL);
     const tree_iterator* iterator = Iterator;
-    ASSERT(iterator != NULL);
     ASSERT(iterator->tree != NULL);
     return iterator->node ? iterator->node->key : NULL;
 }
@@ -443,8 +441,8 @@ tree_iterator_key(const void* Iterator)
 void**
 tree_iterator_data(void* Iterator)
 {
+    ASSERT(Iterator != NULL);
     tree_iterator* iterator = Iterator;
-    ASSERT(iterator != NULL);
     ASSERT(iterator->tree != NULL);
     return iterator->node ? &iterator->node->datum : NULL;
 }
