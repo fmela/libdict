@@ -168,7 +168,7 @@ static const struct key_info keys2[] = {
 };
 #define NKEYS2 (sizeof(keys2) / sizeof(keys2[0]))
 
-static const struct closest_lookup_info cl_infos[] = {
+static const struct closest_lookup_info closest_lookup_infos[] = {
     {.key = "_",
      .ge_key = "a", .ge_val = "A",
      .gt_key = "a", .gt_val = "A"},
@@ -205,7 +205,7 @@ static const struct closest_lookup_info cl_infos[] = {
      .lt_key = "za", .lt_val = "ZA"},
 };
 
-#define N_CL_INFOS (sizeof(cl_infos) / sizeof(cl_infos[0]))
+#define NUM_CLOSEST_LOOKUP_INFOS (sizeof(closest_lookup_infos) / sizeof(closest_lookup_infos[0]))
 
 void
 test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
@@ -478,73 +478,73 @@ strhash(const void *p)
 void test_basic_hashtable_1bucket()
 {
     test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 1),
-	       keys1, NKEYS1, cl_infos, N_CL_INFOS);
+	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
     test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 1),
-	       keys2, NKEYS2, cl_infos, N_CL_INFOS);
+	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_hashtable_nbuckets()
 {
     test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 7),
-	       keys1, NKEYS1, cl_infos, N_CL_INFOS);
+	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
     test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 7),
-	       keys2, NKEYS2, cl_infos, N_CL_INFOS);
+	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_height_balanced_tree()
 {
     test_basic(hb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
     test_basic(hb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_path_reduction_tree()
 {
     test_basic(pr_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
     test_basic(pr_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_red_black_tree()
 {
     test_basic(rb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
     test_basic(rb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_skiplist()
 {
     test_basic(skiplist_dict_new(dict_str_cmp, NULL, 13), keys1, NKEYS1,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
     test_basic(skiplist_dict_new(dict_str_cmp, NULL, 13), keys2, NKEYS2,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_splay_tree()
 {
     test_basic(sp_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
     test_basic(sp_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_treap()
 {
     test_basic(tr_dict_new(dict_str_cmp, NULL, NULL), keys1, NKEYS1,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
     test_basic(tr_dict_new(dict_str_cmp, NULL, NULL), keys2, NKEYS2,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_weight_balanced_tree()
 {
     test_basic(wb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
     test_basic(wb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
-	       cl_infos, N_CL_INFOS);
+	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_version_string()
