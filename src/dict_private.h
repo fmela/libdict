@@ -18,7 +18,7 @@
  * sometimes useful. */
 #ifndef NDEBUG
 # undef ASSERT
-# if defined(__GNUC__)
+# if defined(__GNUC__) || defined(__clang__)
 #  define ASSERT(expr) \
     do { \
 	if (!__builtin_expect((expr), 0)) { \
@@ -58,7 +58,7 @@
 #define MAX(a,b)	((a) > (b) ? (a) : (b))
 #define SWAP(a,b,v)	do { v = (a); (a) = (b); (b) = v; } while (0)
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__clang__)
 # define GCC_INLINE	__inline__
 # define GCC_CONST	__attribute__((__const__))
 #else

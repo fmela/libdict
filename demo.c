@@ -17,7 +17,7 @@ const char appname[] = "demo";
 
 char *xstrdup(const char *str);
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
 # define NORETURN	__attribute__((__noreturn__))
 #else
 # define NORETURN
