@@ -72,10 +72,10 @@ static dict_vtable rb_tree_vtable = {
     (dict_dfree_func)	    rb_tree_free,
     (dict_insert_func)	    rb_tree_insert,
     (dict_search_func)	    rb_tree_search,
-    (dict_search_func)	    NULL,/* search_le: not implemented */
-    (dict_search_func)	    NULL,/* search_lt: not implemented */
-    (dict_search_func)	    NULL,/* search_ge: not implemented */
-    (dict_search_func)	    NULL,/* search_gt: not implemented */
+    (dict_search_func)	    rb_tree_search_le,
+    (dict_search_func)	    rb_tree_search_lt,
+    (dict_search_func)	    rb_tree_search_ge,
+    (dict_search_func)	    rb_tree_search_gt,
     (dict_remove_func)	    rb_tree_remove,
     (dict_clear_func)	    rb_tree_clear,
     (dict_traverse_func)    rb_tree_traverse,
@@ -97,16 +97,16 @@ static itor_vtable rb_tree_itor_vtable = {
     (dict_key_func)	    rb_itor_key,
     (dict_data_func)	    rb_itor_data,
     (dict_isearch_func)	    rb_itor_search,
-    (dict_isearch_func)	    NULL,/* itor_search_le: not implemented */
-    (dict_isearch_func)	    NULL,/* itor_search_lt: not implemented */
-    (dict_isearch_func)	    NULL,/* itor_search_ge: not implemented */
-    (dict_isearch_func)	    NULL,/* itor_search_gt: not implemented */
+    (dict_isearch_func)	    rb_itor_search_le,
+    (dict_isearch_func)	    rb_itor_search_lt,
+    (dict_isearch_func)	    rb_itor_search_ge,
+    (dict_isearch_func)	    rb_itor_search_gt,
     (dict_iremove_func)	    NULL,/* rb_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* rb_itor_compare not implemented yet */
 };
 
-static rb_node _null = { NULL, NULL, NULL, NULL, { RB_BLACK } };
-#define RB_NULL	&_null
+static rb_node rb_null = { NULL, NULL, NULL, NULL, { RB_BLACK } };
+#define RB_NULL	&rb_null
 
 static void	rot_left(rb_tree* tree, rb_node* node);
 static void	rot_right(rb_tree* tree, rb_node* node);
@@ -192,11 +192,10 @@ rb_tree_clone(rb_tree* tree, dict_key_datum_clone_func clone_func)
     return clone;
 }
 
-void*
-rb_tree_search(rb_tree* tree, const void* key)
+rb_node*
+rb_tree_search_node(rb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
-
     rb_node* node = tree->root;
     while (node != RB_NULL) {
 	int cmp = tree->cmp_func(key, node->key);
@@ -205,9 +204,127 @@ rb_tree_search(rb_tree* tree, const void* key)
 	else if (cmp)
 	    node = RLINK(node);
 	else
-	    return node->datum;
+	    return node;
     }
-    return NULL;
+    return RB_NULL;
+}
+
+void*
+rb_tree_search(rb_tree* tree, const void* key)
+{
+    ASSERT(tree != NULL);
+
+    rb_node* node = rb_tree_search_node(tree, key);
+    return (node != RB_NULL) ? node->datum : NULL;
+}
+
+rb_node*
+rb_tree_search_le_node(rb_tree* tree, const void* key)
+{
+    ASSERT(tree != NULL);
+
+    rb_node* node = tree->root, *ret = RB_NULL;
+    while (node != RB_NULL) {
+	int cmp = tree->cmp_func(key, node->key);
+	if (cmp == 0) {
+	    return node;
+	} else if (cmp < 0) {
+	    node = node->llink;
+	} else {
+	    ret = node;
+	    node = RLINK(node);
+	}
+    }
+    return ret;
+}
+
+void*
+rb_tree_search_le(rb_tree* tree, const void* key)
+{
+    rb_node* node = rb_tree_search_le_node(tree, key);
+
+    return (node != RB_NULL) ? node->datum : NULL;
+}
+
+rb_node*
+rb_tree_search_lt_node(rb_tree* tree, const void* key)
+{
+    ASSERT(tree != NULL);
+
+    rb_node* node = tree->root, *ret = RB_NULL;
+    while (node != RB_NULL) {
+	int cmp = tree->cmp_func(key, node->key);
+	if (cmp <= 0) {
+	    node = node->llink;
+	} else {
+	    ret = node;
+	    node = RLINK(node);
+	}
+    }
+    return ret;
+}
+
+void*
+rb_tree_search_lt(rb_tree* tree, const void* key)
+{
+    rb_node* node = rb_tree_search_lt_node(tree, key);
+
+    return (node != RB_NULL) ? node->datum : NULL;
+}
+
+rb_node*
+rb_tree_search_ge_node(rb_tree* tree, const void* key)
+{
+    ASSERT(tree != NULL);
+
+    rb_node* node = tree->root, *ret = RB_NULL;
+    while (node != RB_NULL) {
+	int cmp = tree->cmp_func(key, node->key);
+	if (cmp == 0) {
+	    return node;
+	}
+	if (cmp < 0) {
+	    ret = node;
+	    node = node->llink;
+	} else {
+	    node = RLINK(node);
+	}
+    }
+    return ret;
+}
+
+void*
+rb_tree_search_ge(rb_tree* tree, const void* key)
+{
+    rb_node* node = rb_tree_search_ge_node(tree, key);
+
+    return (node != RB_NULL) ? node->datum : NULL;
+}
+
+rb_node*
+rb_tree_search_gt_node(rb_tree* tree, const void* key)
+{
+    ASSERT(tree != NULL);
+
+    rb_node* node = tree->root, *ret = RB_NULL;
+    while (node != RB_NULL) {
+	int cmp = tree->cmp_func(key, node->key);
+	if (cmp < 0) {
+	    ret = node;
+	    node = node->llink;
+	} else {
+	    node = RLINK(node);
+	}
+    }
+    return ret;
+}
+
+void*
+rb_tree_search_gt(rb_tree* tree, const void* key)
+{
+    rb_node* node = rb_tree_search_gt_node(tree, key);
+
+    return (node != RB_NULL) ? node->datum : NULL;
 }
 
 void**
@@ -890,6 +1007,38 @@ rb_itor_search(rb_itor* itor, const void* key)
     }
     itor->node = RB_NULL;
     return false;
+}
+
+bool
+rb_itor_search_le(rb_itor* itor, const void* key)
+{
+    ASSERT(itor != NULL);
+    ASSERT(itor->tree != NULL);
+    return (itor->node = rb_tree_search_le_node(itor->tree, key)) != RB_NULL;
+}
+
+bool
+rb_itor_search_lt(rb_itor* itor, const void* key)
+{
+    ASSERT(itor != NULL);
+    ASSERT(itor->tree != NULL);
+    return (itor->node = rb_tree_search_lt_node(itor->tree, key)) != RB_NULL;
+}
+
+bool
+rb_itor_search_ge(rb_itor* itor, const void* key)
+{
+    ASSERT(itor != NULL);
+    ASSERT(itor->tree != NULL);
+    return (itor->node = rb_tree_search_ge_node(itor->tree, key)) != RB_NULL;
+}
+
+bool
+rb_itor_search_gt(rb_itor* itor, const void* key)
+{
+    ASSERT(itor != NULL);
+    ASSERT(itor->tree != NULL);
+    return (itor->node = rb_tree_search_gt_node(itor->tree, key)) != RB_NULL;
 }
 
 const void*

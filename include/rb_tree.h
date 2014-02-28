@@ -49,6 +49,10 @@ rb_tree*	rb_tree_clone(rb_tree* tree,
 
 void**		rb_tree_insert(rb_tree* tree, void* key, bool* inserted);
 void*		rb_tree_search(rb_tree* tree, const void* key);
+void*		rb_tree_search_le(rb_tree* tree, const void* key);
+void*		rb_tree_search_lt(rb_tree* tree, const void* key);
+void*		rb_tree_search_ge(rb_tree* tree, const void* key);
+void*		rb_tree_search_gt(rb_tree* tree, const void* key);
 bool		rb_tree_remove(rb_tree* tree, const void* key);
 size_t		rb_tree_clear(rb_tree* tree);
 size_t		rb_tree_traverse(rb_tree* tree, dict_visit_func visit);
@@ -75,6 +79,10 @@ bool		rb_itor_prevn(rb_itor* itor, size_t count);
 bool		rb_itor_first(rb_itor* itor);
 bool		rb_itor_last(rb_itor* itor);
 bool		rb_itor_search(rb_itor* itor, const void* key);
+bool		rb_itor_search_le(rb_itor* itor, const void* key);
+bool		rb_itor_search_lt(rb_itor* itor, const void* key);
+bool		rb_itor_search_ge(rb_itor* itor, const void* key);
+bool		rb_itor_search_gt(rb_itor* itor, const void* key);
 const void*	rb_itor_key(const rb_itor* itor);
 void**		rb_itor_data(rb_itor* itor);
 bool		rb_itor_remove(rb_itor* itor);
