@@ -150,19 +150,20 @@ typedef struct {
     dict_vtable*    _vtable;
 } dict;
 
-#define dict_private(dct)       ((dct)->_object)
-#define dict_insert(dct,k,d)	((dct)->_vtable->insert((dct)->_object,(k),(d)))
-#define dict_search(dct,k)      ((dct)->_vtable->search((dct)->_object, (k)))
-#define dict_search_le(dct,k)   ((dct)->_vtable->search_le((dct)->_object, (k)))
-#define dict_search_lt(dct,k)   ((dct)->_vtable->search_lt((dct)->_object, (k)))
-#define dict_search_ge(dct,k)   ((dct)->_vtable->search_ge((dct)->_object, (k)))
-#define dict_search_gt(dct,k)   ((dct)->_vtable->search_gt((dct)->_object, (k)))
-#define dict_remove(dct,k)      ((dct)->_vtable->remove((dct)->_object, (k)))
-#define dict_traverse(dct,f)    ((dct)->_vtable->traverse((dct)->_object, (f)))
-#define dict_count(dct)		((dct)->_vtable->count((dct)->_object))
-#define dict_verify(dct)	((dct)->_vtable->verify((dct)->_object))
-#define dict_clear(dct)		((dct)->_vtable->clear((dct)->_object))
-#define dict_itor_new(dct)      (dct)->_vtable->inew((dct)->_object)
+#define dict_private(dct)	    ((dct)->_object)
+#define dict_insert(dct,k,d)	    ((dct)->_vtable->insert((dct)->_object,(k),(d)))
+#define dict_search(dct,k)	    ((dct)->_vtable->search((dct)->_object, (k)))
+#define dict_has_near_search(dct)   ((dct)->_vtable->search_le != NULL)	/* Assumes all-or-none near search functions. */
+#define dict_search_le(dct,k)	    ((dct)->_vtable->search_le((dct)->_object, (k)))
+#define dict_search_lt(dct,k)	    ((dct)->_vtable->search_lt((dct)->_object, (k)))
+#define dict_search_ge(dct,k)	    ((dct)->_vtable->search_ge((dct)->_object, (k)))
+#define dict_search_gt(dct,k)	    ((dct)->_vtable->search_gt((dct)->_object, (k)))
+#define dict_remove(dct,k)	    ((dct)->_vtable->remove((dct)->_object, (k)))
+#define dict_traverse(dct,f)	    ((dct)->_vtable->traverse((dct)->_object, (f)))
+#define dict_count(dct)		    ((dct)->_vtable->count((dct)->_object))
+#define dict_verify(dct)	    ((dct)->_vtable->verify((dct)->_object))
+#define dict_clear(dct)		    ((dct)->_vtable->clear((dct)->_object))
+#define dict_itor_new(dct)	    (dct)->_vtable->inew((dct)->_object)
 size_t dict_free(dict* dct);
 dict* dict_clone(dict* dct, dict_key_datum_clone_func clone_func);
 
@@ -171,23 +172,23 @@ struct dict_itor {
     itor_vtable*    _vtable;
 };
 
-#define dict_itor_private(i)    ((i)->_itor)
-#define dict_itor_valid(i)      ((i)->_vtable->valid((i)->_itor))
-#define dict_itor_invalidate(i) ((i)->_vtable->invalid((i)->_itor))
-#define dict_itor_next(i)       ((i)->_vtable->next((i)->_itor))
-#define dict_itor_prev(i)       ((i)->_vtable->prev((i)->_itor))
-#define dict_itor_nextn(i,n)    ((i)->_vtable->nextn((i)->_itor, (n)))
-#define dict_itor_prevn(i,n)    ((i)->_vtable->prevn((i)->_itor, (n)))
-#define dict_itor_first(i)      ((i)->_vtable->first((i)->_itor))
-#define dict_itor_last(i)       ((i)->_vtable->last((i)->_itor))
-#define dict_itor_search(i,k)   ((i)->_vtable->search((i)->_itor, (k)))
-#define dict_itor_search_le(i,k) ((i)->_vtable->search_le((i)->_itor, (k)))
-#define dict_itor_search_lt(i,k) ((i)->_vtable->search_lt((i)->_itor, (k)))
-#define dict_itor_search_ge(i,k) ((i)->_vtable->search_ge((i)->_itor, (k)))
-#define dict_itor_search_gt(i,k) ((i)->_vtable->search_gt((i)->_itor, (k)))
-#define dict_itor_key(i)	((i)->_vtable->key((i)->_itor))
-#define dict_itor_data(i)       ((i)->_vtable->data((i)->_itor))
-#define dict_itor_remove(i)	((i)->_vtable->remove((i)->_itor))
+#define dict_itor_private(i)	    ((i)->_itor)
+#define dict_itor_valid(i)	    ((i)->_vtable->valid((i)->_itor))
+#define dict_itor_invalidate(i)	    ((i)->_vtable->invalid((i)->_itor))
+#define dict_itor_next(i)	    ((i)->_vtable->next((i)->_itor))
+#define dict_itor_prev(i)	    ((i)->_vtable->prev((i)->_itor))
+#define dict_itor_nextn(i,n)	    ((i)->_vtable->nextn((i)->_itor, (n)))
+#define dict_itor_prevn(i,n)	    ((i)->_vtable->prevn((i)->_itor, (n)))
+#define dict_itor_first(i)	    ((i)->_vtable->first((i)->_itor))
+#define dict_itor_last(i)	    ((i)->_vtable->last((i)->_itor))
+#define dict_itor_search(i,k)	    ((i)->_vtable->search((i)->_itor, (k)))
+#define dict_itor_search_le(i,k)    ((i)->_vtable->search_le((i)->_itor, (k)))
+#define dict_itor_search_lt(i,k)    ((i)->_vtable->search_lt((i)->_itor, (k)))
+#define dict_itor_search_ge(i,k)    ((i)->_vtable->search_ge((i)->_itor, (k)))
+#define dict_itor_search_gt(i,k)    ((i)->_vtable->search_gt((i)->_itor, (k)))
+#define dict_itor_key(i)	    ((i)->_vtable->key((i)->_itor))
+#define dict_itor_data(i)	    ((i)->_vtable->data((i)->_itor))
+#define dict_itor_remove(i)	    ((i)->_vtable->remove((i)->_itor))
 void dict_itor_free(dict_itor* itor);
 
 int dict_int_cmp(const void* k1, const void* k2);

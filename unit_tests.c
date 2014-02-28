@@ -225,7 +225,7 @@ test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
 static void
 test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsigned n_cl_infos)
 {
-    if (dct->_vtable->search_le == NULL)
+    if (!dict_has_near_search(dct))
 	return;
 
     dict_itor* itor = dict_itor_new(dct);
