@@ -13,6 +13,7 @@ SHARED_OBJ := $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.So)
 
 PROG_SRC := $(wildcard *.c)
 PROGRAMS := $(PROG_SRC:%.c=$(OUTPUT_DIR)/%)
+VG := $(OUTPUT_DIR)/vg
 
 LIB := dict
 STATIC_LIB_NAME := lib$(LIB).a
@@ -39,7 +40,7 @@ INSTALL_SHLIB = $(SHARED_LIB_NAME).$(INSTALL_LIBVER)
 INSTALL_USER ?= 0
 INSTALL_GROUP ?= 0
 
-all: $(OUTPUT_DIR) $(STATIC_LIB) $(SHARED_LIB) $(PROGRAMS)
+all: $(OUTPUT_DIR) $(STATIC_LIB) $(SHARED_LIB) $(PROGRAMS) $(VG)
 
 $(OUTPUT_DIR):
 	[ -d $(OUTPUT_DIR) ] || mkdir -m 755 $(OUTPUT_DIR)
@@ -67,6 +68,9 @@ $(OUTPUT_DIR)/unit_tests: unit_tests.c $(STATIC_LIB) GNUmakefile
 
 $(OUTPUT_DIR)/%: %.c $(STATIC_LIB) GNUmakefile
 	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_LIB) $(LDFLAGS)
+
+$(VG): vg
+	cp vg $(VG)
 
 .PHONY: clean
 clean:

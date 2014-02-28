@@ -57,6 +57,10 @@ static dict_vtable pr_tree_vtable = {
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    pr_tree_insert,
     (dict_search_func)	    tree_search,
+    (dict_search_func)	    tree_search_le,
+    (dict_search_func)	    tree_search_lt,
+    (dict_search_func)	    tree_search_ge,
+    (dict_search_func)	    tree_search_gt,
     (dict_remove_func)	    pr_tree_remove,
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
@@ -77,6 +81,11 @@ static itor_vtable pr_tree_itor_vtable = {
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
     (dict_data_func)	    tree_iterator_data,
+    (dict_isearch_func)	    tree_iterator_search,
+    (dict_isearch_func)	    tree_iterator_search_le,
+    (dict_isearch_func)	    tree_iterator_search_lt,
+    (dict_isearch_func)	    tree_iterator_search_ge,
+    (dict_isearch_func)	    tree_iterator_search_gt,
     (dict_iremove_func)	    NULL,/* pr_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* pr_itor_compare not implemented yet */
 };
@@ -138,20 +147,7 @@ pr_tree_clone(pr_tree* tree, dict_key_datum_clone_func clone_func)
 void*
 pr_tree_search(pr_tree* tree, const void* key)
 {
-    ASSERT(tree != NULL);
-
-    pr_node* node = tree->root;
-    while (node) {
-	int cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    node = node->llink;
-	else if (cmp)
-	    node = node->rlink;
-	else
-	    return node->datum;
-    }
-
-    return NULL;
+    return tree_search(tree, key);
 }
 
 static unsigned
@@ -764,27 +760,6 @@ pr_itor_last(pr_itor* itor)
     else
 	itor->node = tree_node_max(itor->tree->root);
     return itor->node != NULL;
-}
-
-bool
-pr_itor_search(pr_itor* itor, const void* key)
-{
-    ASSERT(itor != NULL);
-
-    pr_node* node = itor->tree->root;
-    while (node) {
-	int cmp = itor->tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    node = node->llink;
-	else if (cmp)
-	    node = node->rlink;
-	else {
-	    itor->node = node;
-	    return true;
-	}
-    }
-    itor->node = NULL;
-    return false;
 }
 
 const void*

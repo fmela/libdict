@@ -71,6 +71,10 @@ static dict_vtable sp_tree_vtable = {
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    sp_tree_insert,
     (dict_search_func)	    sp_tree_search,
+    (dict_search_func)	    tree_search_le,
+    (dict_search_func)	    tree_search_lt,
+    (dict_search_func)	    tree_search_ge,
+    (dict_search_func)	    tree_search_gt,
     (dict_remove_func)	    sp_tree_remove,
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
@@ -91,6 +95,11 @@ static itor_vtable sp_tree_itor_vtable = {
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
     (dict_data_func)	    tree_iterator_data,
+    (dict_isearch_func)	    sp_itor_search,
+    (dict_isearch_func)	    tree_iterator_search_le,
+    (dict_isearch_func)	    tree_iterator_search_lt,
+    (dict_isearch_func)	    tree_iterator_search_ge,
+    (dict_isearch_func)	    tree_iterator_search_gt,
     (dict_iremove_func)	    NULL,/* sp_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* sp_itor_compare not implemented yet */
 };
@@ -678,6 +687,7 @@ sp_itor_search(sp_itor* itor, const void* key)
 {
     ASSERT(itor != NULL);
 
+    /* TODO: use algorithm from sp_tree_search() */
     return tree_iterator_search(itor, key);
 }
 

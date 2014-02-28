@@ -76,7 +76,6 @@ bool		tr_itor_nextn(tr_itor* itor, size_t count);
 bool		tr_itor_prevn(tr_itor* itor, size_t count);
 bool		tr_itor_first(tr_itor* itor);
 bool		tr_itor_last(tr_itor* itor);
-bool		tr_itor_search(tr_itor* itor, const void* key);
 const void*	tr_itor_key(const tr_itor* itor);
 void**		tr_itor_data(tr_itor* itor);
 bool		tr_itor_remove(tr_itor* itor);

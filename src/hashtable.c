@@ -67,6 +67,10 @@ static dict_vtable hashtable_vtable = {
     (dict_dfree_func)	    hashtable_free,
     (dict_insert_func)	    hashtable_insert,
     (dict_search_func)	    hashtable_search,
+    (dict_search_func)	    NULL,/* search_le: not implemented */
+    (dict_search_func)	    NULL,/* search_lt: not implemented */
+    (dict_search_func)	    NULL,/* search_ge: not implemented */
+    (dict_search_func)	    NULL,/* search_gt: not implemented */
     (dict_remove_func)	    hashtable_remove,
     (dict_clear_func)	    hashtable_clear,
     (dict_traverse_func)    hashtable_traverse,
@@ -87,6 +91,11 @@ static itor_vtable hashtable_itor_vtable = {
     (dict_last_func)	    hashtable_itor_last,
     (dict_key_func)	    hashtable_itor_key,
     (dict_data_func)	    hashtable_itor_data,
+    (dict_isearch_func)	    hashtable_itor_search,
+    (dict_isearch_func)	    NULL,/* itor_search_le: not implemented */
+    (dict_isearch_func)	    NULL,/* itor_search_lt: not implemented */
+    (dict_isearch_func)	    NULL,/* itor_search_ge: not implemented */
+    (dict_isearch_func)	    NULL,/* itor_search_gt: not implemented */
     (dict_iremove_func)	    NULL,/* hashtable_itor_remove not implemented yet */
     (dict_icompare_func)    NULL/* hashtable_itor_compare not implemented yet */
 };
@@ -583,6 +592,7 @@ hashtable_itor_search(hashtable_itor* itor, const void* key)
 	    itor->slot = mhash;
 	    return true;
 	}
+	node = node->next;
     }
     itor->node = NULL;
     itor->slot = 0;

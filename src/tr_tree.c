@@ -76,6 +76,10 @@ static dict_vtable tr_tree_vtable = {
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    tr_tree_insert,
     (dict_search_func)	    tree_search,
+    (dict_search_func)	    tree_search_le,
+    (dict_search_func)	    tree_search_lt,
+    (dict_search_func)	    tree_search_ge,
+    (dict_search_func)	    tree_search_gt,
     (dict_remove_func)	    tr_tree_remove,
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
@@ -96,6 +100,11 @@ static itor_vtable tr_tree_itor_vtable = {
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
     (dict_data_func)	    tree_iterator_data,
+    (dict_isearch_func)	    tree_iterator_search,
+    (dict_isearch_func)	    tree_iterator_search_le,
+    (dict_isearch_func)	    tree_iterator_search_lt,
+    (dict_isearch_func)	    tree_iterator_search_ge,
+    (dict_isearch_func)	    tree_iterator_search_gt,
     (dict_iremove_func)	    NULL,/* tr_itor_remove not implemented yet */
     (dict_icompare_func)    NULL /* tr_itor_compare not implemented yet */
 };
@@ -537,26 +546,6 @@ tr_itor_last(tr_itor* itor)
 	itor->node = NULL;
 	return false;
     }
-}
-
-bool
-tr_itor_search(tr_itor* itor, const void* key)
-{
-    ASSERT(itor != NULL);
-
-    for (tr_node* node = itor->tree->root; node;) {
-	int cmp = itor->tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    node = node->llink;
-	else if (cmp)
-	    node = node->rlink;
-	else {
-	    itor->node = node;
-	    return true;
-	}
-    }
-    itor->node = NULL;
-    return false;
 }
 
 const void*
