@@ -97,6 +97,10 @@ typedef struct {
     dict_dfree_func     dfree;
     dict_insert_func    insert;
     dict_search_func    search;
+    dict_search_func    search_le;
+    dict_search_func    search_lt;
+    dict_search_func    search_ge;
+    dict_search_func    search_gt;
     dict_remove_func    remove;
     dict_clear_func     clear;
     dict_traverse_func  traverse;
@@ -116,6 +120,7 @@ typedef bool	    (*dict_first_func)(void* itor);
 typedef bool	    (*dict_last_func)(void* itor);
 typedef void*	    (*dict_key_func)(void* itor);
 typedef void**	    (*dict_data_func)(void* itor);
+typedef bool	    (*dict_isearch_func)(void* itor, const void* key);
 typedef bool	    (*dict_iremove_func)(void* itor);
 typedef int	    (*dict_icompare_func)(void* itor1, void* itor2);
 
@@ -131,6 +136,11 @@ typedef struct {
     dict_last_func	    last;
     dict_key_func	    key;
     dict_data_func	    data;
+    dict_isearch_func       search;
+    dict_isearch_func       search_le;
+    dict_isearch_func       search_lt;
+    dict_isearch_func       search_ge;
+    dict_isearch_func       search_gt;
     dict_iremove_func       remove;
     dict_icompare_func      compare;
 } itor_vtable;
@@ -143,6 +153,10 @@ typedef struct {
 #define dict_private(dct)       ((dct)->_object)
 #define dict_insert(dct,k,d)	((dct)->_vtable->insert((dct)->_object,(k),(d)))
 #define dict_search(dct,k)      ((dct)->_vtable->search((dct)->_object, (k)))
+#define dict_search_le(dct,k)   ((dct)->_vtable->search_le((dct)->_object, (k)))
+#define dict_search_lt(dct,k)   ((dct)->_vtable->search_lt((dct)->_object, (k)))
+#define dict_search_ge(dct,k)   ((dct)->_vtable->search_ge((dct)->_object, (k)))
+#define dict_search_gt(dct,k)   ((dct)->_vtable->search_gt((dct)->_object, (k)))
 #define dict_remove(dct,k)      ((dct)->_vtable->remove((dct)->_object, (k)))
 #define dict_traverse(dct,f)    ((dct)->_vtable->traverse((dct)->_object, (f)))
 #define dict_count(dct)		((dct)->_vtable->count((dct)->_object))
@@ -167,6 +181,10 @@ struct dict_itor {
 #define dict_itor_first(i)      ((i)->_vtable->first((i)->_itor))
 #define dict_itor_last(i)       ((i)->_vtable->last((i)->_itor))
 #define dict_itor_search(i,k)   ((i)->_vtable->search((i)->_itor, (k)))
+#define dict_itor_search_le(i,k) ((i)->_vtable->search_le((i)->_itor, (k)))
+#define dict_itor_search_lt(i,k) ((i)->_vtable->search_lt((i)->_itor, (k)))
+#define dict_itor_search_ge(i,k) ((i)->_vtable->search_ge((i)->_itor, (k)))
+#define dict_itor_search_gt(i,k) ((i)->_vtable->search_gt((i)->_itor, (k)))
 #define dict_itor_key(i)	((i)->_vtable->key((i)->_itor))
 #define dict_itor_data(i)       ((i)->_vtable->data((i)->_itor))
 #define dict_itor_remove(i)	((i)->_vtable->remove((i)->_itor))
