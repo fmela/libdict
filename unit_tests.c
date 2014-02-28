@@ -223,17 +223,13 @@ test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
 }
 
 static void
-test_closest_lookup(
-    dict *dct, const struct closest_lookup_info *cl_infos, unsigned n_cl_infos)
+test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsigned n_cl_infos)
 {
-    dict_itor *itor;
-    unsigned i;
-
     if (dct->_vtable->search_le == NULL)
 	return;
 
-    itor = dict_itor_new(dct);
-    for (i = 0; i < n_cl_infos; i++) {
+    dict_itor* itor = dict_itor_new(dct);
+    for (unsigned i = 0; i < n_cl_infos; i++) {
 	if (cl_infos[i].le_key) {
 	    CU_ASSERT_STRING_EQUAL(dict_search_le(dct, cl_infos[i].key),
 				   cl_infos[i].le_val);
