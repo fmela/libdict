@@ -90,9 +90,11 @@ main(int argc, char **argv)
 	char *p, *ptr, *ptr2;
 	if ((p = strchr(buf, '\n')) != NULL)
 	    *p = 0;
-	for (p = buf; isspace(*p); p++)
+	for (p = buf; *p && isspace(*p); p++)
 	    /* void */;
-	strcpy(buf, p);
+	if (buf != p) {
+	    strcpy(buf, p);
+	}
 	ptr2 = (ptr = strtok(buf, " ") ? strtok(NULL, " ") : NULL) ?
 	    strtok(NULL, " ") : NULL;
 	if (*buf == 0)
