@@ -111,7 +111,7 @@ main(int argc, char **argv)
 		printf("inserted '%s': '%s'\n",
 		       ptr, *datum_location);
 	    } else {
-		printf("key '%s' already in dict: '%s'\n",
+		printf("'%s' already in dict: '%s'\n",
 		       ptr, *datum_location);
 	    }
 	} else if (strcmp(buf, "search") == 0) {
@@ -123,7 +123,63 @@ main(int argc, char **argv)
 	    if (ptr2)
 		printf("found '%s': '%s'\n", ptr, ptr2);
 	    else
-		printf("key '%s' not in dict!\n", ptr);
+		printf("'%s' not found!\n", ptr);
+	} else if (strcmp(buf, "searchle") == 0) {
+	    if (ptr2) {
+		printf("usage: searchle <key>\n");
+		continue;
+	    }
+	    if (!dict_has_near_search(dct)) {
+		printf("dict does not support that operation!");
+		continue;
+	    }
+	    ptr2 = dict_search_le(dct, ptr);
+	    if (ptr2)
+		printf("le '%s': '%s'\n", ptr, ptr2);
+	    else
+		printf("le '%s': no result.\n", ptr);
+	} else if (strcmp(buf, "searchlt") == 0) {
+	    if (ptr2) {
+		printf("usage: searchlt <key>\n");
+		continue;
+	    }
+	    if (!dict_has_near_search(dct)) {
+		printf("dict does not support that operation!");
+		continue;
+	    }
+	    ptr2 = dict_search_lt(dct, ptr);
+	    if (ptr2)
+		printf("lt '%s': '%s'\n", ptr, ptr2);
+	    else
+		printf("lt '%s': no result.\n", ptr);
+	} else if (strcmp(buf, "searchge") == 0) {
+	    if (ptr2) {
+		printf("usage: searchge <key>\n");
+		continue;
+	    }
+	    if (!dict_has_near_search(dct)) {
+		printf("dict does not support that operation!");
+		continue;
+	    }
+	    ptr2 = dict_search_ge(dct, ptr);
+	    if (ptr2)
+		printf("ge '%s': '%s'\n", ptr, ptr2);
+	    else
+		printf("ge '%s': no result.\n", ptr);
+	} else if (strcmp(buf, "searchgt") == 0) {
+	    if (ptr2) {
+		printf("usage: searchgt <key>\n");
+		continue;
+	    }
+	    if (!dict_has_near_search(dct)) {
+		printf("dict does not support that operation!");
+		continue;
+	    }
+	    ptr2 = dict_search_gt(dct, ptr);
+	    if (ptr2)
+		printf("gt '%s': '%s'\n", ptr, ptr2);
+	    else
+		printf("gt '%s': no result.\n", ptr);
 	} else if (strcmp(buf, "remove") == 0) {
 	    if (!ptr || ptr2) {
 		printf("usage: remove <key>\n");
@@ -175,6 +231,10 @@ main(int argc, char **argv)
 	    printf("Usage summary:\n");
 	    printf("  insert <key> <data>\n");
 	    printf("  search <key>\n");
+	    printf("  searchle <key>\n");
+	    printf("  searchlt <key>\n");
+	    printf("  searchge <key>\n");
+	    printf("  searchgt <key>\n");
 	    printf("  remove <key>\n");
 	    printf("  clear\n");
 	    printf("  count\n");
