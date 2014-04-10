@@ -42,6 +42,10 @@ INSTALL_GROUP ?= 0
 
 all: $(OUTPUT_DIR) $(STATIC_LIB) $(SHARED_LIB) $(PROGRAMS) $(VG)
 
+shared:  $(OUTPUT_DIR) $(SHARED_LIB)
+
+static:  $(OUTPUT_DIR) $(STATIC_LIB) $(PROFIL_LIB)
+
 $(OUTPUT_DIR):
 	[ -d $(OUTPUT_DIR) ] || mkdir -m 755 $(OUTPUT_DIR)
 
