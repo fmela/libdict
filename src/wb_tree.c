@@ -55,12 +55,14 @@
  * These are the parameters for alpha = 1 - sqrt(2)/2 == .292893, as
  * recommended in [Gonnet 1984]. */
 
-/* TODO: approximate these constants with integer fractions and eliminate
- * floating point arithmetic throughout.  */
-#define ALPHA_0		.292893f	/* 1 - sqrt(2)/2		*/
-#define ALPHA_1		.707106f	/* sqrt(2)/2			*/
-#define ALPHA_2		.414213f	/* sqrt(2) - 1			*/
-#define ALPHA_3		.585786f	/* 2 - sqrt(2)			*/
+/* These constants are approximated by integer fractions in the code to
+ * eliminate floating point arithmetic. */
+#if 0
+# define ALPHA_0	    .292893f	/* 1 - sqrt(2)/2    */
+# define ALPHA_1	    .707106f	/* sqrt(2)/2	    */
+# define ALPHA_2	    .414213f	/* sqrt(2) - 1	    */
+# define ALPHA_3	    .585786f	/* 2 - sqrt(2)	    */
+#endif
 
 typedef struct wb_node wb_node;
 struct wb_node {
