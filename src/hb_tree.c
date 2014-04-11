@@ -212,7 +212,7 @@ hb_tree_insert(hb_tree* tree, void* key, bool* inserted)
 	    q = parent;
     }
 
-    hb_node *add = node = node_new(key);
+    hb_node* add = node = node_new(key);
     if (!node) {
 	return NULL;
     }

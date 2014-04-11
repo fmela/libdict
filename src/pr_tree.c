@@ -304,7 +304,7 @@ pr_tree_insert(pr_tree* tree, void* key, bool* inserted)
 	}
     }
 
-    pr_node *add = node_new(key);
+    pr_node* add = node_new(key);
     if (!add)
 	return NULL;
     if (inserted)

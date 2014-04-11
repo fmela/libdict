@@ -238,7 +238,7 @@ skiplist_insert(skiplist* list, void* key, bool* inserted)
 	    *inserted = false;
 	return &x->datum;
     }
-    void **datum = node_insert(list, key, update);
+    void** datum = node_insert(list, key, update);
     if (datum) {
 	*inserted = true;
     }

@@ -284,7 +284,7 @@ wb_tree_insert(wb_tree* tree, void* key, bool* inserted)
 	}
     }
 
-    wb_node *add = node = node_new(key);
+    wb_node* add = node = node_new(key);
     if (!add)
 	return NULL;
     if (inserted)
