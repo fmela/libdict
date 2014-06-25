@@ -1,4 +1,4 @@
-/* test.c
+/* benchmark.c
  * Some timing tests for libdict
  * Copyright (C) 2001-2011 Farooq Mela */
 
@@ -19,7 +19,7 @@
 #include "dict_private.h"
 #include "tree_common.h"
 
-const char appname[] = "test";
+const char appname[] = "benchmark";
 
 char *xstrdup(const char *str);
 
