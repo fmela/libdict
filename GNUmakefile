@@ -11,7 +11,7 @@ STATIC_OBJ := $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.o)
 PROFIL_OBJ := $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.po)
 SHARED_OBJ := $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.So)
 
-PROG_SRC := $(wildcard *.c)
+PROG_SRC := anagram.c benchmark.c demo.c
 PROGRAMS := $(PROG_SRC:%.c=$(OUTPUT_DIR)/%)
 VG := $(OUTPUT_DIR)/vg
 
@@ -75,6 +75,9 @@ $(OUTPUT_DIR)/%: %.c $(STATIC_LIB) GNUmakefile
 
 $(VG): vg
 	cp vg $(VG)
+
+test: $(OUTPUT_DIR)/unit_tests
+	./$(OUTPUT_DIR)/unit_tests
 
 .PHONY: clean
 clean:
