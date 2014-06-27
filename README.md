@@ -14,5 +14,3 @@ A generic object-oriented interface is provided, but is not required.
 ## License
 
 libdict is released under the simplified BSD [license](https://github.com/fmela/libdict/blob/master/LICENSE).
-
-**Please submit comments and bug reports via github.**
