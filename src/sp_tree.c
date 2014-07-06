@@ -1,6 +1,5 @@
 /*
  * libdict -- splay tree implementation.
- * cf. [Sleator and Tarjan, 1985], [Tarjan 1985], [Tarjan 1983]
  *
  * Copyright (c) 2001-2014, Farooq Mela
  * All rights reserved.
@@ -24,7 +23,10 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ */
+
+/*
+ * cf. [Sleator and Tarjan, 1985], [Tarjan 1985], [Tarjan 1983]
  *
  * A single operation on a splay tree has a worst-case time complexity of O(N),
  * but a series of M operations have a time complexity of O(M lg N), and thus

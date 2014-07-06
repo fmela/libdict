@@ -1,6 +1,5 @@
 /*
  * libdict -- skiplist implementation.
- * cf. [Pugh 1990], [Sedgewick 1998]
  *
  * Copyright (c) 2001-2014, Farooq Mela
  * All rights reserved.
@@ -24,6 +23,10 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * cf. [Pugh 1990], [Sedgewick 1998]
  */
 
 #include "skiplist.h"

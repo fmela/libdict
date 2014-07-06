@@ -1,6 +1,5 @@
 /*
  * libdict -- red-black tree implementation.
- * cf. [Cormen, Leiserson, and Rivest 1990], [Guibas and Sedgewick, 1978]
  *
  * Copyright (c) 2001-2014, Farooq Mela
  * All rights reserved.
@@ -24,6 +23,10 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * cf. [Cormen, Leiserson, and Rivest 1990], [Guibas and Sedgewick, 1978]
  */
 
 #include "rb_tree.h"
