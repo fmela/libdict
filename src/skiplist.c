@@ -573,6 +573,6 @@ static unsigned
 rand_link_count(skiplist* list)
 {
     unsigned r = list->randgen = list->randgen * RGEN_A + RGEN_M;
-    unsigned count = __builtin_ctz(r) + 1;
+    unsigned count = __builtin_ctz(r)/2 + 1;
     return (count >= list->max_link) ?  list->max_link - 1 : count;
 }
