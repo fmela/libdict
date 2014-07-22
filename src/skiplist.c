@@ -53,11 +53,8 @@ struct skiplist {
     dict_compare_func	    cmp_func;
     dict_delete_func	    del_func;
     size_t		    count;
-    unsigned		    randgen;
+    unsigned		    link_count_ruler;
 };
-
-#define RGEN_A		    1664525U
-#define RGEN_M		    1013904223U
 
 struct skiplist_itor {
     skiplist*		    list;
@@ -127,7 +124,7 @@ skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func,
 	list->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	list->del_func = del_func;
 	list->count = 0;
-	list->randgen = rand();
+	list->link_count_ruler = rand();
     }
     return list;
 }
@@ -572,7 +569,6 @@ node_new(void* key, unsigned link_count)
 static unsigned
 rand_link_count(skiplist* list)
 {
-    unsigned r = list->randgen = list->randgen * RGEN_A + RGEN_M;
-    unsigned count = __builtin_ctz(r)/2 + 1;
+    unsigned count = __builtin_ctz(list->link_count_ruler++) / 2 + 1;
     return (count >= list->max_link) ?  list->max_link - 1 : count;
 }
