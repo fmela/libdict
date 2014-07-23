@@ -86,4 +86,10 @@
 # define GCC_CONST
 #endif
 
+#if defined(__APPLE__) || defined(__FreeBSD__)
+# define dict_rand  random
+#else
+# define dict_rand  rand
+#endif
+
 #endif /* !_DICT_PRIVATE_H_ */

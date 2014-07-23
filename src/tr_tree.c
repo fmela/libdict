@@ -46,10 +46,6 @@
 #include "dict_private.h"
 #include "tree_common.h"
 
-/* I_{j+1} = I_j * A + M; A suggested by Knuth, M by H.W. Lewis. */
-#define RGEN_A		1664525U
-#define RGEN_M		1013904223U
-
 typedef struct tr_node tr_node;
 struct tr_node {
     TREE_NODE_FIELDS(tr_node);
@@ -59,7 +55,6 @@ struct tr_node {
 struct tr_tree {
     TREE_FIELDS(tr_node);
     dict_prio_func	    prio_func;
-    unsigned long	    randgen;
 };
 
 struct tr_itor {
@@ -121,7 +116,6 @@ tr_tree_new(dict_compare_func cmp_func, dict_prio_func prio_func,
 	tree->del_func = del_func;
 	tree->rotation_count = 0;
 	tree->prio_func = prio_func;
-	tree->randgen = rand();
     }
     return tree;
 }
@@ -192,8 +186,7 @@ tr_tree_insert(tr_tree* tree, void* key, bool* inserted)
 	return NULL;
     if (inserted)
 	*inserted = true;
-    node->prio = tree->prio_func ? tree->prio_func(key) :
-	(tree->randgen = tree->randgen * RGEN_A + RGEN_M);
+    node->prio = tree->prio_func ? tree->prio_func(key) : dict_rand();
 
     if (!(node->parent = parent)) {
 	ASSERT(tree->count == 0);
