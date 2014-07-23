@@ -53,7 +53,6 @@ struct skiplist {
     dict_compare_func	    cmp_func;
     dict_delete_func	    del_func;
     size_t		    count;
-    unsigned		    link_count_ruler;
 };
 
 struct skiplist_itor {
@@ -124,7 +123,6 @@ skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func,
 	list->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	list->del_func = del_func;
 	list->count = 0;
-	list->link_count_ruler = rand();
     }
     return list;
 }
@@ -569,6 +567,6 @@ node_new(void* key, unsigned link_count)
 static unsigned
 rand_link_count(skiplist* list)
 {
-    unsigned count = __builtin_ctz(list->link_count_ruler++) / 2 + 1;
+    unsigned count = __builtin_ctz(rand()) / 2 + 1;
     return (count >= list->max_link) ?  list->max_link - 1 : count;
 }
