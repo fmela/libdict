@@ -86,10 +86,13 @@
 # define GCC_CONST
 #endif
 
+inline int dict_rand() {
 #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
-# define dict_rand  random
+    extern long random();
+    return (int) random();
 #else
-# define dict_rand  rand
+    return rand();
 #endif
+}
 
 #endif /* !_DICT_PRIVATE_H_ */
