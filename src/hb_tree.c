@@ -227,8 +227,8 @@ hb_tree_insert(hb_tree* tree, void* key, bool* inserted)
 	    node = parent;
 	    parent = node->parent;
 	}
-	unsigned rotations = 0;
 	if (q) {
+	    unsigned rotations = 0;
 	    if (q->llink == node) {
 		if (--q->bal == -2) {
 		    if (q->llink->bal > 0) {
@@ -248,8 +248,8 @@ hb_tree_insert(hb_tree* tree, void* key, bool* inserted)
 		    ++rotations;
 		}
 	    }
+	    tree->rotation_count += rotations;
 	}
-	tree->rotation_count += rotations;
     }
     ++tree->count;
     return &add->datum;
