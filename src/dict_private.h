@@ -86,7 +86,7 @@
 # define GCC_CONST
 #endif
 
-inline int dict_rand() {
+static inline int dict_rand() {
 #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
     extern long random();
     return (int) random();
