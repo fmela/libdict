@@ -43,6 +43,7 @@ void key_str_free(void *key, void *datum);
 void timer_start(struct rusage* start);
 void timer_end(const struct rusage* start, struct rusage *end,
 	       struct timeval *total);
+dict *create_dictionary(char type, const char **container_name);
 
 /* #define HSIZE 599 */
 /* #define HSIZE 997 */
@@ -64,8 +65,7 @@ main(int argc, char **argv)
 	fprintf(stderr, "   w: weight-balanced tree\n");
 	fprintf(stderr, "   S: skiplist\n");
 	fprintf(stderr, "   H: hashtable\n");
-	fprintf(stderr, "input: text file consisting of newline-separated keys"
-		"\n");
+	fprintf(stderr, "input: text file consisting of newline-separated keys\n");
 	exit(EXIT_FAILURE);
     }
 
@@ -73,51 +73,12 @@ main(int argc, char **argv)
 
     dict_malloc_func = xmalloc;
 
-    dict_compare_func cmp_func = my_strcmp;
-    dict_hash_func hash_func = str_hash;
-
-    dict *dct = NULL;
     const char type = argv[1][0];
     const char *container_name = NULL;
-    switch (type) {
-	case 'h':
-	    container_name = "hb";
-	    dct = hb_dict_new(cmp_func, key_str_free);
-	    break;
-	case 'p':
-	    container_name = "pr";
-	    dct = pr_dict_new(cmp_func, key_str_free);
-	    break;
-	case 'r':
-	    container_name = "rb";
-	    dct = rb_dict_new(cmp_func, key_str_free);
-	    break;
-	case 't':
-	    container_name = "tr";
-	    dct = tr_dict_new(cmp_func, NULL, key_str_free);
-	    break;
-	case 's':
-	    container_name = "sp";
-	    dct = sp_dict_new(cmp_func, key_str_free);
-	    break;
-	case 'S':
-	    container_name = "sk";
-	    dct = skiplist_dict_new(cmp_func, key_str_free, 12);
-	    break;
-	case 'w':
-	    container_name = "wb";
-	    dct = wb_dict_new(cmp_func, key_str_free);
-	    break;
-	case 'H':
-	    container_name = "ht";
-	    dct = hashtable_dict_new(cmp_func, hash_func, key_str_free, HSIZE);
-	    break;
-	default:
-	    quit("type must be one of h, p, r, t, s, w or H");
-    }
-
+    dict *dct = create_dictionary(type, &container_name);
     if (!dct)
 	quit("can't create container");
+
     ASSERT(dict_verify(dct));
 
     const size_t malloced_save = malloced;
@@ -161,7 +122,7 @@ main(int argc, char **argv)
     timer_end(&start, &end, &total);
     printf("    %s container: %.02fkB\n", container_name, malloced_save * 1e-3);
     printf("       %s memory: %.02fkB\n", container_name, malloced * 1e-3);
-    printf("       %s insert: %.03f s (%9zu cmp, %9zu hash)\n",
+    printf("       %s insert: %6.03f s (%9zu cmp, %9zu hash)\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
@@ -191,7 +152,7 @@ main(int argc, char **argv)
 	++n;
     } while (dict_itor_next(itor));
     timer_end(&start, &end, &total);
-    printf("  %s fwd iterate: %.03f s\n",
+    printf("  %s fwd iterate: %6.03f s\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
     if (n != nwords)
@@ -206,7 +167,7 @@ main(int argc, char **argv)
 	++n;
     } while (dict_itor_prev(itor));
     timer_end(&start, &end, &total);
-    printf("  %s rev iterate: %.03f s\n",
+    printf("  %s rev iterate: %6.03f s\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
     if (n != nwords)
@@ -225,7 +186,7 @@ main(int argc, char **argv)
 	    quit("bad data for '%s', got '%s' instead", words[i], p);
     }
     timer_end(&start, &end, &total);
-    printf("  %s good search: %.03f s (%9zu cmp, %9zu hash)\n",
+    printf("  %s good search: %6.03f s (%9zu cmp, %9zu hash)\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
@@ -246,7 +207,7 @@ main(int argc, char **argv)
 	words[i][rv]--;
     }
     timer_end(&start, &end, &total);
-    printf("   %s bad search: %.03f s (%9zu cmp, %9zu hash)\n",
+    printf("   %s bad search: %6.03f s (%9zu cmp, %9zu hash)\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
@@ -261,7 +222,7 @@ main(int argc, char **argv)
 	    quit("removing #%d '%s' failed!\n", i, words[i]);
     }
     timer_end(&start, &end, &total);
-    printf("       %s remove: %.03f s (%9zu cmp, %9zu hash)\n",
+    printf("       %s remove: %6.03f s (%9zu cmp, %9zu hash)\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
 	   comp_count, hash_count);
@@ -281,7 +242,7 @@ main(int argc, char **argv)
 
     dict_free(dct);
 
-    printf("        %s total: %.03f s (%9zu cmp, %9zu hash)\n",
+    printf("        %s total: %6.03f s (%9zu cmp, %9zu hash)\n",
 	   container_name,
 	   (total.tv_sec * 1000000 + total.tv_usec) * 1e-6,
 	   total_comp, total_hash);
@@ -293,6 +254,50 @@ main(int argc, char **argv)
     FREE(words);
 
     exit(EXIT_SUCCESS);
+}
+
+dict *
+create_dictionary(char type, const char **container_name)
+{
+    dict_compare_func cmp_func = my_strcmp;
+    dict_hash_func hash_func = str_hash;
+
+    switch (type) {
+	case 'h':
+	    *container_name = "hb";
+	    return hb_dict_new(cmp_func, key_str_free);
+
+	case 'p':
+	    *container_name = "pr";
+	    return pr_dict_new(cmp_func, key_str_free);
+
+	case 'r':
+	    *container_name = "rb";
+	    return rb_dict_new(cmp_func, key_str_free);
+
+	case 't':
+	    *container_name = "tr";
+	    return tr_dict_new(cmp_func, NULL, key_str_free);
+
+	case 's':
+	    *container_name = "sp";
+	    return sp_dict_new(cmp_func, key_str_free);
+
+	case 'S':
+	    *container_name = "sk";
+	    return skiplist_dict_new(cmp_func, key_str_free, 12);
+
+	case 'w':
+	    *container_name = "wb";
+	    return wb_dict_new(cmp_func, key_str_free);
+
+	case 'H':
+	    *container_name = "ht";
+	    return hashtable_dict_new(cmp_func, hash_func, key_str_free, HASHTABLE_SIZE);
+
+	default:
+	    quit("type must be one of h, p, r, t, s, w or H");
+    }
 }
 
 char *
