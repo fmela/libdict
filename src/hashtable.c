@@ -365,7 +365,7 @@ hashtable_resize(hashtable* table, unsigned new_size)
 	hash_node* node = table->table[i];
 	while (node) {
 	    hash_node* next = node->next;
-	    unsigned mhash = table->hash_func(node->key) % new_size;
+	    unsigned mhash = node->hash % new_size;
 
 	    hash_node* search = ntable[mhash];
 	    hash_node* prev = NULL;
