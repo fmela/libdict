@@ -33,6 +33,7 @@
 
 #include <string.h> /* For memset() */
 #include "dict_private.h"
+#include "hashtable_common.h"
 
 typedef struct hash_node hash_node;
 
@@ -107,13 +108,13 @@ hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func,
 
     hashtable* table = MALLOC(sizeof(*table));
     if (table) {
-	table->table = MALLOC(size * sizeof(hash_node*));
+	table->size = dict_prime_geq(size);
+	table->table = MALLOC(table->size * sizeof(hash_node*));
 	if (!table->table) {
 	    FREE(table);
 	    return NULL;
 	}
-	memset(table->table, 0, size * sizeof(hash_node*));
-	table->size = size;
+	memset(table->table, 0, table->size * sizeof(hash_node*));
 	table->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	table->hash_func = hash_func;
 	table->del_func = del_func;
@@ -351,15 +352,15 @@ hashtable_resize(hashtable* table, unsigned new_size)
     ASSERT(table != NULL);
     ASSERT(new_size != 0);
 
+    new_size = dict_prime_geq(new_size);
     if (table->size == new_size)
 	return true;
 
     /* TODO: use REALLOC instead of MALLOC. */
-    const size_t table_memory = new_size * sizeof(hash_node*);
-    hash_node** ntable = MALLOC(table_memory);
+    hash_node** ntable = MALLOC(new_size * sizeof(hash_node*));
     if (!ntable)
 	return false;
-    memset(ntable, 0, table_memory);
+    memset(ntable, 0, new_size * sizeof(hash_node*));
 
     for (unsigned i = 0; i < table->size; i++) {
 	hash_node* node = table->table[i];
