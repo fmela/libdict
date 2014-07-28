@@ -195,6 +195,11 @@ hashtable_insert(hashtable* table, void* key, bool* inserted)
 {
     ASSERT(table != NULL);
 
+    if (3*table->count >= 2*table->size) {
+	/* Load factor too high. */
+	hashtable_resize(table, table->size + 1);
+    }
+
     const unsigned hash = table->hash_func(key);
     const unsigned mhash = hash % table->size;
     hash_node* node = table->table[mhash];
