@@ -45,9 +45,10 @@ void timer_end(const struct rusage* start, struct rusage *end,
 	       struct timeval *total);
 dict *create_dictionary(char type, const char **container_name);
 
-/* #define HSIZE 599 */
-/* #define HSIZE 997 */
-#define HSIZE 9973
+/* #define HASHTABLE_SIZE 599 */
+/* #define HASHTABLE_SIZE 997 */
+#define HASHTABLE_SIZE 9973
+/* #define HASHTABLE_SIZE 1572869 */
 
 static size_t malloced = 0;
 
