@@ -72,6 +72,11 @@ main(int argc, char **argv)
 				     dict_str_hash,
 				     key_val_free, HSIZE);
 	    break;
+	case '2':
+	    dct = hashtable2_dict_new((dict_compare_func)strcmp,
+				      dict_str_hash,
+				      key_val_free, HSIZE);
+	    break;
 	default:
 	    quit("type must be one of h, p, r, t, s, w, or H");
     }

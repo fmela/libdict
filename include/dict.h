@@ -197,6 +197,7 @@ unsigned dict_str_hash(const void* str);
 END_DECL
 
 #include "hashtable.h"
+#include "hashtable2.h"
 #include "hb_tree.h"
 #include "pr_tree.h"
 #include "rb_tree.h"

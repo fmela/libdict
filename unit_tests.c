@@ -32,7 +32,9 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
 		const struct closest_lookup_info *cl_infos,
 		unsigned n_cl_infos);
 void test_basic_hashtable_1bucket();
+void test_basic_hashtable2_1bucket();
 void test_basic_hashtable_nbuckets();
+void test_basic_hashtable2_nbuckets();
 void test_basic_height_balanced_tree();
 void test_basic_path_reduction_tree();
 void test_basic_red_black_tree();
@@ -44,7 +46,9 @@ void test_version_string();
 
 CU_TestInfo basic_tests[] = {
     TEST_FUNC(test_basic_hashtable_1bucket),
+    TEST_FUNC(test_basic_hashtable2_1bucket),
     TEST_FUNC(test_basic_hashtable_nbuckets),
+    TEST_FUNC(test_basic_hashtable2_nbuckets),
     TEST_FUNC(test_basic_height_balanced_tree),
     TEST_FUNC(test_basic_path_reduction_tree),
     TEST_FUNC(test_basic_red_black_tree),
@@ -306,11 +310,16 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
     }
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
 
-    if (dct->_vtable->insert == (dict_insert_func)hashtable_insert) {
+    if (dct->_vtable->insert == (dict_insert_func)hashtable_insert ||
+	dct->_vtable->insert == (dict_insert_func)hashtable2_insert) {
 	/* Verify that hashtable_resize works as expected. */
 	dict *clone = dict_clone(dct, NULL);
 	CU_ASSERT_TRUE(dict_verify(dct));
-	CU_ASSERT_TRUE(hashtable_resize(dict_private(clone), 3));
+	if (dct->_vtable->insert == (dict_insert_func)hashtable_insert) {
+	    CU_ASSERT_TRUE(hashtable_resize(dict_private(clone), 3));
+	} else {
+	    CU_ASSERT_TRUE(hashtable2_resize(dict_private(clone), 3));
+	}
 	CU_ASSERT_TRUE(dict_verify(dct));
 	for (unsigned j = 0; j < nkeys; ++j)
 	    test_search(clone, NULL, keys[j].key, keys[j].value);
@@ -364,7 +373,8 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
 	}
 	CU_ASSERT_TRUE(key_matched);
 
-	if (dct->_vtable->insert != (dict_insert_func)hashtable_insert) {
+	if (dct->_vtable->insert != (dict_insert_func)hashtable_insert &&
+	    dct->_vtable->insert != (dict_insert_func)hashtable2_insert) {
 	    if (last_key) {
 		CU_ASSERT_TRUE(strcmp(last_key, dict_itor_key(itor)) < 0);
 	    }
@@ -392,7 +402,8 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
 	}
 	CU_ASSERT_TRUE(key_matched);
 
-	if (dct->_vtable->insert != (dict_insert_func)hashtable_insert) {
+	if (dct->_vtable->insert != (dict_insert_func)hashtable_insert &&
+	    dct->_vtable->insert != (dict_insert_func)hashtable2_insert) {
 	    if (last_key) {
 		CU_ASSERT_TRUE(strcmp(last_key, dict_itor_key(itor)) > 0);
 	    }
@@ -479,11 +490,27 @@ void test_basic_hashtable_1bucket()
 	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
+void test_basic_hashtable2_1bucket()
+{
+    test_basic(hashtable2_dict_new(dict_str_cmp, strhash, NULL, 1),
+	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+    test_basic(hashtable2_dict_new(dict_str_cmp, strhash, NULL, 1),
+	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+}
+
 void test_basic_hashtable_nbuckets()
 {
     test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 7),
 	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
     test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 7),
+	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+}
+
+void test_basic_hashtable2_nbuckets()
+{
+    test_basic(hashtable2_dict_new(dict_str_cmp, strhash, NULL, 7),
+	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+    test_basic(hashtable2_dict_new(dict_str_cmp, strhash, NULL, 7),
 	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 

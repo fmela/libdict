@@ -66,6 +66,7 @@ main(int argc, char **argv)
 	fprintf(stderr, "   w: weight-balanced tree\n");
 	fprintf(stderr, "   S: skiplist\n");
 	fprintf(stderr, "   H: hashtable\n");
+	fprintf(stderr, "   2: hashtable 2\n");
 	fprintf(stderr, "input: text file consisting of newline-separated keys\n");
 	exit(EXIT_FAILURE);
     }
@@ -129,7 +130,7 @@ main(int argc, char **argv)
 	   comp_count, hash_count);
     total_comp += comp_count; comp_count = 0;
     total_hash += hash_count; hash_count = 0;
-    if (type != 'H' && type != 'S') {
+    if (type != 'H' && type != '2' && type != 'S') {
 	tree_base *tree = dict_private(dct);
 	printf("insert rotations: %zu\n", tree->rotation_count);
 	total_rotations += tree->rotation_count;
@@ -193,7 +194,7 @@ main(int argc, char **argv)
 	   comp_count, hash_count);
     total_comp += comp_count; comp_count = 0;
     total_hash += hash_count; hash_count = 0;
-    if (type != 'H' && type != 'S') {
+    if (type != 'H' && type != '2' && type != 'S') {
 	tree_base *tree = dict_private(dct);
 	printf("search rotations: %zu\n", tree->rotation_count);
 	total_rotations += tree->rotation_count;
@@ -229,7 +230,7 @@ main(int argc, char **argv)
 	   comp_count, hash_count);
     total_comp += comp_count; comp_count = 0;
     total_hash += hash_count; hash_count = 0;
-    if (type != 'H' && type != 'S') {
+    if (type != 'H' && type != '2' && type != 'S') {
 	tree_base *tree = dict_private(dct);
 	printf("remove rotations: %zu\n", tree->rotation_count);
 	total_rotations += tree->rotation_count;
@@ -248,7 +249,7 @@ main(int argc, char **argv)
 	   (total.tv_sec * 1000000 + total.tv_usec) * 1e-6,
 	   total_comp, total_hash);
 
-    if (type != 'H' && type != 'S') {
+    if (type != 'H' && type != '2' && type != 'S') {
 	printf(" total rotations: %zu\n", total_rotations);
     }
 
@@ -295,6 +296,10 @@ create_dictionary(char type, const char **container_name)
 	case 'H':
 	    *container_name = "ht";
 	    return hashtable_dict_new(cmp_func, hash_func, key_str_free, HASHTABLE_SIZE);
+
+	case '2':
+	    *container_name = "h2";
+	    return hashtable2_dict_new(cmp_func, hash_func, key_str_free, HASHTABLE_SIZE);
 
 	default:
 	    quit("type must be one of h, p, r, t, s, w or H");
