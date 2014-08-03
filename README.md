@@ -7,7 +7,8 @@ libdict is a C library that provides the following data structures with efficien
 * weight-balanced tree
 * [path-reduction tree](https://cs.uwaterloo.ca/research/tr/1982/CS-82-07.pdf)
 * [treap](http://en.wikipedia.org/wiki/Treap)
-* [hashtable](http://en.wikipedia.org/wiki/Hashtable#Separate_chaining)
+* [hashtable, using separate chaining](http://en.wikipedia.org/wiki/Hashtable#Separate_chaining)
+* [hashtable, using open addressing with linear probing](http://en.wikipedia.org/wiki/Hashtable#Open_addressing)
 
 A generic object-oriented interface is provided, but is not required.
 
