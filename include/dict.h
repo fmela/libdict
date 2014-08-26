@@ -70,9 +70,9 @@ typedef void*	    (*dict_clone_func)(void*,
 
 
 /* A pointer to a function that libdict will use to allocate memory. */
-void*		    (*dict_malloc_func)(size_t);
+extern void*	    (*dict_malloc_func)(size_t);
 /* A pointer to a function that libdict will use to deallocate memory. */
-void		    (*dict_free_func)(void*);
+extern void	    (*dict_free_func)(void*);
 
 /* Forward declarations for transparent type dict_itor. */
 typedef struct dict_itor dict_itor;
