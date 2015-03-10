@@ -27,7 +27,7 @@
 
 #include "hashtable_common.h"
 
-static const unsigned dict_primes_table[] = {
+static const unsigned primes[] = {
     53,             97,             193,            389,
     769,            1543,           3079,           6151,
     12289,          24593,          49157,          98317,
@@ -36,14 +36,14 @@ static const unsigned dict_primes_table[] = {
     50331653,       100663319,      201326611,      402653189,
     805306457,      1610612741,
 };
-static const unsigned dict_primes_table_size = sizeof(dict_primes_table) / sizeof(dict_primes_table[0]);
+static const unsigned primes_size = sizeof(primes) / sizeof(primes[0]);
 
 unsigned
 dict_prime_geq(unsigned n)
 {
     /* TODO(farooq): use binary search */
     unsigned index = 0;
-    while (index < dict_primes_table_size && dict_primes_table[index] < n)
+    while (index < primes_size && primes[index] < n)
         ++index;
-    return dict_primes_table[index];
+    return primes[index];
 }
