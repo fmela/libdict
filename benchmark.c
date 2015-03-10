@@ -99,11 +99,15 @@ main(int argc, char **argv)
 
     char **words = xmalloc(sizeof(*words) * nwords);
     rewind(fp);
-    for (unsigned i = 0; i < nwords && fgets(buf, sizeof(buf), fp); i++) {
+    unsigned words_read = 0;
+    while (words_read < nwords && fgets(buf, sizeof(buf), fp)) {
 	strtok(buf, "\n");
-	words[i] = xstrdup(buf);
+	words[words_read++] = xstrdup(buf);
     }
     fclose(fp);
+    if (words_read < nwords)
+	quit("Only read %u/%u words!", words_read, nwords);
+    printf("Loaded %u keys from %s.\n", nwords, argv[2]);
 
     malloced = malloced_save;
     size_t total_comp = 0, total_hash = 0, total_rotations = 0;
