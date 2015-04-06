@@ -41,8 +41,7 @@ typedef struct hash_node hash_node;
 struct hash_node {
     void*		    key;
     void*		    datum;
-    unsigned		    hash;	/* Untruncated hash value. */
-    bool		    occupied;
+    unsigned		    hash;	/* Untruncated hash value; 0 iff unoccupied. */
 };
 
 struct hashtable2 {
@@ -135,7 +134,7 @@ hashtable2_clone(hashtable2* table, dict_key_datum_clone_func clone_func)
     clone->count = table->count;
     if (clone_func) {
 	for (hash_node *node = clone->table, *end = clone->table + table->size; node != end; ++node) {
-	    if (node->occupied) {
+	    if (node->hash) {
 		clone_func(&node->key, &node->datum);
 	    }
 	}
@@ -176,12 +175,13 @@ hashtable2_free(hashtable2* table)
 static void**
 insert(hashtable2* table, void *key, unsigned hash, bool* inserted)
 {
+    ASSERT(hash != 0);
+
     const unsigned truncated_hash = hash % table->size;
     unsigned index = truncated_hash;
     do {
 	hash_node *node = &table->table[index];
-	if (!node->occupied) {
-	    node->occupied = true;
+	if (!node->hash) {
 	    node->key = key;
 	    node->datum = NULL;
 	    node->hash = hash;
@@ -219,7 +219,9 @@ hashtable2_insert(hashtable2* table, void* key, bool* inserted)
 	    return NULL;
 	}
     }
-    void **datum_location = insert(table, key, table->hash_func(key), inserted);
+    const unsigned raw_hash = table->hash_func(key);
+    const unsigned hash = (raw_hash == 0) ? -1 : raw_hash;
+    void **datum_location = insert(table, key, hash, inserted);
     ASSERT(datum_location != NULL);
     return datum_location;
 }
@@ -229,12 +231,13 @@ hashtable2_search(hashtable2* table, const void* key)
 {
     ASSERT(table != NULL);
 
-    const unsigned hash = table->hash_func(key);
+    const unsigned raw_hash = table->hash_func(key);
+    const unsigned hash = (raw_hash == 0) ? -1 : raw_hash;
     const unsigned truncated_hash = hash % table->size;
     unsigned index = truncated_hash;
     do {
 	hash_node *node = &table->table[index];
-	if (!node->occupied) {
+	if (!node->hash) { /* Not occupied. */
 	    return NULL;
 	}
 	if (node->hash == hash && table->cmp_func(key, node->key) == 0) {
@@ -254,7 +257,7 @@ index_of_node_to_shift(hashtable2* table, unsigned truncated_hash, unsigned inde
     int last_index = -1;
     do {
 	hash_node* node = &table->table[index];
-	if (!node->occupied) {
+	if (!node->hash) {
 	    break;
 	}
 	if (node->hash % table->size == truncated_hash) {
@@ -273,15 +276,16 @@ remove_cleanup(hashtable2* table, unsigned truncated_hash, unsigned index)
 {
     do {
 	hash_node* node = &table->table[index];
-	if (!node->occupied) {
+	const unsigned hash = node->hash;
+	if (!hash) { /* Not occupied. */
 	    break;
 	}
 	void *datum = node->datum;
-	node->occupied = false;
+	node->hash = 0;
 	table->count--;
 
 	bool inserted = false;
-	void **datum_location = insert(table, node->key, node->hash, &inserted);
+	void **datum_location = insert(table, node->key, hash, &inserted);
 	ASSERT(inserted);
 	ASSERT(datum_location != NULL);
 	*datum_location = datum;
@@ -297,18 +301,19 @@ hashtable2_remove(hashtable2* table, const void* key)
 {
     ASSERT(table != NULL);
 
-    const unsigned hash = table->hash_func(key);
+    const unsigned raw_hash = table->hash_func(key);
+    const unsigned hash = (raw_hash == 0) ? -1 : raw_hash;
     const unsigned truncated_hash = hash % table->size;
     unsigned index = truncated_hash;
     do {
 	hash_node *node = &table->table[index];
-	if (!node->occupied) {
+	if (!node->hash) { /* Not occupied. */
 	    return NULL;
 	}
 	if (node->hash == hash && table->cmp_func(key, node->key) == 0) {
 	    if (table->del_func)
 		table->del_func(node->key, node->datum);
-	    node->occupied = false;
+	    node->hash = 0;
 	    table->count--;
 	    remove_cleanup(table, truncated_hash, (index + 1) % table->size);
 	    return true;
@@ -328,10 +333,10 @@ hashtable2_clear(hashtable2* table)
     hash_node *node = table->table;
     hash_node *end = table->table + table->size;
     for (; node != end; ++node) {
-	if (node->occupied) {
+	if (node->hash) {
 	    if (table->del_func)
 		table->del_func(node->key, node->datum);
-	    node->occupied = false;
+	    node->hash = 0;
 	}
     }
 
@@ -350,7 +355,7 @@ hashtable2_traverse(hashtable2* table, dict_visit_func visit)
     hash_node *node = table->table;
     hash_node *end = table->table + table->size;
     for (; node != end; ++node) {
-	if (node->occupied) {
+	if (node->hash) {
 	    ++count;
 	    if (!visit(node->key, node->datum))
 		break;
@@ -412,7 +417,7 @@ hashtable2_resize(hashtable2* table, unsigned new_size)
     table->count = 0;
 
     for (unsigned i = 0; i < old_size; i++) {
-	if (old_table[i].occupied) {
+	if (old_table[i].hash) {
 	    bool inserted = false;
 	    void **datum_location = insert(table, old_table[i].key, old_table[i].hash, &inserted);
 	    if (!inserted || !datum_location) {
@@ -439,7 +444,7 @@ hashtable2_verify(const hashtable2* table)
     const hash_node *node = table->table;
     const hash_node *end = table->table + table->size;
     for (; node != end; ++node) {
-	if (node->occupied) {
+	if (node->hash) {
 	    ++count;
 	    /* TODO(farooq): additional validation here? */
 	}
@@ -510,7 +515,7 @@ hashtable2_itor_next(hashtable2_itor* itor)
 	return hashtable2_itor_first(itor);
 
     while (++itor->slot < (int) itor->table->size) {
-	if (itor->table->table[itor->slot].occupied) {
+	if (itor->table->table[itor->slot].hash) {
 	    return true;
 	}
     }
@@ -527,7 +532,7 @@ hashtable2_itor_prev(hashtable2_itor* itor)
 	return hashtable2_itor_last(itor);
 
     while (itor->slot-- > 0) {
-	if (itor->table->table[itor->slot].occupied) {
+	if (itor->table->table[itor->slot].hash) {
 	    return true;
 	}
     }
@@ -563,7 +568,7 @@ hashtable2_itor_first(hashtable2_itor* itor)
     ASSERT(itor != NULL);
 
     for (unsigned slot = 0; slot < itor->table->size; ++slot) {
-	if (itor->table->table[slot].occupied) {
+	if (itor->table->table[slot].hash) {
 	    itor->slot = slot;
 	    return true;
 	}
@@ -578,7 +583,7 @@ hashtable2_itor_last(hashtable2_itor* itor)
     ASSERT(itor != NULL);
 
     for (unsigned slot = itor->table->size; slot > 0;) {
-	if (itor->table->table[--slot].occupied) {
+	if (itor->table->table[--slot].hash) {
 	    itor->slot = slot;
 	    return true;
 	}
@@ -590,12 +595,13 @@ hashtable2_itor_last(hashtable2_itor* itor)
 bool
 hashtable2_itor_search(hashtable2_itor* itor, const void* key)
 {
-    const unsigned hash = itor->table->hash_func(key);
+    const unsigned raw_hash = itor->table->hash_func(key);
+    const unsigned hash = (raw_hash == 0) ? -1 : raw_hash;
     const unsigned truncated_hash = hash % itor->table->size;
     unsigned index = truncated_hash;
     do {
 	hash_node *node = &itor->table->table[index];
-	if (!node->occupied) {
+	if (!node->hash) {
 	    break;
 	}
 	if (node->hash == hash && itor->table->cmp_func(key, node->key) == 0) {
