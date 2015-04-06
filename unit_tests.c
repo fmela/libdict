@@ -60,7 +60,7 @@ CU_TestInfo basic_tests[] = {
     CU_TEST_INFO_NULL
 };
 
-#define TEST_SUITE(suite) { #suite, NULL, NULL, suite }
+#define TEST_SUITE(suite) { .pName = #suite, .pTests = suite }
 
 CU_SuiteInfo test_suites[] = {
     TEST_SUITE(basic_tests),
