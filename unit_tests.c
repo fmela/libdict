@@ -363,15 +363,16 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
 	CU_ASSERT_PTR_NOT_NULL(*dict_itor_data(itor));
 
 	char *key = dict_itor_key(itor);
-	bool key_matched = false;
+	unsigned keys_matched = 0;
 	for (unsigned i = 0; i < nkeys; ++i) {
 	    if (keys[i].key == key) {
 		CU_ASSERT_EQUAL(*dict_itor_data(itor), keys[i].value);
-		key_matched = true;
-		break;
+		keys_matched++;
+	    } else {
+		CU_ASSERT_NOT_EQUAL(*dict_itor_data(itor), keys[i].value);
 	    }
 	}
-	CU_ASSERT_TRUE(key_matched);
+	CU_ASSERT_EQUAL(keys_matched, 1);
 
 	if (dct->_vtable->insert != (dict_insert_func)hashtable_insert &&
 	    dct->_vtable->insert != (dict_insert_func)hashtable2_insert) {
@@ -392,15 +393,16 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
 	CU_ASSERT_PTR_NOT_NULL(*dict_itor_data(itor));
 
 	char *key = dict_itor_key(itor);
-	bool key_matched = false;
+	unsigned keys_matched = 0;
 	for (unsigned i = 0; i < nkeys; ++i) {
 	    if (keys[i].key == key) {
 		CU_ASSERT_EQUAL(*dict_itor_data(itor), keys[i].value);
-		key_matched = true;
-		break;
+		keys_matched++;
+	    } else {
+		CU_ASSERT_NOT_EQUAL(*dict_itor_data(itor), keys[i].value);
 	    }
 	}
-	CU_ASSERT_TRUE(key_matched);
+	CU_ASSERT_EQUAL(keys_matched, 1);
 
 	if (dct->_vtable->insert != (dict_insert_func)hashtable_insert &&
 	    dct->_vtable->insert != (dict_insert_func)hashtable2_insert) {
