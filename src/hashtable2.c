@@ -36,6 +36,13 @@
 #include "dict_private.h"
 #include "hashtable_common.h"
 
+/* TODO: make this configurable in the constructor methods */
+#define LOADFACTOR_NUMERATOR	2
+#define LOADFACTOR_DENOMINATOR	3
+#if LOADFACTOR_NUMERATOR > LOADFACTOR_DENOMINATOR
+# error LOADFACTOR_NUMERATOR must be less than LOADFACTOR_DENOMINATOR
+#endif
+
 typedef struct hash_node hash_node;
 
 struct hash_node {
@@ -210,7 +217,7 @@ hashtable2_insert(hashtable2* table, void* key, bool* inserted)
 {
     ASSERT(table != NULL);
 
-    if (3*table->count >= 2*table->size) {
+    if (LOADFACTOR_DENOMINATOR * table->count >= LOADFACTOR_NUMERATOR * table->size) {
 	/* Load factor too high: resize the table up to the next prime. */
 	if (!hashtable2_resize(table, table->size + 1)) {
 	    /* Out of memory, or other error? */
