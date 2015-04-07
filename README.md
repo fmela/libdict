@@ -10,8 +10,6 @@ libdict is a C library that provides the following data structures with efficien
 * [hashtable, using separate chaining](http://en.wikipedia.org/wiki/Hashtable#Separate_chaining)
 * [hashtable, using open addressing with linear probing](http://en.wikipedia.org/wiki/Hashtable#Open_addressing)
 
-A generic object-oriented interface is provided, but is not required.
-
 ## License
 
 libdict is released under the simplified BSD [license](https://github.com/fmela/libdict/blob/master/LICENSE).
