@@ -1,0 +1,7 @@
+install:
+- sudo apt-get install libcunit1-dev
+script: make test
+language: c
+compiler:
+- clang
+- gcc
