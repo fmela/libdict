@@ -13,7 +13,6 @@ SHARED_OBJ := $(SOURCE:$(SOURCE_DIR)/%.c=$(OUTPUT_DIR)/%.So)
 
 PROG_SRC := anagram.c benchmark.c demo.c
 PROGRAMS := $(PROG_SRC:%.c=$(OUTPUT_DIR)/%)
-VG := $(OUTPUT_DIR)/vg
 
 LIB := dict
 STATIC_LIB_NAME := lib$(LIB).a
@@ -26,7 +25,7 @@ SHARED_LIB := $(OUTPUT_DIR)/$(SHARED_LIB_NAME)
 # Plug in your favorite compiler here:
 CC := $(shell which clang || which gcc)
 INCLUDES = -I$(HEADER_DIR) -I$(SOURCE_DIR) -I$(CUNIT_PREFIX)/include
-CFLAGS = -Wall -Wextra -Wshadow -W -std=c99 -O3 -pipe $(INCLUDES)
+CFLAGS = -Wall -Wextra -Wshadow -W -std=c11 -O3 -pipe $(INCLUDES)
 LDFLAGS =
 
 INSTALL_PREFIX ?= /usr/local
@@ -40,11 +39,11 @@ INSTALL_SHLIB = $(SHARED_LIB_NAME).$(INSTALL_LIBVER)
 INSTALL_USER ?= 0
 INSTALL_GROUP ?= 0
 
-all: $(OUTPUT_DIR) $(STATIC_LIB) $(SHARED_LIB) $(PROGRAMS) $(VG)
+all: $(OUTPUT_DIR) $(STATIC_LIB) $(SHARED_LIB) $(PROGRAMS)
 
-shared:  $(SHARED_LIB)
+shared: $(SHARED_LIB)
 
-static:  $(STATIC_LIB) $(PROFIL_LIB)
+static: $(STATIC_LIB) $(PROFIL_LIB)
 
 $(OUTPUT_DIR):
 	[ -d $(OUTPUT_DIR) ] || mkdir -m 755 $(OUTPUT_DIR)
@@ -72,9 +71,6 @@ $(OUTPUT_DIR)/unit_tests: unit_tests.c $(STATIC_LIB) GNUmakefile
 
 $(OUTPUT_DIR)/%: %.c $(STATIC_LIB) GNUmakefile
 	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_LIB) $(LDFLAGS)
-
-$(VG): vg
-	cp vg $(VG)
 
 test: $(OUTPUT_DIR)/unit_tests
 	./$(OUTPUT_DIR)/unit_tests
