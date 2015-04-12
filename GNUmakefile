@@ -32,7 +32,7 @@ ifeq ($(CC),cc)
   CC := $(shell which clang || which gcc)
 endif
 INCLUDES := -I$(HEADER_DIR) -I$(SOURCE_DIR)
-CFLAGS := -Wall -Wextra -Wshadow -W -std=c11 -O3 -pipe $(INCLUDES)
+CFLAGS := -Wall -Wextra -Wshadow -W -std=c99 -O3 -pipe $(INCLUDES)
 LDFLAGS :=
 
 INSTALL_PREFIX ?= /usr/local
