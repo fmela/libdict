@@ -1,8 +1,14 @@
-SOURCE_DIR = src
-HEADER_DIR = include
-OUTPUT_DIR = bin
+SOURCE_DIR := src
+HEADER_DIR := include
+OUTPUT_DIR := bin
 
-CUNIT_PREFIX=$(HOME)/homebrew
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+HOMEBREW_PREFIX := $(shell dirname `which brew`)
+HOMEBREW_PREFIX := $(shell dirname $(HOMEBREW_PREFIX))
+TEST_CFLAGS := -I$(HOMEBREW_PREFIX)/include
+TEST_LDFLAGS := -L$(HOMEBREW_PREFIX)/lib
+endif
 
 SOURCE := $(wildcard $(SOURCE_DIR)/*.c)
 HEADER := $(wildcard $(HEADER_DIR)/*.h $(SOURCE_DIR)/*.h)
@@ -22,11 +28,12 @@ STATIC_LIB := $(OUTPUT_DIR)/$(STATIC_LIB_NAME)
 PROFIL_LIB := $(OUTPUT_DIR)/$(PROFIL_LIB_NAME)
 SHARED_LIB := $(OUTPUT_DIR)/$(SHARED_LIB_NAME)
 
-# Plug in your favorite compiler here:
-CC := $(shell which clang || which gcc)
-INCLUDES = -I$(HEADER_DIR) -I$(SOURCE_DIR) -I$(CUNIT_PREFIX)/include
-CFLAGS = -Wall -Wextra -Wshadow -W -std=c11 -O3 -pipe $(INCLUDES)
-LDFLAGS =
+ifeq ($(CC),cc)
+  CC := $(shell which clang || which gcc)
+endif
+INCLUDES := -I$(HEADER_DIR) -I$(SOURCE_DIR)
+CFLAGS := -Wall -Wextra -Wshadow -W -std=c11 -O3 -pipe $(INCLUDES)
+LDFLAGS :=
 
 INSTALL_PREFIX ?= /usr/local
 INSTALL_BINDIR = $(INSTALL_PREFIX)/bin
@@ -57,17 +64,17 @@ $(PROFIL_LIB): $(OUTPUT_DIR) $(PROFIL_OBJ)
 $(SHARED_LIB): $(OUTPUT_DIR) $(SHARED_OBJ)
 	$(CC) -shared -o $(SHARED_LIB) $(SHARED_OBJ)
 
-$(OUTPUT_DIR)/%.o: $(SOURCE_DIR)/%.c $(HEADER) GNUmakefile
+$(OUTPUT_DIR)/%.o: $(SOURCE_DIR)/%.c $(HEADER) GNUmakefile $(OUTPUT_DIR)
 	$(CC) $(CFLAGS) -c -o $(@) $(<)
 
-$(OUTPUT_DIR)/%.po: $(SOURCE_DIR)/%.c $(HEADER) GNUmakefile
+$(OUTPUT_DIR)/%.po: $(SOURCE_DIR)/%.c $(HEADER) GNUmakefile $(OUTPUT_DIR)
 	$(CC) $(CFLAGS) -pg -c -o $(@) $(<)
 
-$(OUTPUT_DIR)/%.So: $(SOURCE_DIR)/%.c $(HEADER) GNUmakefile
+$(OUTPUT_DIR)/%.So: $(SOURCE_DIR)/%.c $(HEADER) GNUmakefile $(OUTPUT_DIR)
 	$(CC) $(CFLAGS) -fPIC -DPIC -c -o $(@) $(<)
 
-$(OUTPUT_DIR)/unit_tests: unit_tests.c $(STATIC_LIB) GNUmakefile
-	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_LIB) -L$(CUNIT_PREFIX)/lib $(LDFLAGS) -lcunit
+$(OUTPUT_DIR)/unit_tests: unit_tests.c $(SOURCE) GNUmakefile $(OUTPUT_DIR)
+	$(CC) $(CFLAGS) $(TEST_CFLAGS) -o $(@) $(<) $(SOURCE) $(LDFLAGS) $(TEST_LDFLAGS) -lcunit
 
 $(OUTPUT_DIR)/%: %.c $(STATIC_LIB) GNUmakefile
 	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_LIB) $(LDFLAGS)
