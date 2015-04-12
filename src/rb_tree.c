@@ -751,7 +751,7 @@ node_new(void* key)
 {
     rb_node* node = MALLOC(sizeof(*node));
     if (node) {
-	ASSERT((((intptr_t)node) & 1) == 0);
+	ASSERT((((intptr_t)node) & 1) == 0); /* Ensure malloc returns aligned result. */
 	node->key = key;
 	node->datum = NULL;
 	node->parent = RB_NULL;

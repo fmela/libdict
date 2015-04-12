@@ -149,9 +149,9 @@ tree_search_node(void* Tree, const void* key)
 {
     ASSERT(Tree != NULL);
 
-    tree* tree = Tree;
-    for (tree_node* node = tree->root; node;) {
-	int cmp = tree->cmp_func(key, node->key);
+    tree* t = Tree;
+    for (tree_node* node = t->root; node;) {
+	int cmp = t->cmp_func(key, node->key);
 	if (cmp < 0)
 	    node = node->llink;
 	else if (cmp)
@@ -173,11 +173,11 @@ tree_search(void* Tree, const void* key)
 void*
 tree_search_le_node(void* Tree, const void* key)
 {
-    tree* tree = Tree;
-    ASSERT(tree != NULL);
-    tree_node* node = tree->root, *ret = NULL;
+    tree* t = Tree;
+    ASSERT(t != NULL);
+    tree_node* node = t->root, *ret = NULL;
     while (node) {
-	int cmp = tree->cmp_func(key, node->key);
+	int cmp = t->cmp_func(key, node->key);
 	if (cmp == 0)
 	    return node;
 	if (cmp < 0) {
@@ -201,11 +201,11 @@ tree_search_le(void* Tree, const void* key)
 void*
 tree_search_lt_node(void* Tree, const void* key)
 {
-    tree* tree = Tree;
-    ASSERT(tree != NULL);
-    tree_node* node = tree->root, *ret = NULL;
+    tree* t = Tree;
+    ASSERT(t != NULL);
+    tree_node* node = t->root, *ret = NULL;
     while (node) {
-	int cmp = tree->cmp_func(key, node->key);
+	int cmp = t->cmp_func(key, node->key);
 	if (cmp <= 0) {
 	    node = node->llink;
 	} else {
@@ -227,11 +227,11 @@ tree_search_lt(void* Tree, const void* key)
 void*
 tree_search_ge_node(void* Tree, const void* key)
 {
-    tree* tree = Tree;
-    ASSERT(tree != NULL);
-    tree_node* node = tree->root, *ret = NULL;
+    tree* t = Tree;
+    ASSERT(t != NULL);
+    tree_node* node = t->root, *ret = NULL;
     while (node) {
-	int cmp = tree->cmp_func(key, node->key);
+	int cmp = t->cmp_func(key, node->key);
 	if (cmp == 0) {
 	    return node;
 	}
@@ -256,11 +256,11 @@ tree_search_ge(void* Tree, const void* key)
 void*
 tree_search_gt_node(void* Tree, const void* key)
 {
-    tree* tree = Tree;
-    ASSERT(tree != NULL);
-    tree_node* node = tree->root, *ret = NULL;
+    tree* t = Tree;
+    ASSERT(t != NULL);
+    tree_node* node = t->root, *ret = NULL;
     while (node) {
-	int cmp = tree->cmp_func(key, node->key);
+	int cmp = t->cmp_func(key, node->key);
 	if (cmp < 0) {
 	    ret = node;
 	    node = node->llink;
@@ -284,10 +284,10 @@ tree_min(const void* Tree)
 {
     ASSERT(Tree != NULL);
 
-    const tree* tree = Tree;
-    if (!tree->root)
+    const tree* t = Tree;
+    if (!t->root)
 	return NULL;
-    const tree_node* node = tree->root;
+    const tree_node* node = t->root;
     while (node->llink)
 	node = node->llink;
     return node->key;
@@ -298,10 +298,10 @@ tree_max(const void* Tree)
 {
     ASSERT(Tree != NULL);
 
-    const tree* tree = Tree;
-    if (!tree->root)
+    const tree* t = Tree;
+    if (!t->root)
 	return NULL;
-    const tree_node* node = tree->root;
+    const tree_node* node = t->root;
     while (node->rlink)
 	node = node->rlink;
     return node->key;
@@ -313,10 +313,10 @@ tree_traverse(void* Tree, dict_visit_func visit)
     ASSERT(Tree != NULL);
     ASSERT(visit != NULL);
 
-    tree* tree = Tree;
+    tree* t = Tree;
     size_t count = 0;
-    if (tree->root) {
-	tree_node* node = tree_node_min(tree->root);
+    if (t->root) {
+	tree_node* node = tree_node_min(t->root);
 	do {
 	    ++count;
 	    if (!visit(node->key, node->datum))
@@ -355,12 +355,12 @@ tree_clear(void* Tree)
 {
     ASSERT(Tree != NULL);
 
-    tree* tree = Tree;
-    const size_t count = tree->count;
-    if (tree->root) {
-	tree_node_free(tree, tree->root);
-	tree->root = NULL;
-	tree->count = 0;
+    tree* t = Tree;
+    const size_t count = t->count;
+    if (t->root) {
+	tree_node_free(t, t->root);
+	t->root = NULL;
+	t->count = 0;
     }
     return count;
 }
@@ -429,9 +429,9 @@ node_min_leaf_depth(const tree_node* node, size_t depth)
 size_t
 tree_min_leaf_depth(const void* Tree)
 {
-    const tree* tree = Tree;
-    ASSERT(tree != NULL);
-    return tree->root ? node_min_leaf_depth(tree->root, 1) : 0;
+    const tree* t = Tree;
+    ASSERT(t != NULL);
+    return t->root ? node_min_leaf_depth(t->root, 1) : 0;
 }
 
 static size_t
@@ -454,9 +454,9 @@ node_max_leaf_depth(const tree_node* node, size_t depth)
 size_t
 tree_max_leaf_depth(const void* Tree)
 {
-    const tree* tree = Tree;
-    ASSERT(tree != NULL);
-    return tree->root ? node_max_leaf_depth(tree->root, 1) : 0;
+    const tree* t = Tree;
+    ASSERT(t != NULL);
+    return t->root ? node_max_leaf_depth(t->root, 1) : 0;
 }
 
 bool

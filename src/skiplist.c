@@ -568,5 +568,5 @@ static unsigned
 rand_link_count(skiplist* list)
 {
     unsigned count = __builtin_ctz(dict_rand()) / 2 + 1;
-    return (count >= list->max_link) ?  list->max_link - 1 : count;
+    return (count >= list->max_link) ? list->max_link - 1 : count;
 }

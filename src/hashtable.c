@@ -368,7 +368,7 @@ hashtable_resize(hashtable* table, unsigned new_size)
     if (table->size == new_size)
 	return true;
 
-    /* TODO: use REALLOC instead of MALLOC. */
+    /* TODO: investigate whether using realloc would be advantageous. */
     hash_node** ntable = MALLOC(new_size * sizeof(hash_node*));
     if (!ntable)
 	return false;
@@ -489,8 +489,7 @@ hashtable_itor_next(hashtable_itor* itor)
     if (!itor->node)
 	return hashtable_itor_first(itor);
 
-    itor->node = itor->node->next;
-    if (itor->node)
+    if ((itor->node = itor->node->next) != NULL)
 	return true;
 
     unsigned slot = itor->slot;
@@ -514,8 +513,7 @@ hashtable_itor_prev(hashtable_itor* itor)
     if (!itor->node)
 	return hashtable_itor_last(itor);
 
-    itor->node = itor->node->prev;
-    if (itor->node)
+    if ((itor->node = itor->node->prev) != NULL)
 	return true;
 
     unsigned slot = itor->slot;

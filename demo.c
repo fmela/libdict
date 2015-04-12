@@ -114,10 +114,10 @@ main(int argc, char **argv)
 	    if (inserted) {
 		*datum_location = xstrdup(ptr2);
 		printf("inserted '%s': '%s'\n",
-		       ptr, *datum_location);
+		       ptr, (char *)*datum_location);
 	    } else {
 		printf("'%s' already in dict: '%s'\n",
-		       ptr, *datum_location);
+		       ptr, (char *)*datum_location);
 	    }
 	} else if (strcmp(buf, "search") == 0) {
 	    if (ptr2) {

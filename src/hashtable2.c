@@ -227,7 +227,7 @@ hashtable2_insert(hashtable2* table, void* key, bool* inserted)
 	}
     }
     const unsigned raw_hash = table->hash_func(key);
-    const unsigned hash = (raw_hash == 0) ? -1 : raw_hash;
+    const unsigned hash = (raw_hash == 0) ? ~(unsigned)0 : raw_hash;
     void **datum_location = insert(table, key, hash, inserted);
     ASSERT(datum_location != NULL);
     return datum_location;
@@ -239,7 +239,7 @@ hashtable2_search(hashtable2* table, const void* key)
     ASSERT(table != NULL);
 
     const unsigned raw_hash = table->hash_func(key);
-    const unsigned hash = (raw_hash == 0) ? -1 : raw_hash;
+    const unsigned hash = (raw_hash == 0) ? ~(unsigned)0 : raw_hash;
     const unsigned truncated_hash = hash % table->size;
     unsigned index = truncated_hash;
     do {
@@ -309,7 +309,7 @@ hashtable2_remove(hashtable2* table, const void* key)
     ASSERT(table != NULL);
 
     const unsigned raw_hash = table->hash_func(key);
-    const unsigned hash = (raw_hash == 0) ? -1 : raw_hash;
+    const unsigned hash = (raw_hash == 0) ? ~(unsigned)0 : raw_hash;
     const unsigned truncated_hash = hash % table->size;
     unsigned index = truncated_hash;
     do {
@@ -603,7 +603,7 @@ bool
 hashtable2_itor_search(hashtable2_itor* itor, const void* key)
 {
     const unsigned raw_hash = itor->table->hash_func(key);
-    const unsigned hash = (raw_hash == 0) ? -1 : raw_hash;
+    const unsigned hash = (raw_hash == 0) ? ~(unsigned)0 : raw_hash;
     const unsigned truncated_hash = hash % itor->table->size;
     unsigned index = truncated_hash;
     do {
