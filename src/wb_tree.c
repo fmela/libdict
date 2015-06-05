@@ -65,7 +65,7 @@
 typedef struct wb_node wb_node;
 struct wb_node {
     TREE_NODE_FIELDS(wb_node);
-    uint32_t		    weight;
+    uint32_t weight;
 };
 
 #define WEIGHT(n)	((n) ? (n)->weight : 1U)
@@ -189,7 +189,7 @@ fixup(wb_tree* tree, wb_node* n) {
 	    nr->weight = (n->weight = WEIGHT(n->llink) + WEIGHT(n->rlink)) +
 			 WEIGHT(nr->rlink);
 	    rotations += 1;
-	} else {					    /* RL */
+	} else {					/* RL */
 	    /* Rotate |nr| right, then |n| left. */
 	    ASSERT(nrl != NULL);
 	    wb_node* p = n->parent;
@@ -228,7 +228,7 @@ fixup(wb_tree* tree, wb_node* n) {
 	    n->weight = WEIGHT(n->llink) + WEIGHT(n->rlink);
 	    nl->weight = weight + n->weight;
 	    rotations += 1;
-	} else {						/* LR */
+	} else {					/* LR */
 	    /* Rotate |nl| left, then |n| right. */
 	    wb_node* nlr = nl->rlink;
 	    ASSERT(nlr != NULL);
