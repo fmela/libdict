@@ -55,11 +55,11 @@ struct hash_node {
 
 struct hashtable {
     hash_node**		    table;
-    unsigned		    size;
     dict_compare_func	    cmp_func;
     dict_hash_func	    hash_func;
     dict_delete_func	    del_func;
     size_t		    count;
+    unsigned		    size;
 };
 
 struct hashtable_itor {

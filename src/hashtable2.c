@@ -52,12 +52,12 @@ struct hash_node {
 };
 
 struct hashtable2 {
-    unsigned		    size;
     size_t		    count;
     dict_compare_func	    cmp_func;
     dict_hash_func	    hash_func;
     dict_delete_func	    del_func;
     hash_node*		    table;
+    unsigned		    size;
 };
 
 struct hashtable2_itor {
