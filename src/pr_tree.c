@@ -37,7 +37,7 @@
 typedef struct pr_node pr_node;
 struct pr_node {
     TREE_NODE_FIELDS(pr_node);
-    unsigned		weight;
+    unsigned weight;
 };
 
 #define WEIGHT(n)	((n) ? (n)->weight : 1)

@@ -35,7 +35,7 @@
     void*		datum; \
     node_type*		parent; \
     node_type*		llink; \
-    node_type*		rlink;
+    node_type*		rlink
 
 typedef struct tree_node_base {
     TREE_NODE_FIELDS(struct tree_node_base);
@@ -46,7 +46,7 @@ typedef struct tree_node_base {
     size_t		count; \
     dict_compare_func	cmp_func; \
     dict_delete_func	del_func; \
-    size_t		rotation_count;
+    size_t		rotation_count
 
 typedef struct tree_base {
     TREE_FIELDS(struct tree_node_base);
@@ -54,7 +54,7 @@ typedef struct tree_base {
 
 #define TREE_ITERATOR_FIELDS(tree_type, node_type) \
     tree_type*		tree; \
-    node_type*		node;
+    node_type*		node
 
 /* Rotate |node| left.
  * |node| and |node->rlink| must not be NULL. */

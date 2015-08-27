@@ -190,7 +190,7 @@ rb_tree_clone(rb_tree* tree, dict_key_datum_clone_func clone_func)
     return clone;
 }
 
-rb_node*
+static rb_node*
 rb_tree_search_node(rb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -216,7 +216,7 @@ rb_tree_search(rb_tree* tree, const void* key)
     return (node != RB_NULL) ? node->datum : NULL;
 }
 
-rb_node*
+static rb_node*
 rb_tree_search_le_node(rb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -239,12 +239,13 @@ rb_tree_search_le_node(rb_tree* tree, const void* key)
 void*
 rb_tree_search_le(rb_tree* tree, const void* key)
 {
-    rb_node* node = rb_tree_search_le_node(tree, key);
+    ASSERT(tree != NULL);
 
+    rb_node* node = rb_tree_search_le_node(tree, key);
     return (node != RB_NULL) ? node->datum : NULL;
 }
 
-rb_node*
+static rb_node*
 rb_tree_search_lt_node(rb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -265,12 +266,13 @@ rb_tree_search_lt_node(rb_tree* tree, const void* key)
 void*
 rb_tree_search_lt(rb_tree* tree, const void* key)
 {
-    rb_node* node = rb_tree_search_lt_node(tree, key);
+    ASSERT(tree != NULL);
 
+    rb_node* node = rb_tree_search_lt_node(tree, key);
     return (node != RB_NULL) ? node->datum : NULL;
 }
 
-rb_node*
+static rb_node*
 rb_tree_search_ge_node(rb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -294,12 +296,13 @@ rb_tree_search_ge_node(rb_tree* tree, const void* key)
 void*
 rb_tree_search_ge(rb_tree* tree, const void* key)
 {
-    rb_node* node = rb_tree_search_ge_node(tree, key);
+    ASSERT(tree != NULL);
 
+    rb_node* node = rb_tree_search_ge_node(tree, key);
     return (node != RB_NULL) ? node->datum : NULL;
 }
 
-rb_node*
+static rb_node*
 rb_tree_search_gt_node(rb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
