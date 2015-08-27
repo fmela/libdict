@@ -19,7 +19,7 @@
 #include "dict_private.h"
 #include "tree_common.h"
 
-const char appname[] = "benchmark";
+static const char appname[] = "benchmark";
 
 char *xstrdup(const char *str);
 
@@ -128,10 +128,13 @@ main(int argc, char **argv)
     timer_end(&start, &end, &total);
     printf("    %s container: %.02fkB\n", container_name, malloced_save * 1e-3);
     printf("       %s memory: %.02fkB\n", container_name, malloced * 1e-3);
-    printf("       %s insert: %6.03f s (%9zu cmp, %9zu hash)\n",
+    printf("       %s insert: %6.03fs %9zu cmp (%.02f/insert)",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
-	   comp_count, hash_count);
+	   comp_count, comp_count / (double) nwords);
+    if (hash_count)
+	printf(" %9zu hash", hash_count);
+    printf("\n");
     total_comp += comp_count; comp_count = 0;
     total_hash += hash_count; hash_count = 0;
     if (type != 'H' && type != '2' && type != 'S') {
@@ -158,7 +161,7 @@ main(int argc, char **argv)
 	++n;
     } while (dict_itor_next(itor));
     timer_end(&start, &end, &total);
-    printf("  %s fwd iterate: %6.03f s\n",
+    printf("  %s fwd iterate: %6.03fs\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
     if (n != nwords)
@@ -173,7 +176,7 @@ main(int argc, char **argv)
 	++n;
     } while (dict_itor_prev(itor));
     timer_end(&start, &end, &total);
-    printf("  %s rev iterate: %6.03f s\n",
+    printf("  %s rev iterate: %6.03fs\n",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6);
     if (n != nwords)
@@ -192,10 +195,13 @@ main(int argc, char **argv)
 	    quit("bad data for '%s', got '%s' instead", words[i], p);
     }
     timer_end(&start, &end, &total);
-    printf("  %s good search: %6.03f s (%9zu cmp, %9zu hash)\n",
+    printf("  %s good search: %6.03fs %9zu cmp (%.02f/search)",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
-	   comp_count, hash_count);
+	   comp_count, comp_count / (double) nwords);
+    if (hash_count)
+	printf(" %9zu hash", hash_count);
+    printf("\n");
     total_comp += comp_count; comp_count = 0;
     total_hash += hash_count; hash_count = 0;
     if (type != 'H' && type != '2' && type != 'S') {
@@ -207,16 +213,19 @@ main(int argc, char **argv)
 
     timer_start(&start);
     for (unsigned i = 0; i < nwords; i++) {
-	int rv = rand() % strlen(words[i]);
+	unsigned rv = dict_rand() % strlen(words[i]);
 	words[i][rv]++;
 	dict_search(dct, words[i]);
 	words[i][rv]--;
     }
     timer_end(&start, &end, &total);
-    printf("   %s bad search: %6.03f s (%9zu cmp, %9zu hash)\n",
+    printf("   %s bad search: %6.03fs %9zu cmp (%.02f/search)",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
-	   comp_count, hash_count);
+	   comp_count, comp_count / (double) nwords);
+    if (hash_count)
+	printf(" %9zu hash", hash_count);
+    printf("\n");
     total_comp += comp_count; comp_count = 0;
     total_hash += hash_count; hash_count = 0;
 
@@ -228,10 +237,13 @@ main(int argc, char **argv)
 	    quit("removing #%d '%s' failed!\n", i, words[i]);
     }
     timer_end(&start, &end, &total);
-    printf("       %s remove: %6.03f s (%9zu cmp, %9zu hash)\n",
+    printf("       %s remove: %6.03fs %9zu cmp (%.2f/remove)",
 	   container_name,
 	   (end.ru_utime.tv_sec * 1000000 + end.ru_utime.tv_usec) * 1e-6,
-	   comp_count, hash_count);
+	   comp_count, comp_count / (double)nwords);
+    if (hash_count)
+	printf(" %9zu hash", hash_count);
+    printf("\n");
     total_comp += comp_count; comp_count = 0;
     total_hash += hash_count; hash_count = 0;
     if (type != 'H' && type != '2' && type != 'S') {
@@ -248,10 +260,13 @@ main(int argc, char **argv)
 
     dict_free(dct);
 
-    printf("        %s total: %6.03f s (%9zu cmp, %9zu hash)\n",
+    printf("        %s total: %6.03fs %9zu cmp",
 	   container_name,
 	   (total.tv_sec * 1000000 + total.tv_usec) * 1e-6,
-	   total_comp, total_hash);
+	   total_comp);
+    if (total_hash)
+	printf(" %9zu hash", total_hash);
+    printf("\n");
 
     if (type != 'H' && type != '2' && type != 'S') {
 	printf(" total rotations: %zu\n", total_rotations);
@@ -357,7 +372,7 @@ void
 shuffle(char **p, unsigned size)
 {
     for (unsigned i = 0; i < size - 1; i++) {
-	unsigned n = rand() % (size - i);
+	unsigned n = ((unsigned) rand()) % (size - i);
 	char *t = p[i+n]; p[i+n] = p[i]; p[i] = t;
     }
 }
