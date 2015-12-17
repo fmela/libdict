@@ -41,7 +41,7 @@ struct skip_node {
     void*		    datum;
     skip_node*		    prev;
     unsigned		    link_count;
-    skip_node*		    link[0];
+    skip_node*		    link[];
 };
 
 #define MAX_LINK	    32
