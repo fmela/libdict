@@ -32,13 +32,8 @@ ifeq ($(CC),cc)
   CC := $(shell which clang || which gcc)
 endif
 INCLUDES := -I$(HEADER_DIR) -I$(SOURCE_DIR)
-ifeq ($(shell basename $(CC)),clang)
-    WARNINGS := -Weverything -Wno-padded -Wno-format-nonliteral
-else
-    WARNINGS := -Wall -W -Wextra
-endif
-
-CFLAGS := $(WARNINGS) -Werror -ansi -pedantic -std=c11 -O2 -pipe $(INCLUDES)
+WARNINGS := -Weverything -Wno-padded -Wno-format-nonliteral -Werror -ansi -pedantic
+CFLAGS := $(WARNINGS) -std=c11 -O2 -pipe $(INCLUDES)
 LDFLAGS :=
 
 INSTALL_PREFIX ?= /usr/local
