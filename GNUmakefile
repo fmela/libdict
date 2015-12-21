@@ -38,7 +38,7 @@ else
     WARNINGS := -Wall -W -Wextra
 endif
 
-CFLAGS := $(WARNINGS) -Werror -std=c11 -O3 -pipe $(INCLUDES)
+CFLAGS := $(WARNINGS) -Werror -ansi -pedantic -std=c11 -O2 -pipe $(INCLUDES)
 LDFLAGS :=
 
 INSTALL_PREFIX ?= /usr/local
