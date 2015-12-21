@@ -89,7 +89,7 @@ main(int argc, char **argv)
     if (fp == NULL)
 	quit("cant open file '%s': %s", argv[2], strerror(errno));
 
-    unsigned nwords = 0;
+    size_t nwords = 0;
     char buf[512];
     while (fgets(buf, sizeof(buf), fp))
 	++nwords;
@@ -99,15 +99,15 @@ main(int argc, char **argv)
 
     char **words = xmalloc(sizeof(*words) * nwords);
     rewind(fp);
-    unsigned words_read = 0;
+    size_t words_read = 0;
     while (words_read < nwords && fgets(buf, sizeof(buf), fp)) {
 	strtok(buf, "\n");
 	words[words_read++] = xstrdup(buf);
     }
     fclose(fp);
     if (words_read < nwords)
-	quit("Only read %u/%u words!", words_read, nwords);
-    printf("Loaded %u keys from %s.\n", nwords, argv[2]);
+	quit("Only read %zu/%zu words!", words_read, nwords);
+    printf("Loaded %zu keys from %s.\n", nwords, argv[2]);
 
     malloced = malloced_save;
     size_t total_comp = 0, total_hash = 0, total_rotations = 0;
@@ -146,7 +146,7 @@ main(int argc, char **argv)
 
     ASSERT(dict_verify(dct));
 
-    unsigned n = dict_count(dct);
+    size_t n = dict_count(dct);
     if (n != nwords)
 	quit("bad count (%u - should be %u)!", n, nwords);
 
@@ -395,7 +395,7 @@ unsigned
 ptr_hash(const void *p)
 {
     ++hash_count;
-    return (2166136261U ^ (uintptr_t)p) * 16777619U;
+    return (unsigned) ((2166136261U ^ (uintptr_t)p) * 16777619U);
 }
 
 int

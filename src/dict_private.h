@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DICT_PRIVATE_H_
-#define _DICT_PRIVATE_H_
+#ifndef LIBDICT_DICT_PRIVATE_H__
+#define LIBDICT_DICT_PRIVATE_H__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,4 +95,4 @@ static inline unsigned dict_rand() {
 #endif
 }
 
-#endif /* !_DICT_PRIVATE_H_ */
+#endif /* !LIBDICT_DICT_PRIVATE_H__ */

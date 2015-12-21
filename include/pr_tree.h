@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PR_TREE_H_
-#define _PR_TREE_H_
+#ifndef LIBDICT_PR_TREE_H__
+#define LIBDICT_PR_TREE_H__
 
 #include "dict.h"
 
@@ -75,4 +75,4 @@ bool		pr_itor_remove(pr_itor* itor);
 
 END_DECL
 
-#endif /* !_PR_TREE_H_ */
+#endif /* !LIBDICT_PR_TREE_H__ */

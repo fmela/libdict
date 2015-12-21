@@ -347,7 +347,7 @@ size_t
 tree_count(const void* Tree)
 {
     ASSERT(Tree != NULL);
-    return ((tree*)Tree)->count;
+    return ((const tree*)Tree)->count;
 }
 
 size_t

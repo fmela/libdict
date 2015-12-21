@@ -576,7 +576,7 @@ hashtable2_itor_first(hashtable2_itor* itor)
 
     for (unsigned slot = 0; slot < itor->table->size; ++slot) {
 	if (itor->table->table[slot].hash) {
-	    itor->slot = slot;
+	    itor->slot = (int) slot;
 	    return true;
 	}
     }
@@ -591,7 +591,7 @@ hashtable2_itor_last(hashtable2_itor* itor)
 
     for (unsigned slot = itor->table->size; slot > 0;) {
 	if (itor->table->table[--slot].hash) {
-	    itor->slot = slot;
+	    itor->slot = (int) slot;
 	    return true;
 	}
     }
@@ -612,7 +612,7 @@ hashtable2_itor_search(hashtable2_itor* itor, const void* key)
 	    break;
 	}
 	if (node->hash == hash && itor->table->cmp_func(key, node->key) == 0) {
-	    itor->slot = index;
+	    itor->slot = (int) index;
 	    return true;
 	}
 	if (++index == itor->table->size) {

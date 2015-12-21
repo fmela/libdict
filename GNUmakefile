@@ -32,7 +32,13 @@ ifeq ($(CC),cc)
   CC := $(shell which clang || which gcc)
 endif
 INCLUDES := -I$(HEADER_DIR) -I$(SOURCE_DIR)
-CFLAGS := -Wall -Wextra -Wshadow -W -std=c99 -O3 -pipe $(INCLUDES)
+ifeq ($(shell basename $(CC)),clang)
+    WARNINGS := -Weverything -Wno-padded -Wno-format-nonliteral
+else
+    WARNINGS := -Wall -W -Wextra
+endif
+
+CFLAGS := $(WARNINGS) -Werror -std=c11 -O3 -pipe $(INCLUDES)
 LDFLAGS :=
 
 INSTALL_PREFIX ?= /usr/local
@@ -47,6 +53,7 @@ INSTALL_USER ?= 0
 INSTALL_GROUP ?= 0
 
 all: $(OUTPUT_DIR) $(STATIC_LIB) $(SHARED_LIB) $(PROGRAMS)
+	@echo && echo "Don't forget to run 'make test'"
 
 shared: $(SHARED_LIB)
 

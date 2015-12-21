@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HB_TREE_H_
-#define _HB_TREE_H_
+#ifndef LIBDICT_HB_TREE_H__
+#define LIBDICT_HB_TREE_H__
 
 #include "dict.h"
 
@@ -75,4 +75,4 @@ bool		hb_itor_remove(hb_itor* itor);
 
 END_DECL
 
-#endif /* !_HB_TREE_H_ */
+#endif /* !LIBDICT_HB_TREE_H__ */

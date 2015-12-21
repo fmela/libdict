@@ -13,7 +13,7 @@
 
 #include "dict.h"
 
-const char appname[] = "demo";
+static const char appname[] = "demo";
 
 char *xstrdup(const char *str);
 
@@ -27,7 +27,7 @@ void *xmalloc(size_t size);
 void *xrealloc(void *ptr, size_t size);
 void *xdup(const void *ptr, size_t size);
 
-void
+static void
 key_val_free(void *key, void *datum)
 {
     free(key);

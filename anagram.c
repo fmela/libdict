@@ -51,8 +51,8 @@ main(int argc, char *argv[])
 	    if (freq[i]) {
 		ASSERT(freq[i] < 10);
 
-		*p++ = i;
-		*p++ = '0' + freq[i];
+		*p++ = (char) i;
+		*p++ = '0' + (char) freq[i];
 	    }
 	}
 	*p = 0;

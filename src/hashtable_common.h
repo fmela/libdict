@@ -25,9 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HASHTABLE_COMMON_H_
-#define _HASHTABLE_COMMON_H_
+#ifndef LIBDICT_HASHTABLE_COMMON_H__
+#define LIBDICT_HASHTABLE_COMMON_H__
 
 unsigned dict_prime_geq(unsigned n);
 
-#endif /* !defined(_HASHTABLE_COMMON_H_) */
+#endif /* !LIBDICT_HASHTABLE_COMMON_H__ */

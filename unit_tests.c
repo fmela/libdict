@@ -29,22 +29,24 @@ struct closest_lookup_info {
 };
 
 void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
-		const struct closest_lookup_info *cl_infos,
-		unsigned n_cl_infos);
-void test_basic_hashtable_1bucket();
-void test_basic_hashtable2_1bucket();
-void test_basic_hashtable_nbuckets();
-void test_basic_hashtable2_nbuckets();
-void test_basic_height_balanced_tree();
-void test_basic_path_reduction_tree();
-void test_basic_red_black_tree();
-void test_basic_skiplist();
-void test_basic_splay_tree();
-void test_basic_treap();
-void test_basic_weight_balanced_tree();
-void test_version_string();
+		const struct closest_lookup_info *cl_infos, unsigned n_cl_infos);
+void test_basic_hashtable_1bucket(void);
+void test_basic_hashtable2_1bucket(void);
+void test_basic_hashtable_nbuckets(void);
+void test_basic_hashtable2_nbuckets(void);
+void test_basic_height_balanced_tree(void);
+void test_basic_path_reduction_tree(void);
+void test_basic_red_black_tree(void);
+void test_basic_skiplist(void);
+void test_basic_splay_tree(void);
+void test_basic_treap(void);
+void test_basic_weight_balanced_tree(void);
+void test_search(dict *dct, dict_itor *itor, const char *key, const char *value);
+void test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsigned n_cl_infos);
+void test_version_string(void);
+void shuffle(char **p, unsigned size);
 
-CU_TestInfo basic_tests[] = {
+static CU_TestInfo basic_tests[] = {
     TEST_FUNC(test_basic_hashtable_1bucket),
     TEST_FUNC(test_basic_hashtable2_1bucket),
     TEST_FUNC(test_basic_hashtable_nbuckets),
@@ -62,7 +64,7 @@ CU_TestInfo basic_tests[] = {
 
 #define TEST_SUITE(suite) { .pName = #suite, .pTests = suite }
 
-CU_SuiteInfo test_suites[] = {
+static CU_SuiteInfo test_suites[] = {
     TEST_SUITE(basic_tests),
     CU_SUITE_INFO_NULL
 };
@@ -83,7 +85,7 @@ void
 shuffle(char **p, unsigned size)
 {
     for (unsigned i = 0; i < size - 1; i++) {
-	unsigned n = rand() % (size - i);
+	unsigned n = (unsigned) rand() % (size - i);
 	char *t = p[i+n]; p[i+n] = p[i]; p[i] = t;
     }
 }
@@ -226,7 +228,7 @@ test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
     }
 }
 
-static void
+void
 test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsigned n_cl_infos)
 {
     if (!dict_has_near_search(dct))
@@ -287,8 +289,7 @@ test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsig
 }
 
 void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
-		const struct closest_lookup_info *cl_infos,
-		unsigned n_cl_infos) {
+		const struct closest_lookup_info *cl_infos, unsigned n_cl_infos) {
     dict_itor *itor = dict_itor_new(dct);
 
     CU_ASSERT_TRUE(dict_verify(dct));

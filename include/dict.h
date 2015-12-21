@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DICT_H_
-#define _DICT_H_
+#ifndef LIBDICT_DICT_H__
+#define LIBDICT_DICT_H__
 
 #if defined(__cplusplus) || defined(c_plusplus)
 # define BEGIN_DECL     extern "C" {
@@ -206,4 +206,4 @@ END_DECL
 #include "tr_tree.h"
 #include "wb_tree.h"
 
-#endif /* !_DICT_H_ */
+#endif /* !LIBDICT_DICT_H__ */

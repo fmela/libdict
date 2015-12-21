@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TR_TREE_H_
-#define _TR_TREE_H_
+#ifndef LIBDICT_TR_TREE_H__
+#define LIBDICT_TR_TREE_H__
 
 #include "dict.h"
 
@@ -77,4 +77,4 @@ bool		tr_itor_remove(tr_itor* itor);
 
 END_DECL
 
-#endif /* !_TR_TREE_H_ */
+#endif /* !LIBDICT_TR_TREE_H__ */

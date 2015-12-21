@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SP_TREE_H_
-#define _SP_TREE_H_
+#ifndef LIBDICT_SP_TREE_H__
+#define LIBDICT_SP_TREE_H__
 
 #include "dict.h"
 
@@ -76,4 +76,4 @@ bool		sp_itor_remove(sp_itor* itor);
 
 END_DECL
 
-#endif /* !_SP_TREE_H_ */
+#endif /* !LIBDICT_SP_TREE_H__ */

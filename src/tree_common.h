@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TREE_COMMON_H_
-#define _TREE_COMMON_H_
+#ifndef LIBDICT_TREE_COMMON_H__
+#define LIBDICT_TREE_COMMON_H__
 
 #include "dict.h"
 
@@ -135,4 +135,4 @@ bool	    tree_iterator_search_gt(void *iterator, const void *key);
 const void* tree_iterator_key(const void *iterator);
 void**	    tree_iterator_data(void *iterator);
 
-#endif /* !defined(_TREE_COMMON_H_) */
+#endif /* !LIBDICT_TREE_COMMON_H__ */

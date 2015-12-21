@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HASHTABLE2_H_
-#define _HASHTABLE2_H_
+#ifndef LIBDICT_HASHTABLE2_H__
+#define LIBDICT_HASHTABLE2_H__
 
 #include "dict.h"
 
@@ -76,4 +76,4 @@ bool		hashtable2_itor_remove(hashtable2_itor* itor);
 
 END_DECL
 
-#endif /* !_HASHTABLE2_H_ */
+#endif /* !LIBDICT_HASHTABLE2_H__ */

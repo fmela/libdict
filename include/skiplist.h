@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SKIPLIST_H_
-#define _SKIPLIST_H_
+#ifndef LIBDICT_SKIPLIST_H__
+#define LIBDICT_SKIPLIST_H__
 
 #include "dict.h"
 
@@ -73,4 +73,4 @@ bool		skiplist_itor_remove(skiplist_itor* itor);
 
 END_DECL
 
-#endif /* !_SKIPLIST_H_ */
+#endif /* !LIBDICT_SKIPLIST_H__ */
