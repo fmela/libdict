@@ -14,7 +14,7 @@
 
 #include "dict.h"
 
-#define TEST_FUNC(func) { #func, func }
+#define TEST_FUNC(func) { (char *)#func, func }
 
 struct key_info {
     char *key, *value, *alt;
