@@ -475,45 +475,35 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
     CU_ASSERT_EQUAL(dict_free(dct), nkeys);
 }
 
-unsigned
-strhash(const void *p)
-{
-    unsigned hash = 2166136261U;
-    for (const uint8_t *ptr = p; *ptr;) {
-	hash = (hash ^ *ptr++) * 16777619U;
-    }
-    return hash;
-}
-
 void test_basic_hashtable_1bucket()
 {
-    test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 1),
+    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, NULL, 1),
 	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 1),
+    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, NULL, 1),
 	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_hashtable2_1bucket()
 {
-    test_basic(hashtable2_dict_new(dict_str_cmp, strhash, NULL, 1),
+    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, NULL, 1),
 	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hashtable2_dict_new(dict_str_cmp, strhash, NULL, 1),
+    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, NULL, 1),
 	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_hashtable_nbuckets()
 {
-    test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 7),
+    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, NULL, 7),
 	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hashtable_dict_new(dict_str_cmp, strhash, NULL, 7),
+    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, NULL, 7),
 	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_hashtable2_nbuckets()
 {
-    test_basic(hashtable2_dict_new(dict_str_cmp, strhash, NULL, 7),
+    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, NULL, 7),
 	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hashtable2_dict_new(dict_str_cmp, strhash, NULL, 7),
+    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, NULL, 7),
 	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
