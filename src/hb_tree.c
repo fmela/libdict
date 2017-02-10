@@ -207,12 +207,12 @@ hb_tree_insert(hb_tree* tree, void* key, bool* inserted)
 	    q = parent;
     }
 
-    hb_node* add = node = node_new(key);
-    if (!node) {
+    hb_node* const add = node = node_new(key);
+    if (!node)
 	return NULL;
-    }
     if (inserted)
 	*inserted = true;
+
     if (!(node->parent = parent)) {
 	tree->root = node;
 	ASSERT(tree->count == 0);
@@ -223,32 +223,94 @@ hb_tree_insert(hb_tree* tree, void* key, bool* inserted)
 	    parent->rlink = node;
 
 	while (parent != q) {
-	    parent->bal = (parent->rlink == node) * 2 - 1;
+	    ASSERT(parent->bal == 0);
+	    parent->bal = (parent->rlink == node) ? 1 : -1;
 	    node = parent;
 	    parent = node->parent;
 	}
 	if (q) {
-	    unsigned rotations = 0;
 	    if (q->llink == node) {
 		if (--q->bal == -2) {
 		    if (q->llink->bal > 0) {
-			rot_left(tree, q->llink);
-			++rotations;
+			/* LR: rotate q->llink left, then rotate q right. */
+			hb_node* const ql = q->llink;
+			hb_node* const qlr = ql->rlink;
+
+			hb_node *const qp = q->parent;
+			*(qp == NULL ? &tree->root : qp->llink == q ? &qp->llink : &qp->rlink) = qlr;
+			qlr->parent = qp;
+
+			if ((q->llink = qlr->rlink) != NULL)
+			    q->llink->parent = q;
+			if ((ql->rlink = qlr->llink) != NULL)
+			    ql->rlink->parent = ql;
+			qlr->llink = ql;
+			qlr->rlink = q;
+			ql->parent = q->parent = qlr;
+			q->bal = (qlr->bal == -1);
+			ql->bal = -(qlr->bal == 1);
+			qlr->bal = 0;
+
+			tree->rotation_count += 2;
+		    } else {
+			/* R: rotate q right. */
+			hb_node* const ql = q->llink;
+
+			hb_node *const qp = q->parent;
+			*(qp == NULL ? &tree->root : qp->llink == q ? &qp->llink : &qp->rlink) = ql;
+			ql->parent = qp;
+
+			if ((q->llink = ql->rlink) != NULL)
+			    q->llink->parent = q;
+			ql->rlink = q;
+			q->parent = ql;
+			q->bal = ql->bal = 0;
+
+			tree->rotation_count += 1;
 		    }
-		    rot_right(tree, q);
-		    ++rotations;
 		}
 	    } else {
+		ASSERT(q->rlink == node);
 		if (++q->bal == +2) {
 		    if (q->rlink->bal < 0) {
-			rot_right(tree, q->rlink);
-			++rotations;
+			/* Rotate q->rlink right, then q left. */
+			hb_node* const qr = q->rlink;
+			hb_node* const qrl = qr->llink;
+
+			hb_node *const qp = q->parent;
+			*(qp == NULL ? &tree->root : qp->llink == q ? &qp->llink : &qp->rlink) = qrl;
+			qrl->parent = qp;
+
+			if ((q->rlink = qrl->llink) != NULL)
+			    q->rlink->parent = q;
+			if ((qr->llink = qrl->rlink) != NULL)
+			    qr->llink->parent = qr;
+			qrl->llink = q;
+			qrl->rlink = qr;
+			qr->parent = q->parent = qrl;
+			q->bal = -(qrl->bal == 1);
+			qr->bal = (qrl->bal == -1);
+			qrl->bal = 0;
+
+			tree->rotation_count += 2;
+		    } else {
+			/* R: rotate q left */
+			hb_node* const qr = q->rlink;
+
+			hb_node *const qp = q->parent;
+			*(qp == NULL ? &tree->root : qp->llink == q ? &qp->llink : &qp->rlink) = qr;
+			qr->parent = qp;
+
+			if ((q->rlink = qr->llink) != NULL)
+			    q->rlink->parent = q;
+			qr->llink = q;
+			q->parent = qr;
+			q->bal = qr->bal = 0;
+
+			tree->rotation_count += 1;
 		    }
-		    rot_left(tree, q);
-		    ++rotations;
 		}
 	    }
-	    tree->rotation_count += rotations;
 	}
     }
     ++tree->count;
@@ -503,10 +565,10 @@ rot_left(hb_tree* tree, hb_node* node)
     hb_node* rlink = node->rlink;
     tree_node_rot_left(tree, node);
 
-    bool hc = (rlink->bal != 0);
+    bool height_changed = (rlink->bal != 0);
     node->bal  -= 1 + MAX(rlink->bal, 0);
     rlink->bal -= 1 - MIN(node->bal, 0);
-    return hc;
+    return height_changed;
 }
 
 /*
@@ -530,10 +592,10 @@ rot_right(hb_tree* tree, hb_node* node)
     hb_node* llink = node->llink;
     tree_node_rot_right(tree, node);
 
-    bool hc = (llink->bal != 0);
+    bool height_changed = (llink->bal != 0);
     node->bal  += 1 - MIN(llink->bal, 0);
     llink->bal += 1 + MAX(node->bal, 0);
-    return hc;
+    return height_changed;
 }
 
 static bool
