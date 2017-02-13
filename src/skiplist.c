@@ -65,10 +65,10 @@ static dict_vtable skiplist_vtable = {
     (dict_dfree_func)	    skiplist_free,
     (dict_insert_func)	    skiplist_insert,
     (dict_search_func)	    skiplist_search,
-    (dict_search_func)	    NULL,/* search_le: not implemented */
-    (dict_search_func)	    NULL,/* search_lt: not implemented */
-    (dict_search_func)	    NULL,/* search_ge: not implemented */
-    (dict_search_func)	    NULL,/* search_gt: not implemented */
+    (dict_search_func)	    NULL,/* TODO: implement search_le */
+    (dict_search_func)	    NULL,/* TODO: implement search_lt */
+    (dict_search_func)	    NULL,/* TODO: implement search_ge */
+    (dict_search_func)	    NULL,/* TODO: implement search_gt */
     (dict_remove_func)	    skiplist_remove,
     (dict_clear_func)	    skiplist_clear,
     (dict_traverse_func)    skiplist_traverse,
@@ -129,7 +129,8 @@ skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func,
 
 dict*
 skiplist_dict_new(dict_compare_func cmp_func, dict_delete_func del_func,
-		  unsigned max_link) {
+		  unsigned max_link)
+{
     dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
 	if (!(dct->_object = skiplist_new(cmp_func, del_func, max_link))) {
@@ -377,6 +378,22 @@ skiplist_verify(const skiplist* list)
     }
     VERIFY(list->top_link == observed_top_link);
     return true;
+}
+
+size_t
+skiplist_link_count_histogram(const skiplist* list, size_t counts[], size_t ncounts)
+{
+    for (size_t i = 0; i < ncounts; ++i)
+	counts[i] = 0;
+
+    size_t max_num_links = 0;
+    for (const skip_node* node = list->head->link[0]; node; node = node->link[0]) {
+	if (max_num_links < node->link_count)
+	    max_num_links = node->link_count;
+	if (ncounts > node->link_count)
+	    counts[node->link_count]++;
+    }
+    return max_num_links;
 }
 
 #define VALID(itor) ((itor)->node && (itor)->node != (itor)->list->head)

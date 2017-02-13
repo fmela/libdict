@@ -142,6 +142,15 @@ main(int argc, char **argv)
 	printf("insert rotations: %zu\n", tree->rotation_count);
 	total_rotations += tree->rotation_count;
 	tree->rotation_count = 0;
+    } else if (type == 'S') {
+	size_t counts[16] = { 0 };
+	size_t num_counts = skiplist_link_count_histogram(dict_private(dct), counts, sizeof(counts) / sizeof(counts[0]));
+	size_t count_sum = 0;
+	for (size_t i = 0; i <= num_counts; ++i) {
+	    printf("skiplist %zu-node(s): %zu\n", i, counts[i]);
+	    count_sum += counts[i];
+	}
+	ASSERT(count_sum == nwords);
     }
 
     ASSERT(dict_verify(dct));

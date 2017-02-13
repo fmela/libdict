@@ -52,6 +52,14 @@ size_t		skiplist_traverse(skiplist* list, dict_visit_func visit);
 size_t		skiplist_count(const skiplist* list);
 bool		skiplist_verify(const skiplist* list);
 
+/* Compute the histogram of link counts of the skiplist.
+ * For 0 < x < |ncounts|, |counts|[x] will be set to the number of nodes with x
+ * links, and the maximal link count will be returned. If the return value is
+ * greater than or equal to |ncounts|, not all link counts could be stored in
+ * |counts| (i.e. the array was not large enough). */
+size_t          skiplist_link_count_histogram(const skiplist* list,
+                                              size_t counts[], size_t ncounts);
+
 typedef struct skiplist_itor skiplist_itor;
 
 skiplist_itor*	skiplist_itor_new(skiplist* list);
