@@ -1,18 +1,20 @@
 /* unit_tests.c
  * Copyright (C) 2012 Farooq Mela. All rights reserved. */
 
+#include <float.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
-#include <limits.h>
-#include <float.h>
 #include <time.h>
 
 #include <CUnit/CUnit.h>
 #include <CUnit/Basic.h>
 
 #include "dict.h"
+#include "src/hashtable_common.h"   /* For dict_prime_geq() */
 
 #define TEST_FUNC(func) { (char *)#func, func }
 
@@ -43,8 +45,10 @@ void test_basic_treap(void);
 void test_basic_weight_balanced_tree(void);
 void test_search(dict *dct, dict_itor *itor, const char *key, const char *value);
 void test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsigned n_cl_infos);
+void test_primes_geq(void);
 void test_version_string(void);
 void shuffle(char **p, unsigned size);
+bool is_prime(unsigned n);
 
 static CU_TestInfo basic_tests[] = {
     TEST_FUNC(test_basic_hashtable_1bucket),
@@ -58,6 +62,7 @@ static CU_TestInfo basic_tests[] = {
     TEST_FUNC(test_basic_splay_tree),
     TEST_FUNC(test_basic_treap),
     TEST_FUNC(test_basic_weight_balanced_tree),
+    TEST_FUNC(test_primes_geq),
     TEST_FUNC(test_version_string),
     CU_TEST_INFO_NULL
 };
@@ -319,9 +324,11 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
 	if (dct->_vtable->insert == (dict_insert_func)hashtable_insert) {
 	    CU_ASSERT_TRUE(hashtable_resize(dict_private(clone), 3));
 	} else {
-	    CU_ASSERT_TRUE(hashtable2_resize(dict_private(clone), 3));
+	    CU_ASSERT_TRUE(hashtable2_resize(dict_private(clone),
+                                             dict_prime_geq(nkeys * 5)));
 	}
 	CU_ASSERT_TRUE(dict_verify(dct));
+	CU_ASSERT_TRUE(dict_verify(clone));
 	for (unsigned j = 0; j < nkeys; ++j)
 	    test_search(clone, NULL, keys[j].key, keys[j].value);
 	dict_free(clone);
@@ -561,6 +568,47 @@ void test_basic_weight_balanced_tree()
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
     test_basic(wb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+}
+
+bool is_prime(unsigned n) {
+    if (n <= 0)
+	return false;
+    if (n <= 3)
+	return true;
+    if (!(n & 1))
+	return false;
+    for (unsigned f = 3, f2 = f * f;;) {
+	if (f2 >= n) {
+	    if (f2 == n)
+		return false;
+	    return true;
+	}
+	if (n % f == 0)
+	    return false;
+        if (f2 + (4 * f + 4) < f2)
+            return true; /* Overflow */
+        f2 += 4 * f + 4;
+        f += 2;
+    }
+}
+
+void test_primes_geq()
+{
+    CU_ASSERT_TRUE(is_prime(2));
+    CU_ASSERT_TRUE(is_prime(3));
+    CU_ASSERT_FALSE(is_prime(4));
+    CU_ASSERT_TRUE(is_prime(5));
+    CU_ASSERT_FALSE(is_prime(6));
+    CU_ASSERT_TRUE(is_prime(7));
+
+    unsigned value = 0;
+    do {
+        const unsigned prime_geq_value = dict_prime_geq(value+1);
+        CU_ASSERT_TRUE(prime_geq_value >= value+1);
+        CU_ASSERT_TRUE(is_prime(prime_geq_value));
+        CU_ASSERT_TRUE(dict_prime_geq(prime_geq_value) == prime_geq_value);
+        value = prime_geq_value;
+    } while (value != 4294967291U);
 }
 
 void test_version_string()

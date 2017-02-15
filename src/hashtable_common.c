@@ -27,23 +27,22 @@
 
 #include "hashtable_common.h"
 
-static const unsigned primes[] = {
-    53,             97,             193,            389,
-    769,            1543,           3079,           6151,
-    12289,          24593,          49157,          98317,
-    196613,         393241,         786433,         1572869,
-    3145739,        6291469,        12582917,       25165843,
-    50331653,       100663319,      201326611,      402653189,
-    805306457,      1610612741,
+static const unsigned kPrimes[] = {
+    11,         17,         37,         67,         131,
+    257,        521,        1031,       2053,       4099,
+    8209,       16411,      32771,      65537,      131101,
+    262147,     524309,     1048583,    2097169,    4194319,
+    8388617,    16777259,   33554467,   67108879,   134217757,
+    268435459,  536870923,  1073741827, 2147483659, 4294967291
 };
-static const unsigned primes_size = sizeof(primes) / sizeof(primes[0]);
+static const unsigned kNumPrimes = sizeof(kPrimes) / sizeof(kPrimes[0]);
 
 unsigned
 dict_prime_geq(unsigned n)
 {
     /* TODO(farooq): use binary search */
-    unsigned index = 0;
-    while (index < primes_size && primes[index] < n)
-        ++index;
-    return primes[index];
+    for (unsigned index = 0; index < kNumPrimes; ++index)
+        if (kPrimes[index] >= n)
+            return kPrimes[index];
+    return kPrimes[kNumPrimes - 1];
 }
