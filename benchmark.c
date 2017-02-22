@@ -197,11 +197,11 @@ main(int argc, char **argv)
 
     timer_start(&start);
     for (unsigned i = 0; i < nwords; i++) {
-	char *p = dict_search(dct, words[i]);
+	void **p = dict_search(dct, words[i]);
 	if (!p)
 	    quit("lookup failed for '%s'", buf);
-	if (p != words[i])
-	    quit("bad data for '%s', got '%s' instead", words[i], p);
+	if (*p != words[i])
+	    quit("bad data for '%s', got '%s' instead", words[i], *(char **)p);
     }
     timer_end(&start, &end, &total);
     printf("  %s good search: %6.03fs %9zu cmp (%.02f/search)",

@@ -43,7 +43,7 @@ rb_tree*	rb_tree_clone(rb_tree* tree,
 			      dict_key_datum_clone_func clone_func);
 
 void**		rb_tree_insert(rb_tree* tree, void* key, bool* inserted);
-void*		rb_tree_search(rb_tree* tree, const void* key);
+void**		rb_tree_search(rb_tree* tree, const void* key);
 void*		rb_tree_search_le(rb_tree* tree, const void* key);
 void*		rb_tree_search_lt(rb_tree* tree, const void* key);
 void*		rb_tree_search_ge(rb_tree* tree, const void* key);

@@ -43,7 +43,7 @@ wb_tree*	wb_tree_clone(wb_tree* tree,
 			      dict_key_datum_clone_func clone_func);
 
 void**		wb_tree_insert(wb_tree* tree, void* key, bool* inserted);
-void*		wb_tree_search(wb_tree* tree, const void* key);
+void**		wb_tree_search(wb_tree* tree, const void* key);
 bool		wb_tree_remove(wb_tree* tree, const void* key);
 size_t		wb_tree_clear(wb_tree* tree);
 size_t		wb_tree_traverse(wb_tree* tree, dict_visit_func visit);

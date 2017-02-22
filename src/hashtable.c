@@ -244,7 +244,7 @@ hashtable_insert(hashtable* table, void* key, bool* inserted)
     return &add->datum;
 }
 
-void*
+void**
 hashtable_search(hashtable* table, const void* key)
 {
     ASSERT(table != NULL);
@@ -253,7 +253,7 @@ hashtable_search(hashtable* table, const void* key)
     hash_node* node = table->table[hash % table->size];
     while (node && hash >= node->hash) {
 	if (hash == node->hash && table->cmp_func(key, node->key) == 0)
-	    return node->datum;
+	    return &node->datum;
 	node = node->next;
     }
     return NULL;

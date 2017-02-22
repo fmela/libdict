@@ -335,7 +335,7 @@ sp_tree_insert(sp_tree* tree, void* key, bool* inserted)
     return &node->datum;
 }
 
-void*
+void**
 sp_tree_search(sp_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -351,7 +351,7 @@ sp_tree_search(sp_tree* tree, const void* key)
 	else {
 	    splay(tree, node);
 	    ASSERT(tree->root == node);
-	    return node->datum;
+	    return &node->datum;
 	}
     }
     if (parent) {

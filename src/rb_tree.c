@@ -207,13 +207,13 @@ rb_tree_search_node(rb_tree* tree, const void* key)
     return RB_NULL;
 }
 
-void*
+void**
 rb_tree_search(rb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
 
     rb_node* node = rb_tree_search_node(tree, key);
-    return (node != RB_NULL) ? node->datum : NULL;
+    return (node != RB_NULL) ? &node->datum : NULL;
 }
 
 static rb_node*
@@ -242,7 +242,7 @@ rb_tree_search_le(rb_tree* tree, const void* key)
     ASSERT(tree != NULL);
 
     rb_node* node = rb_tree_search_le_node(tree, key);
-    return (node != RB_NULL) ? node->datum : NULL;
+    return (node != RB_NULL) ? &node->datum : NULL;
 }
 
 static rb_node*
@@ -269,7 +269,7 @@ rb_tree_search_lt(rb_tree* tree, const void* key)
     ASSERT(tree != NULL);
 
     rb_node* node = rb_tree_search_lt_node(tree, key);
-    return (node != RB_NULL) ? node->datum : NULL;
+    return (node != RB_NULL) ? &node->datum : NULL;
 }
 
 static rb_node*
@@ -299,7 +299,7 @@ rb_tree_search_ge(rb_tree* tree, const void* key)
     ASSERT(tree != NULL);
 
     rb_node* node = rb_tree_search_ge_node(tree, key);
-    return (node != RB_NULL) ? node->datum : NULL;
+    return (node != RB_NULL) ? &node->datum : NULL;
 }
 
 static rb_node*
@@ -325,7 +325,7 @@ rb_tree_search_gt(rb_tree* tree, const void* key)
 {
     rb_node* node = rb_tree_search_gt_node(tree, key);
 
-    return (node != RB_NULL) ? node->datum : NULL;
+    return (node != RB_NULL) ? &node->datum : NULL;
 }
 
 void**

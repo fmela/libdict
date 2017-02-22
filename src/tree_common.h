@@ -74,25 +74,25 @@ void*	    tree_node_min(void *node);
 /* Return the rightmost child of |node|, or |node| if it has no right child.
  * |node| must not be NULL. */
 void*	    tree_node_max(void *node);
-/* Return the data associated with the key, or NULL if not found. */
-void*	    tree_search(void *tree, const void *key);
+/* Return the address of the data for the given the key, or NULL if not found. */
+void**	    tree_search(void *tree, const void *key);
 /* Return the node has the key, or NULL if not found. */
 void*	    tree_search_node(void *tree, const void *key);
 /* Return the data/node associated with the first key less than or
  * equal to the specified key, or NULL if not found. */
-void*	    tree_search_le(void *tree, const void *key);
+void**	    tree_search_le(void *tree, const void *key);
 void*	    tree_search_le_node(void *tree, const void *key);
 /* Return the data/node associated with the first key less than the
  * specified key, or NULL if not found. */
-void*	    tree_search_lt(void *tree, const void *key);
+void**	    tree_search_lt(void *tree, const void *key);
 void*	    tree_search_lt_node(void *tree, const void *key);
 /* Return the data/node associated with the first key greater than or
  * equal to the specified key, or NULL if not found. */
-void*	    tree_search_ge(void *tree, const void *key);
+void**	    tree_search_ge(void *tree, const void *key);
 void*	    tree_search_ge_node(void *tree, const void *key);
 /* Return the data/node associated with the first key greater than the
  * specified key, or NULL if not found. */
-void*	    tree_search_gt(void *tree, const void *key);
+void**	    tree_search_gt(void *tree, const void *key);
 void*	    tree_search_gt_node(void *tree, const void *key);
 /* Return the minimal key in the tree, or NULL if the tree is empty. */
 const void* tree_min(const void *tree);

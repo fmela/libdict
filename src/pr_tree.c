@@ -142,7 +142,7 @@ pr_tree_clone(pr_tree* tree, dict_key_datum_clone_func clone_func)
     return tree_clone(tree, sizeof(pr_tree), sizeof(pr_node), clone_func);
 }
 
-void*
+void**
 pr_tree_search(pr_tree* tree, const void* key)
 {
     return tree_search(tree, key);

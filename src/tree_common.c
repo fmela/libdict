@@ -162,12 +162,12 @@ tree_search_node(void* Tree, const void* key)
     return NULL;
 }
 
-void*
+void**
 tree_search(void* Tree, const void* key)
 {
     tree_node* node = tree_search_node(Tree, key);
 
-    return node ? node->datum : NULL;
+    return node ? &node->datum : NULL;
 }
 
 void*
@@ -190,12 +190,12 @@ tree_search_le_node(void* Tree, const void* key)
     return ret;
 }
 
-void*
+void**
 tree_search_le(void* Tree, const void* key)
 {
     tree_node* node = tree_search_le_node(Tree, key);
 
-    return node ? node->datum : NULL;
+    return node ? &node->datum : NULL;
 }
 
 void*
@@ -216,12 +216,12 @@ tree_search_lt_node(void* Tree, const void* key)
     return ret;
 }
 
-void*
+void**
 tree_search_lt(void* Tree, const void* key)
 {
     tree_node* node = tree_search_lt_node(Tree, key);
 
-    return node ? node->datum : NULL;
+    return node ? &node->datum : NULL;
 }
 
 void*
@@ -245,12 +245,12 @@ tree_search_ge_node(void* Tree, const void* key)
     return ret;
 }
 
-void*
+void**
 tree_search_ge(void* Tree, const void* key)
 {
     tree_node* node = tree_search_ge_node(Tree, key);
 
-    return node ? node->datum : NULL;
+    return node ? &node->datum : NULL;
 }
 
 void*
@@ -271,12 +271,12 @@ tree_search_gt_node(void* Tree, const void* key)
     return ret;
 }
 
-void*
+void**
 tree_search_gt(void* Tree, const void* key)
 {
     tree_node* node = tree_search_gt_node(Tree, key);
 
-    return node ? node->datum : NULL;
+    return node ? &node->datum : NULL;
 }
 
 const void*

@@ -239,7 +239,7 @@ skiplist_insert(skiplist* list, void* key, bool* inserted)
     return datum;
 }
 
-void*
+void**
 skiplist_search(skiplist* list, const void* key)
 {
     ASSERT(list != NULL);
@@ -252,7 +252,7 @@ skiplist_search(skiplist* list, const void* key)
 		break;
 	    x = x->link[k];
 	    if (cmp == 0)
-		return x->datum;
+		return &x->datum;
 	}
     }
     return NULL;

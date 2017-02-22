@@ -221,7 +221,14 @@ static const struct closest_lookup_info closest_lookup_infos[] = {
 void
 test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
 {
-    CU_ASSERT_EQUAL(dict_search(dct, key), value);
+    void **search = dict_search(dct, key);
+    if (value == NULL) {
+        CU_ASSERT_PTR_NULL(search);
+    } else {
+        CU_ASSERT_PTR_NOT_NULL(search);
+        CU_ASSERT_EQUAL(*search, value);
+    }
+
     if (itor != NULL) {
 	if (value == NULL) {
 	    CU_ASSERT_EQUAL(dict_itor_search(itor, key), false);
@@ -242,7 +249,7 @@ test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsig
     dict_itor* itor = dict_itor_new(dct);
     for (unsigned i = 0; i < n_cl_infos; i++) {
 	if (cl_infos[i].le_key) {
-	    CU_ASSERT_STRING_EQUAL(dict_search_le(dct, cl_infos[i].key),
+	    CU_ASSERT_STRING_EQUAL(*dict_search_le(dct, cl_infos[i].key),
 				   cl_infos[i].le_val);
 	    CU_ASSERT_EQUAL(dict_itor_search_le(itor, cl_infos[i].key), true);
 	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].le_key);
@@ -254,7 +261,7 @@ test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsig
 	    CU_ASSERT_PTR_NULL(dict_itor_data(itor));
 	}
 	if (cl_infos[i].lt_key) {
-	    CU_ASSERT_STRING_EQUAL(dict_search_lt(dct, cl_infos[i].key),
+	    CU_ASSERT_STRING_EQUAL(*dict_search_lt(dct, cl_infos[i].key),
 				   cl_infos[i].lt_val);
 	    CU_ASSERT_EQUAL(dict_itor_search_lt(itor, cl_infos[i].key), true);
 	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].lt_key);
@@ -266,7 +273,7 @@ test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsig
 	    CU_ASSERT_PTR_NULL(dict_itor_data(itor));
 	}
 	if (cl_infos[i].ge_key) {
-	    CU_ASSERT_STRING_EQUAL(dict_search_ge(dct, cl_infos[i].key),
+	    CU_ASSERT_STRING_EQUAL(*dict_search_ge(dct, cl_infos[i].key),
 				   cl_infos[i].ge_val);
 	    CU_ASSERT_EQUAL(dict_itor_search_ge(itor, cl_infos[i].key), true);
 	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].ge_key);
@@ -278,7 +285,7 @@ test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsig
 	    CU_ASSERT_PTR_NULL(dict_itor_data(itor));
 	}
 	if (cl_infos[i].gt_key) {
-	    CU_ASSERT_STRING_EQUAL(dict_search_gt(dct, cl_infos[i].key),
+	    CU_ASSERT_STRING_EQUAL(*dict_search_gt(dct, cl_infos[i].key),
 				   cl_infos[i].gt_val);
 	    CU_ASSERT_EQUAL(dict_itor_search_gt(itor, cl_infos[i].key), true);
 	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].gt_key);
@@ -618,3 +625,4 @@ void test_version_string()
 	     DICT_VERSION_MAJOR, DICT_VERSION_MINOR, DICT_VERSION_PATCH);
     CU_ASSERT_STRING_EQUAL(kDictVersionString, version_string);
 }
+

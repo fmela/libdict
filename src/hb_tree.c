@@ -177,7 +177,7 @@ hb_tree_clear(hb_tree* tree)
     return count;
 }
 
-void*
+void**
 hb_tree_search(hb_tree* tree, const void* key)
 {
     return tree_search(tree, key);

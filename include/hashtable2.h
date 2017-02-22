@@ -45,7 +45,7 @@ hashtable2*	hashtable2_clone(hashtable2* table,
 				 dict_key_datum_clone_func clone_func);
 
 void**		hashtable2_insert(hashtable2* table, void* key, bool* inserted);
-void*		hashtable2_search(hashtable2* table, const void* key);
+void**		hashtable2_search(hashtable2* table, const void* key);
 bool		hashtable2_remove(hashtable2* table, const void* key);
 size_t		hashtable2_clear(hashtable2* table);
 size_t		hashtable2_traverse(hashtable2* table, dict_visit_func visit);

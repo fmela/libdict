@@ -261,7 +261,7 @@ tr_tree_remove(tr_tree* tree, const void* key)
     return true;
 }
 
-void*
+void**
 tr_tree_search(tr_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);

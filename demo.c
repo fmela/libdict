@@ -35,6 +35,7 @@ key_val_free(void *key, void *datum)
 }
 
 #define HSIZE		997
+#define SKIPLINKS       10
 
 int
 main(int argc, char **argv)
@@ -67,6 +68,9 @@ main(int argc, char **argv)
 	case 'w':
 	    dct = wb_dict_new((dict_compare_func)strcmp, key_val_free);
 	    break;
+        case 'S':
+            dct = skiplist_dict_new((dict_compare_func)strcmp, key_val_free, SKIPLINKS);
+            break;
 	case 'H':
 	    dct = hashtable_dict_new((dict_compare_func)strcmp,
 				     dict_str_hash,
@@ -78,7 +82,7 @@ main(int argc, char **argv)
 				      key_val_free, HSIZE);
 	    break;
 	default:
-	    quit("type must be one of h, p, r, t, s, w, or H");
+	    quit("type must be one of h, p, r, t, s, w, S, H, or 2");
     }
 
     if (!dct)
@@ -124,9 +128,9 @@ main(int argc, char **argv)
 		printf("usage: search <key>\n");
 		continue;
 	    }
-	    ptr2 = dict_search(dct, ptr);
-	    if (ptr2)
-		printf("found '%s': '%s'\n", ptr, ptr2);
+	    void** search = dict_search(dct, ptr);
+	    if (search)
+		printf("found '%s': '%s'\n", ptr, *(char **)search);
 	    else
 		printf("'%s' not found!\n", ptr);
 	} else if (strcmp(buf, "searchle") == 0) {
@@ -138,9 +142,9 @@ main(int argc, char **argv)
 		printf("dict does not support that operation!");
 		continue;
 	    }
-	    ptr2 = dict_search_le(dct, ptr);
-	    if (ptr2)
-		printf("le '%s': '%s'\n", ptr, ptr2);
+	    void** search = dict_search_le(dct, ptr);
+	    if (search)
+		printf("le '%s': '%s'\n", ptr, *(char **)search);
 	    else
 		printf("le '%s': no result.\n", ptr);
 	} else if (strcmp(buf, "searchlt") == 0) {
@@ -152,9 +156,9 @@ main(int argc, char **argv)
 		printf("dict does not support that operation!");
 		continue;
 	    }
-	    ptr2 = dict_search_lt(dct, ptr);
-	    if (ptr2)
-		printf("lt '%s': '%s'\n", ptr, ptr2);
+	    void** search = dict_search_lt(dct, ptr);
+	    if (search)
+		printf("lt '%s': '%s'\n", ptr, *(char **)search);
 	    else
 		printf("lt '%s': no result.\n", ptr);
 	} else if (strcmp(buf, "searchge") == 0) {
@@ -166,9 +170,9 @@ main(int argc, char **argv)
 		printf("dict does not support that operation!");
 		continue;
 	    }
-	    ptr2 = dict_search_ge(dct, ptr);
-	    if (ptr2)
-		printf("ge '%s': '%s'\n", ptr, ptr2);
+	    void** search = dict_search_ge(dct, ptr);
+	    if (search)
+		printf("ge '%s': '%s'\n", ptr, *(char **)search);
 	    else
 		printf("ge '%s': no result.\n", ptr);
 	} else if (strcmp(buf, "searchgt") == 0) {
@@ -180,9 +184,9 @@ main(int argc, char **argv)
 		printf("dict does not support that operation!");
 		continue;
 	    }
-	    ptr2 = dict_search_gt(dct, ptr);
-	    if (ptr2)
-		printf("gt '%s': '%s'\n", ptr, ptr2);
+	    void** search = dict_search_gt(dct, ptr);
+	    if (search)
+		printf("gt '%s': '%s'\n", ptr, *(char **)search);
 	    else
 		printf("gt '%s': no result.\n", ptr);
 	} else if (strcmp(buf, "remove") == 0) {

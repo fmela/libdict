@@ -167,7 +167,7 @@ wb_tree_clone(wb_tree* tree, dict_key_datum_clone_func clone_func)
     return tree_clone(tree, sizeof(wb_tree), sizeof(wb_node), clone_func);
 }
 
-void*
+void**
 wb_tree_search(wb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -176,7 +176,8 @@ wb_tree_search(wb_tree* tree, const void* key)
 }
 
 static inline unsigned
-fixup(wb_tree* tree, wb_node* n) {
+fixup(wb_tree* tree, wb_node* n)
+{
     unsigned rotations = 0;
     unsigned weight = WEIGHT(n->llink);
     if (weight * 1000U < n->weight * 293U) {
@@ -689,3 +690,4 @@ wb_itor_data(wb_itor* itor)
 
     return itor->node ? &itor->node->datum : NULL;
 }
+
