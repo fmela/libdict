@@ -59,7 +59,7 @@ main(int argc, char *argv[])
 
 	WordList* word = xmalloc(sizeof(*word));
 	word->word = xstrdup(buf);
-	WordList** wordp = (WordList**)rb_tree_insert(tree, xstrdup(name), NULL);
+	WordList** wordp = (WordList**) rb_tree_insert(tree, xstrdup(name)).datum_ptr;
 	word->next = *wordp;
 	*wordp = word;
     }

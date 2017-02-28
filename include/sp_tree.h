@@ -42,7 +42,8 @@ size_t		sp_tree_free(sp_tree* tree);
 sp_tree*	sp_tree_clone(sp_tree* tree,
 			      dict_key_datum_clone_func clone_func);
 
-void**		sp_tree_insert(sp_tree* tree, void* key, bool* inserted);
+dict_insert_result
+                sp_tree_insert(sp_tree* tree, void* key);
 void**		sp_tree_search(sp_tree* tree, const void* key);
 bool		sp_tree_remove(sp_tree* tree, const void* key);
 size_t		sp_tree_clear(sp_tree* tree);

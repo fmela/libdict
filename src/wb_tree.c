@@ -44,11 +44,12 @@
  * Legal values for alpha are 0 <= alpha <= 1/2. BB[0] is a normal, unbalanced
  * binary tree, and BB[1/2] includes only completely balanced binary search
  * trees of 2^height - 1 nodes. A higher value of alpha specifies a more
- * stringent balance requirement. Values for alpha in the range 2/11 <= alpha
- * <= 1 - sqrt(2)/2 are interesting because a tree can be brought back into
- * weighted balance after an insertion or deletion using at most one rotation
- * per level (thus the number of rotations after insertion or deletion is
- * O(lg N)).
+ * stringent balance requirement.
+ *
+ * Values for alpha in the range 2/11 <= alpha <= 1 - sqrt(2)/2 are interesting
+ * because a tree can be brought back into weighted balance after an insertion or
+ * deletion using at most one rotation per level (thus the number of rotations
+ * after insertion or deletion is O(lg N)).
  *
  * These are the parameters for alpha = 1 - sqrt(2)/2 == .292893, as
  * recommended in [Gonnet 1984]. */
@@ -263,8 +264,8 @@ fixup(wb_tree* tree, wb_node* n)
     return rotations;
 }
 
-void**
-wb_tree_insert(wb_tree* tree, void* key, bool* inserted)
+dict_insert_result
+wb_tree_insert(wb_tree* tree, void* key)
 {
     int cmp = 0;
 
@@ -278,18 +279,14 @@ wb_tree_insert(wb_tree* tree, void* key, bool* inserted)
 	    parent = node, node = node->llink;
 	else if (cmp)
 	    parent = node, node = node->rlink;
-	else {
-	    if (inserted)
-		*inserted = false;
-	    return &node->datum;
-	}
+	else
+	    return (dict_insert_result) { &node->datum, false };
     }
 
-    wb_node* add = node = node_new(key);
+    wb_node* const add = node = node_new(key);
     if (!add)
-	return NULL;
-    if (inserted)
-	*inserted = true;
+	return (dict_insert_result) { NULL, false };
+
     if (!(node->parent = parent)) {
 	ASSERT(tree->count == 0);
 	ASSERT(tree->root == NULL);
@@ -309,7 +306,7 @@ wb_tree_insert(wb_tree* tree, void* key, bool* inserted)
 	tree->rotation_count += rotations;
     }
     ++tree->count;
-    return &add->datum;
+    return (dict_insert_result) { &add->datum, true };
 }
 
 bool
@@ -540,7 +537,8 @@ wb_dict_itor_new(wb_tree* tree)
 }
 
 static bool
-node_verify(const wb_tree* tree, const wb_node* parent, const wb_node* node)
+node_verify(const wb_tree* tree, const wb_node* parent, const wb_node* node,
+	    unsigned *weight)
 {
     ASSERT(tree != NULL);
 
@@ -551,13 +549,18 @@ node_verify(const wb_tree* tree, const wb_node* parent, const wb_node* node)
     }
     if (node) {
 	VERIFY(node->parent == parent);
-	if (!node_verify(tree, node, node->llink) ||
-	    !node_verify(tree, node, node->rlink))
+	unsigned lweight, rweight;
+	if (!node_verify(tree, node, node->llink, &lweight) ||
+	    !node_verify(tree, node, node->rlink, &rweight))
 	    return false;
-	const unsigned lweight = WEIGHT(node->llink);
-	VERIFY(node->weight == lweight + WEIGHT(node->rlink));
+	VERIFY(WEIGHT(node->llink) == lweight);
+	VERIFY(WEIGHT(node->rlink) == rweight);
+	VERIFY(node->weight == lweight + rweight);
 	VERIFY(lweight * 1000U >= node->weight * 292U);
 	VERIFY(lweight * 1000U <= node->weight * 708U);
+	*weight = lweight + rweight;
+    } else {
+	*weight = 1;
     }
     return true;
 }
@@ -572,15 +575,16 @@ wb_tree_verify(const wb_tree* tree)
     } else {
 	VERIFY(tree->count == 0);
     }
-    return node_verify(tree, NULL, tree->root);
+    unsigned root_weight;
+    return node_verify(tree, NULL, tree->root, &root_weight);
 }
 
 void
 wb_itor_free(wb_itor* itor)
 {
-	ASSERT(itor != NULL);
+    ASSERT(itor != NULL);
 
-	FREE(itor);
+    FREE(itor);
 }
 
 bool
@@ -690,4 +694,3 @@ wb_itor_data(wb_itor* itor)
 
     return itor->node ? &itor->node->datum : NULL;
 }
-

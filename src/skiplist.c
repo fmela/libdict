@@ -163,13 +163,12 @@ skiplist_clone(skiplist* list, dict_key_datum_clone_func clone_func)
     if (clone) {
 	skip_node* node = list->head->link[0];
 	while (node) {
-	    bool inserted = false;
-	    void** datum = skiplist_insert(clone, node->key, &inserted);
-	    if (!datum || !inserted) {
+	    dict_insert_result result = skiplist_insert(clone, node->key);
+	    if (!result.datum_ptr || !result.inserted) {
 		skiplist_free(clone);
 		return NULL;
 	    }
-	    *datum = node->datum;
+	    *result.datum_ptr = node->datum;
 	    node = node->link[0];
 	}
 	if (clone_func) {
@@ -189,9 +188,8 @@ node_insert(skiplist* list, void* key, skip_node** update)
     const unsigned nlinks = rand_link_count(list);
     ASSERT(nlinks < list->max_link);
     skip_node* x = node_new(key, nlinks);
-    if (!x) {
+    if (!x)
 	return NULL;
-    }
 
     if (list->top_link < nlinks) {
 	for (unsigned k = list->top_link+1; k <= nlinks; k++) {
@@ -213,8 +211,8 @@ node_insert(skiplist* list, void* key, skip_node** update)
     return &x->datum;
 }
 
-void**
-skiplist_insert(skiplist* list, void* key, bool* inserted)
+dict_insert_result
+skiplist_insert(skiplist* list, void* key)
 {
     ASSERT(list != NULL);
 
@@ -227,16 +225,11 @@ skiplist_insert(skiplist* list, void* key, bool* inserted)
 	update[k] = x;
     }
     x = x->link[0];
-    if (x && list->cmp_func(key, x->key) == 0) {
-	if (inserted)
-	    *inserted = false;
-	return &x->datum;
-    }
+    if (x && list->cmp_func(key, x->key) == 0)
+	return (dict_insert_result) { &x->datum, false };
+
     void** datum = node_insert(list, key, update);
-    if (datum) {
-	*inserted = true;
-    }
-    return datum;
+    return (dict_insert_result) { datum, datum != NULL };
 }
 
 void**

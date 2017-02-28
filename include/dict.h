@@ -77,9 +77,15 @@ extern void	    (*dict_free_func)(void*);
 /* Forward declarations for transparent type dict_itor. */
 typedef struct dict_itor dict_itor;
 
+typedef struct {
+    void**  datum_ptr;
+    bool    inserted;
+} dict_insert_result;
+
 typedef dict_itor*  (*dict_inew_func)(void* obj);
 typedef size_t      (*dict_dfree_func)(void* obj);
-typedef void**	    (*dict_insert_func)(void* obj, void* key, bool* inserted);
+typedef dict_insert_result
+                    (*dict_insert_func)(void* obj, void* key);
 typedef void**      (*dict_search_func)(void* obj, const void* key);
 typedef bool	    (*dict_remove_func)(void* obj, const void* key);
 typedef size_t      (*dict_clear_func)(void* obj);
@@ -146,15 +152,15 @@ typedef struct {
 } dict;
 
 #define dict_private(dct)	    ((dct)->_object)
-#define dict_insert(dct,k,d)	    ((dct)->_vtable->insert((dct)->_object,(k),(d)))
-#define dict_search(dct,k)	    ((dct)->_vtable->search((dct)->_object, (k)))
+#define dict_insert(dct,key)	    ((dct)->_vtable->insert((dct)->_object, (key)))
+#define dict_search(dct,key)	    ((dct)->_vtable->search((dct)->_object, (key)))
 #define dict_has_near_search(dct)   ((dct)->_vtable->search_le != NULL)	/* Assumes all-or-none near search functions. */
-#define dict_search_le(dct,k)	    ((dct)->_vtable->search_le((dct)->_object, (k)))
-#define dict_search_lt(dct,k)	    ((dct)->_vtable->search_lt((dct)->_object, (k)))
-#define dict_search_ge(dct,k)	    ((dct)->_vtable->search_ge((dct)->_object, (k)))
-#define dict_search_gt(dct,k)	    ((dct)->_vtable->search_gt((dct)->_object, (k)))
-#define dict_remove(dct,k)	    ((dct)->_vtable->remove((dct)->_object, (k)))
-#define dict_traverse(dct,f)	    ((dct)->_vtable->traverse((dct)->_object, (f)))
+#define dict_search_le(dct,key)	    ((dct)->_vtable->search_le((dct)->_object, (key)))
+#define dict_search_lt(dct,key)	    ((dct)->_vtable->search_lt((dct)->_object, (key)))
+#define dict_search_ge(dct,key)	    ((dct)->_vtable->search_ge((dct)->_object, (key)))
+#define dict_search_gt(dct,key)	    ((dct)->_vtable->search_gt((dct)->_object, (key)))
+#define dict_remove(dct,key)	    ((dct)->_vtable->remove((dct)->_object, (key)))
+#define dict_traverse(dct,func)	    ((dct)->_vtable->traverse((dct)->_object, (func)))
 #define dict_count(dct)		    ((dct)->_vtable->count((dct)->_object))
 #define dict_verify(dct)	    ((dct)->_vtable->verify((dct)->_object))
 #define dict_clear(dct)		    ((dct)->_vtable->clear((dct)->_object))

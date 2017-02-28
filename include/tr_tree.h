@@ -44,7 +44,8 @@ size_t		tr_tree_free(tr_tree* tree);
 tr_tree*	tr_tree_clone(tr_tree* tree,
 			      dict_key_datum_clone_func clone_func);
 
-void**		tr_tree_insert(tr_tree* tree, void* key, bool* inserted);
+dict_insert_result
+                tr_tree_insert(tr_tree* tree, void* key);
 void**		tr_tree_search(tr_tree* tree, const void* key);
 bool		tr_tree_remove(tr_tree* tree, const void* key);
 size_t		tr_tree_clear(tr_tree* tree);

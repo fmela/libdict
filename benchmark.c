@@ -116,13 +116,12 @@ main(int argc, char **argv)
 
     timer_start(&start);
     for (unsigned i = 0; i < nwords; i++) {
-	bool inserted = false;
-	void **datum_location = dict_insert(dct, words[i], &inserted);
-	if (!inserted)
+	dict_insert_result result = dict_insert(dct, words[i]);
+	if (!result.inserted)
 	    quit("insert #%d failed for '%s'", i, words[i]);
-	ASSERT(datum_location != NULL);
-	ASSERT(*datum_location == NULL);
-	*datum_location = words[i];
+	ASSERT(result.datum_ptr != NULL);
+	ASSERT(*result.datum_ptr == NULL);
+	*result.datum_ptr = words[i];
     }
     timer_end(&start, &end, &total);
     printf("    %s container: %.02fkB\n", container_name, malloced_save * 1e-3);

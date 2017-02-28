@@ -281,8 +281,8 @@ fixup(pr_tree* tree, pr_node* node)
     return rotations;
 }
 
-void**
-pr_tree_insert(pr_tree* tree, void* key, bool* inserted)
+dict_insert_result
+pr_tree_insert(pr_tree* tree, void* key)
 {
     ASSERT(tree != NULL);
 
@@ -295,18 +295,13 @@ pr_tree_insert(pr_tree* tree, void* key, bool* inserted)
 	    parent = node, node = node->llink;
 	else if (cmp)
 	    parent = node, node = node->rlink;
-	else {
-	    if (inserted)
-		*inserted = false;
-	    return &node->datum;
-	}
+	else
+	    return (dict_insert_result) { &node->datum, false };
     }
 
     pr_node* add = node_new(key);
     if (!add)
-	return NULL;
-    if (inserted)
-	*inserted = true;
+	return (dict_insert_result) { NULL, false };
     if (!(add->parent = parent)) {
 	ASSERT(tree->count == 0);
 	ASSERT(tree->root == NULL);
@@ -325,8 +320,8 @@ pr_tree_insert(pr_tree* tree, void* key, bool* inserted)
 	}
 	tree->rotation_count += rotations;
     }
-    ++tree->count;
-    return &add->datum;
+    tree->count++;
+    return (dict_insert_result) { &add->datum, true };
 }
 
 bool
@@ -543,9 +538,9 @@ node_pathlen(const pr_node* node, size_t level)
 /*
  * rot_left(T, B):
  *
- *     /             /
- *    B             D
- *   / \           / \
+ *     /	     /
+ *    B	     D
+ *   / \	   / \
  *  A   D   ==>   B   E
  *     / \       / \
  *    C   E     A   C
@@ -569,12 +564,12 @@ rot_left(pr_tree* tree, pr_node	*node)
 /*
  * rot_right(T, D):
  *
- *       /           /
- *      D           B
- *     / \         / \
+ *       /	   /
+ *      D	   B
+ *     / \	 / \
  *    B   E  ==>  A   D
- *   / \             / \
- *  A   C           C   E
+ *   / \	     / \
+ *  A   C	   C   E
  *
  * Only the weights of D and D's left child need to be readjusted.
  */

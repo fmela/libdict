@@ -328,8 +328,8 @@ rb_tree_search_gt(rb_tree* tree, const void* key)
     return (node != RB_NULL) ? &node->datum : NULL;
 }
 
-void**
-rb_tree_insert(rb_tree* tree, void* key, bool* inserted)
+dict_insert_result
+rb_tree_insert(rb_tree* tree, void* key)
 {
     ASSERT(tree != NULL);
 
@@ -342,19 +342,15 @@ rb_tree_insert(rb_tree* tree, void* key, bool* inserted)
 	    parent = node, node = node->llink;
 	else if (cmp)
 	    parent = node, node = RLINK(node);
-	else {
-	    if (inserted)
-		*inserted = false;
-	    return &node->datum;
-	}
+	else
+	    return (dict_insert_result) { &node->datum, false };
     }
 
-    if (!(node = node_new(key))) {
-	return NULL;
-    }
-    if (inserted)
-	*inserted = true;
+    if (!(node = node_new(key)))
+	return (dict_insert_result) { NULL, false };
+
     if ((node->parent = parent) == RB_NULL) {
+	ASSERT(tree->root == RB_NULL);
 	tree->root = node;
 	ASSERT(tree->count == 0);
 	SET_BLACK(node);
@@ -367,7 +363,7 @@ rb_tree_insert(rb_tree* tree, void* key, bool* inserted)
 	tree->rotation_count += insert_fixup(tree, node);
     }
     ++tree->count;
-    return &node->datum;
+    return (dict_insert_result) { &node->datum, true };
 }
 
 static unsigned

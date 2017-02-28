@@ -161,8 +161,8 @@ tr_tree_clear(tr_tree* tree)
     return tree_clear(tree);
 }
 
-void**
-tr_tree_insert(tr_tree* tree, void* key, bool* inserted)
+dict_insert_result
+tr_tree_insert(tr_tree* tree, void* key)
 {
     ASSERT(tree != NULL);
 
@@ -175,20 +175,16 @@ tr_tree_insert(tr_tree* tree, void* key, bool* inserted)
 	    parent = node, node = node->llink;
 	else if (cmp)
 	    parent = node, node = node->rlink;
-	else {
-	    if (inserted)
-		*inserted = false;
-	    return &node->datum;
-	}
+	else
+	    return (dict_insert_result) { &node->datum, false };
     }
 
     if (!(node = node_new(key)))
-	return NULL;
-    if (inserted)
-	*inserted = true;
+	return (dict_insert_result) { NULL, false };
     node->prio = tree->prio_func ? tree->prio_func(key) : dict_rand();
 
     if (!(node->parent = parent)) {
+	ASSERT(tree->root == NULL);
 	ASSERT(tree->count == 0);
 	tree->root = node;
     } else {
@@ -210,7 +206,7 @@ tr_tree_insert(tr_tree* tree, void* key, bool* inserted)
 	tree->rotation_count += rotations;
     }
     ++tree->count;
-    return &node->datum;
+    return (dict_insert_result) { &node->datum, true };
 }
 
 bool

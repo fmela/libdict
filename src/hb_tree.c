@@ -183,8 +183,8 @@ hb_tree_search(hb_tree* tree, const void* key)
     return tree_search(tree, key);
 }
 
-void**
-hb_tree_insert(hb_tree* tree, void* key, bool* inserted)
+dict_insert_result
+hb_tree_insert(hb_tree* tree, void* key)
 {
     ASSERT(tree != NULL);
 
@@ -198,24 +198,21 @@ hb_tree_insert(hb_tree* tree, void* key, bool* inserted)
 	    parent = node, node = node->llink;
 	else if (cmp)
 	    parent = node, node = node->rlink;
-	else {
-	    if (inserted)
-		*inserted = false;
-	    return &node->datum;
-	}
+	else
+	    return (dict_insert_result) { &node->datum, false };
+
 	if (parent->bal)
 	    q = parent;
     }
 
     hb_node* const add = node = node_new(key);
     if (!node)
-	return NULL;
-    if (inserted)
-	*inserted = true;
+	return (dict_insert_result) { NULL, false };
 
     if (!(node->parent = parent)) {
-	tree->root = node;
 	ASSERT(tree->count == 0);
+	ASSERT(tree->root == NULL);
+	tree->root = node;
     } else {
 	if (cmp < 0)
 	    parent->llink = node;
@@ -313,8 +310,8 @@ hb_tree_insert(hb_tree* tree, void* key, bool* inserted)
 	    }
 	}
     }
-    ++tree->count;
-    return &add->datum;
+    tree->count++;
+    return (dict_insert_result) { &add->datum, true };
 }
 
 bool
@@ -547,9 +544,9 @@ node_pathlen(const hb_node* node, size_t level)
 /*
  * rot_left(T, B):
  *
- *     /             /
- *    B             D
- *   / \           / \
+ *     /	     /
+ *    B	     D
+ *   / \	   / \
  *  A   D   ==>   B   E
  *     / \       / \
  *    C   E     A   C
@@ -574,12 +571,12 @@ rot_left(hb_tree* tree, hb_node* node)
 /*
  * rot_right(T, D):
  *
- *       /           /
- *      D           B
- *     / \         / \
+ *       /	   /
+ *      D	   B
+ *     / \	 / \
  *    B   E  ==>  A   D
- *   / \             / \
- *  A   C           C   E
+ *   / \	     / \
+ *  A   C	   C   E
  *
  */
 static bool

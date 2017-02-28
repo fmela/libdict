@@ -293,8 +293,8 @@ splay(sp_tree* t, sp_node* n)
     t->rotation_count += rotations;
 }
 
-void**
-sp_tree_insert(sp_tree* tree, void* key, bool* inserted)
+dict_insert_result
+sp_tree_insert(sp_tree* tree, void* key)
 {
     ASSERT(tree != NULL);
 
@@ -307,17 +307,13 @@ sp_tree_insert(sp_tree* tree, void* key, bool* inserted)
 	    parent = node, node = node->llink;
 	else if (cmp)
 	    parent = node, node = node->rlink;
-	else {
-	    if (inserted)
-		*inserted = false;
-	    return &node->datum;
-	}
+	else
+	    return (dict_insert_result) { &node->datum, false };
     }
 
     if (!(node = node_new(key)))
-	return NULL;
-    if (inserted)
-	*inserted = true;
+	return (dict_insert_result) { NULL, false };
+
     if (!(node->parent = parent)) {
 	ASSERT(tree->count == 0);
 	ASSERT(tree->root == NULL);
@@ -332,7 +328,7 @@ sp_tree_insert(sp_tree* tree, void* key, bool* inserted)
 	++tree->count;
     }
     ASSERT(tree->root == node);
-    return &node->datum;
+    return (dict_insert_result) { &node->datum, true };
 }
 
 void**

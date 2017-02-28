@@ -113,15 +113,14 @@ main(int argc, char **argv)
 		printf("usage: insert <key> <data>\n");
 		continue;
 	    }
-	    bool inserted = false;
-	    void **datum_location = dict_insert(dct, xstrdup(ptr), &inserted);
-	    if (inserted) {
-		*datum_location = xstrdup(ptr2);
+	    dict_insert_result result = dict_insert(dct, xstrdup(ptr));
+	    if (result.inserted) {
+		*result.datum_ptr = xstrdup(ptr2);
 		printf("inserted '%s': '%s'\n",
-		       ptr, (char *)*datum_location);
+		       ptr, (char *)*result.datum_ptr);
 	    } else {
 		printf("'%s' already in dict: '%s'\n",
-		       ptr, (char *)*datum_location);
+		       ptr, (char *)*result.datum_ptr);
 	    }
 	} else if (strcmp(buf, "search") == 0) {
 	    if (ptr2) {

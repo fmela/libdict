@@ -44,7 +44,8 @@ size_t		skiplist_free(skiplist* list);
 skiplist*	skiplist_clone(skiplist* list,
 			       dict_key_datum_clone_func clone_func);
 
-void**		skiplist_insert(skiplist* list, void* key, bool* inserted);
+dict_insert_result
+                skiplist_insert(skiplist* list, void* key);
 void**		skiplist_search(skiplist* list, const void* key);
 bool		skiplist_remove(skiplist* list, const void* key);
 size_t		skiplist_clear(skiplist* list);

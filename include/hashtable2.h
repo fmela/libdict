@@ -36,15 +36,16 @@ typedef struct hashtable2 hashtable2;
 
 hashtable2*	hashtable2_new(dict_compare_func cmp_func,
 			       dict_hash_func hash_func,
-			       dict_delete_func del_func, unsigned size);
+			       dict_delete_func del_func, unsigned initial_size);
 dict*		hashtable2_dict_new(dict_compare_func cmp_func,
 				    dict_hash_func hash_func,
-				    dict_delete_func del_func, unsigned size);
+				    dict_delete_func del_func, unsigned initial_size);
 size_t		hashtable2_free(hashtable2* table);
 hashtable2*	hashtable2_clone(hashtable2* table,
 				 dict_key_datum_clone_func clone_func);
 
-void**		hashtable2_insert(hashtable2* table, void* key, bool* inserted);
+dict_insert_result
+                hashtable2_insert(hashtable2* table, void* key);
 void**		hashtable2_search(hashtable2* table, const void* key);
 bool		hashtable2_remove(hashtable2* table, const void* key);
 size_t		hashtable2_clear(hashtable2* table);

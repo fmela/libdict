@@ -44,7 +44,8 @@ size_t		hashtable_free(hashtable* table);
 hashtable*	hashtable_clone(hashtable* table,
 				dict_key_datum_clone_func clone_func);
 
-void**		hashtable_insert(hashtable* table, void* key, bool* inserted);
+dict_insert_result
+                hashtable_insert(hashtable* table, void* key);
 void**		hashtable_search(hashtable* table, const void* key);
 bool		hashtable_remove(hashtable* table, const void* key);
 size_t		hashtable_clear(hashtable* table);
