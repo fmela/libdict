@@ -79,7 +79,6 @@ static dict_vtable hashtable2_vtable = {
     (dict_traverse_func)    hashtable2_traverse,
     (dict_count_func)	    hashtable2_count,
     (dict_verify_func)	    hashtable2_verify,
-    (dict_clone_func)	    hashtable2_clone,
 };
 
 static itor_vtable hashtable2_itor_vtable = {
@@ -125,27 +124,6 @@ hashtable2_new(dict_compare_func cmp_func, dict_hash_func hash_func,
 	table->count = 0;
     }
     return table;
-}
-
-hashtable2*
-hashtable2_clone(hashtable2* table, dict_key_datum_clone_func clone_func)
-{
-    ASSERT(table != NULL);
-
-    hashtable2* clone = hashtable2_new(table->cmp_func, table->hash_func,
-				       table->del_func, table->size);
-    if (!clone) {
-	return NULL;
-    }
-    memcpy(clone->table, table->table, sizeof(hash_node) * table->size);
-    clone->count = table->count;
-    if (clone_func) {
-	for (hash_node *node = clone->table, *end = clone->table + table->size; node != end; ++node) {
-	    if (node->hash)
-		clone_func(&node->key, &node->datum);
-	}
-    }
-    return clone;
 }
 
 dict*

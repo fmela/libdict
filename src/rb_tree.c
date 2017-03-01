@@ -79,7 +79,6 @@ static dict_vtable rb_tree_vtable = {
     (dict_traverse_func)    rb_tree_traverse,
     (dict_count_func)	    tree_count,
     (dict_verify_func)	    rb_tree_verify,
-    (dict_clone_func)	    rb_tree_clone,
 };
 
 static itor_vtable rb_tree_itor_vtable = {
@@ -155,39 +154,6 @@ rb_tree_free(rb_tree* tree)
     size_t count = rb_tree_clear(tree);
     FREE(tree);
     return count;
-}
-
-static rb_node*
-node_clone(rb_node* node, rb_node* parent, dict_key_datum_clone_func clone_func)
-{
-    if (node == RB_NULL)
-	return RB_NULL;
-    rb_node* clone = MALLOC(sizeof(*clone));
-    if (!clone)
-	return RB_NULL;
-    clone->parent = parent;
-    clone->key = node->key;
-    clone->datum = node->datum;
-    clone->llink = node_clone(node->llink, clone, clone_func);
-    clone->rlink = node_clone(RLINK(node), clone, clone_func);
-    if (COLOR(node) == RB_BLACK)
-	SET_BLACK(clone);
-    else
-	SET_RED(clone);
-    return clone;
-}
-
-rb_tree*
-rb_tree_clone(rb_tree* tree, dict_key_datum_clone_func clone_func)
-{
-    ASSERT(tree != NULL);
-
-    rb_tree* clone = rb_tree_new(tree->cmp_func, tree->del_func);
-    if (clone) {
-	memcpy(clone, tree, sizeof(rb_tree));
-	clone->root = node_clone(tree->root, RB_NULL, clone_func);
-    }
-    return clone;
 }
 
 static rb_node*

@@ -326,33 +326,16 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
     if (dct->_vtable->insert == (dict_insert_func)hashtable_insert ||
 	dct->_vtable->insert == (dict_insert_func)hashtable2_insert) {
 	/* Verify that hashtable_resize works as expected. */
-	dict *clone = dict_clone(dct, NULL);
-	CU_ASSERT_TRUE(dict_verify(dct));
 	if (dct->_vtable->insert == (dict_insert_func)hashtable_insert) {
-	    CU_ASSERT_TRUE(hashtable_resize(dict_private(clone), 3));
+	    CU_ASSERT_TRUE(hashtable_resize(dict_private(dct), 3));
 	} else {
-	    CU_ASSERT_TRUE(hashtable2_resize(dict_private(clone),
+	    CU_ASSERT_TRUE(hashtable2_resize(dict_private(dct),
                                              dict_prime_geq(nkeys * 5)));
 	}
 	CU_ASSERT_TRUE(dict_verify(dct));
-	CU_ASSERT_TRUE(dict_verify(clone));
+	CU_ASSERT_EQUAL(dict_count(dct), nkeys);
 	for (unsigned j = 0; j < nkeys; ++j)
-	    test_search(clone, NULL, keys[j].key, keys[j].value);
-	dict_free(clone);
-    }
-
-    if (dct->_vtable->clone) {
-	dict *clone = dict_clone(dct, NULL);
-	CU_ASSERT_PTR_NOT_NULL(clone);
-	CU_ASSERT_TRUE(dict_verify(clone));
-	CU_ASSERT_EQUAL(dict_count(clone), nkeys);
-	for (unsigned i = 0; i < nkeys; ++i) {
-	    test_search(clone, itor, keys[i].key, keys[i].value);
-	}
-	for (unsigned i = 0; i < nkeys; ++i) {
-	    CU_ASSERT_TRUE(dict_remove(clone, keys[i].key));
-	}
-	dict_free(clone);
+	    test_search(dct, NULL, keys[j].key, keys[j].value);
     }
 
     for (unsigned i = 0; i < nkeys; ++i)

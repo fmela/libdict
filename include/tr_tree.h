@@ -41,8 +41,6 @@ dict*		tr_dict_new(dict_compare_func compare_func,
 			    dict_prio_func prio_func,
 			    dict_delete_func del_func);
 size_t		tr_tree_free(tr_tree* tree);
-tr_tree*	tr_tree_clone(tr_tree* tree,
-			      dict_key_datum_clone_func clone_func);
 
 dict_insert_result
                 tr_tree_insert(tr_tree* tree, void* key);

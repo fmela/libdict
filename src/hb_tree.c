@@ -59,7 +59,6 @@ static dict_vtable hb_tree_vtable = {
     (dict_traverse_func)    tree_traverse,
     (dict_count_func)	    tree_count,
     (dict_verify_func)	    hb_tree_verify,
-    (dict_clone_func)	    hb_tree_clone,
 };
 
 static itor_vtable hb_tree_itor_vtable = {
@@ -128,14 +127,6 @@ hb_tree_free(hb_tree* tree)
     const size_t count = hb_tree_clear(tree);
     FREE(tree);
     return count;
-}
-
-hb_tree*
-hb_tree_clone(hb_tree* tree, dict_key_datum_clone_func clone_func)
-{
-    ASSERT(tree != NULL);
-
-    return tree_clone(tree, sizeof(hb_tree), sizeof(hb_node), clone_func);
 }
 
 size_t

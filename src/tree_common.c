@@ -375,40 +375,6 @@ tree_free(void* Tree)
     return count;
 }
 
-static tree_node_base*
-node_clone(tree_node_base* node, tree_node_base* parent, size_t node_size,
-	   dict_key_datum_clone_func clone_func)
-{
-    if (!node)
-	return NULL;
-    tree_node_base* clone = MALLOC(node_size);
-    if (!clone)
-	return NULL;
-    memcpy(clone, node, node_size);
-    if (clone_func)
-	clone_func(&clone->key, &clone->datum);
-    clone->parent = parent;
-    clone->llink = node_clone(node->llink, clone, node_size, clone_func);
-    clone->rlink = node_clone(node->rlink, clone, node_size, clone_func);
-    return clone;
-}
-
-void*
-tree_clone(void* tree, size_t tree_size, size_t node_size,
-	   dict_key_datum_clone_func clone_func)
-{
-    ASSERT(tree_size >= sizeof(tree_base));
-    ASSERT(node_size >= sizeof(tree_node_base));
-
-    tree_base* clone = MALLOC(tree_size);
-    if (clone) {
-	memcpy(clone, tree, tree_size);
-	clone->root = node_clone(((tree_base*)tree)->root, NULL, node_size,
-				 clone_func);
-    }
-    return clone;
-}
-
 static size_t
 node_min_leaf_depth(const tree_node* node, size_t depth)
 {

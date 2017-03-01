@@ -93,7 +93,6 @@ static dict_vtable wb_tree_vtable = {
     (dict_traverse_func)    tree_traverse,
     (dict_count_func)	    tree_count,
     (dict_verify_func)	    wb_tree_verify,
-    (dict_clone_func)	    wb_tree_clone,
 };
 
 static itor_vtable wb_tree_itor_vtable = {
@@ -158,14 +157,6 @@ wb_tree_free(wb_tree* tree)
     size_t count = tree_clear(tree);
     FREE(tree);
     return count;
-}
-
-wb_tree*
-wb_tree_clone(wb_tree* tree, dict_key_datum_clone_func clone_func)
-{
-    ASSERT(tree != NULL);
-
-    return tree_clone(tree, sizeof(wb_tree), sizeof(wb_node), clone_func);
 }
 
 void**

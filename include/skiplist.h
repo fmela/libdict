@@ -41,8 +41,6 @@ dict*		skiplist_dict_new(dict_compare_func cmp_func,
 				  dict_delete_func del_func,
 				  unsigned max_link);
 size_t		skiplist_free(skiplist* list);
-skiplist*	skiplist_clone(skiplist* list,
-			       dict_key_datum_clone_func clone_func);
 
 dict_insert_result
                 skiplist_insert(skiplist* list, void* key);

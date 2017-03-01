@@ -64,7 +64,6 @@ static dict_vtable pr_tree_vtable = {
     (dict_traverse_func)    tree_traverse,
     (dict_count_func)	    tree_count,
     (dict_verify_func)	    pr_tree_verify,
-    (dict_clone_func)	    pr_tree_clone,
 };
 
 static itor_vtable pr_tree_itor_vtable = {
@@ -132,14 +131,6 @@ pr_tree_free(pr_tree* tree)
     size_t count = pr_tree_clear(tree);
     FREE(tree);
     return count;
-}
-
-pr_tree*
-pr_tree_clone(pr_tree* tree, dict_key_datum_clone_func clone_func)
-{
-    ASSERT(tree != NULL);
-
-    return tree_clone(tree, sizeof(pr_tree), sizeof(pr_node), clone_func);
 }
 
 void**

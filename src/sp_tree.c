@@ -77,7 +77,6 @@ static dict_vtable sp_tree_vtable = {
     (dict_traverse_func)    tree_traverse,
     (dict_count_func)	    tree_count,
     (dict_verify_func)	    sp_tree_verify,
-    (dict_clone_func)	    sp_tree_clone,
 };
 
 static itor_vtable sp_tree_itor_vtable = {
@@ -143,14 +142,6 @@ sp_tree_free(sp_tree* tree)
     size_t count = sp_tree_clear(tree);
     FREE(tree);
     return count;
-}
-
-sp_tree*
-sp_tree_clone(sp_tree* tree, dict_key_datum_clone_func clone_func)
-{
-    ASSERT(tree != NULL);
-
-    return tree_clone(tree, sizeof(sp_tree), sizeof(sp_node), clone_func);
 }
 
 size_t

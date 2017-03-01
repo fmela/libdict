@@ -39,8 +39,6 @@ pr_tree*	pr_tree_new(dict_compare_func cmp_func,
 dict*		pr_dict_new(dict_compare_func cmp_func,
 			    dict_delete_func del_func);
 size_t		pr_tree_free(pr_tree* tree);
-pr_tree*	pr_tree_clone(pr_tree* tree,
-			      dict_key_datum_clone_func clone_func);
 
 dict_insert_result
                 pr_tree_insert(pr_tree* tree, void* key);

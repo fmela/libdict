@@ -82,7 +82,6 @@ static dict_vtable hashtable_vtable = {
     (dict_traverse_func)    hashtable_traverse,
     (dict_count_func)	    hashtable_count,
     (dict_verify_func)	    hashtable_verify,
-    (dict_clone_func)	    hashtable_clone,
 };
 
 static itor_vtable hashtable_itor_vtable = {
@@ -128,43 +127,6 @@ hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func,
 	table->count = 0;
     }
     return table;
-}
-
-hashtable*
-hashtable_clone(hashtable* table, dict_key_datum_clone_func clone_func)
-{
-    ASSERT(table != NULL);
-
-    hashtable* clone = hashtable_new(table->cmp_func, table->hash_func,
-				     table->del_func, table->size);
-    if (clone) {
-	clone->count = table->count;
-	for (unsigned slot = 0; slot < table->size; ++slot) {
-	    hash_node* prev = NULL;
-	    hash_node* node = table->table[slot];
-	    for (; node; node = node->next) {
-		hash_node* add = MALLOC(sizeof(*add));
-		if (!add) {
-		    hashtable_free(clone);
-		    return NULL;
-		}
-		add->key = node->key;
-		add->datum = node->datum;
-		if (clone_func)
-		    clone_func(&add->key, &add->datum);
-		add->next = NULL;
-		add->prev = prev;
-		if (prev)
-		    prev->next = add;
-		else
-		    clone->table[slot] = add;
-		add->hash = node->hash;
-
-		prev = add;
-	    }
-	}
-    }
-    return clone;
 }
 
 dict*
