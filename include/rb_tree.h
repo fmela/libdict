@@ -45,10 +45,10 @@ rb_tree*	rb_tree_clone(rb_tree* tree,
 dict_insert_result
                 rb_tree_insert(rb_tree* tree, void* key);
 void**		rb_tree_search(rb_tree* tree, const void* key);
-void*		rb_tree_search_le(rb_tree* tree, const void* key);
-void*		rb_tree_search_lt(rb_tree* tree, const void* key);
-void*		rb_tree_search_ge(rb_tree* tree, const void* key);
-void*		rb_tree_search_gt(rb_tree* tree, const void* key);
+void**		rb_tree_search_le(rb_tree* tree, const void* key);
+void**		rb_tree_search_lt(rb_tree* tree, const void* key);
+void**		rb_tree_search_ge(rb_tree* tree, const void* key);
+void**		rb_tree_search_gt(rb_tree* tree, const void* key);
 bool		rb_tree_remove(rb_tree* tree, const void* key);
 size_t		rb_tree_clear(rb_tree* tree);
 size_t		rb_tree_traverse(rb_tree* tree, dict_visit_func visit);

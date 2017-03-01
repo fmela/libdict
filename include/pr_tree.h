@@ -45,6 +45,10 @@ pr_tree*	pr_tree_clone(pr_tree* tree,
 dict_insert_result
                 pr_tree_insert(pr_tree* tree, void* key);
 void**		pr_tree_search(pr_tree* tree, const void* key);
+void**		pr_tree_search_le(pr_tree* tree, const void* key);
+void**		pr_tree_search_lt(pr_tree* tree, const void* key);
+void**		pr_tree_search_ge(pr_tree* tree, const void* key);
+void**		pr_tree_search_gt(pr_tree* tree, const void* key);
 bool		pr_tree_remove(pr_tree* tree, const void* key);
 size_t		pr_tree_clear(pr_tree* tree);
 size_t		pr_tree_traverse(pr_tree* tree, dict_visit_func visit);

@@ -47,6 +47,10 @@ tr_tree*	tr_tree_clone(tr_tree* tree,
 dict_insert_result
                 tr_tree_insert(tr_tree* tree, void* key);
 void**		tr_tree_search(tr_tree* tree, const void* key);
+void**		tr_tree_search_le(tr_tree* tree, const void* key);
+void**		tr_tree_search_lt(tr_tree* tree, const void* key);
+void**		tr_tree_search_ge(tr_tree* tree, const void* key);
+void**		tr_tree_search_gt(tr_tree* tree, const void* key);
 bool		tr_tree_remove(tr_tree* tree, const void* key);
 size_t		tr_tree_clear(tr_tree* tree);
 size_t		tr_tree_traverse(tr_tree* tree, dict_visit_func visit);

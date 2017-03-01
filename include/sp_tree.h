@@ -45,6 +45,10 @@ sp_tree*	sp_tree_clone(sp_tree* tree,
 dict_insert_result
                 sp_tree_insert(sp_tree* tree, void* key);
 void**		sp_tree_search(sp_tree* tree, const void* key);
+void**		sp_tree_search_le(sp_tree* tree, const void* key);
+void**		sp_tree_search_lt(sp_tree* tree, const void* key);
+void**		sp_tree_search_ge(sp_tree* tree, const void* key);
+void**		sp_tree_search_gt(sp_tree* tree, const void* key);
 bool		sp_tree_remove(sp_tree* tree, const void* key);
 size_t		sp_tree_clear(sp_tree* tree);
 size_t		sp_tree_traverse(sp_tree* tree, dict_visit_func visit);

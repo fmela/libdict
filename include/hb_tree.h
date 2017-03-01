@@ -45,6 +45,10 @@ hb_tree*	hb_tree_clone(hb_tree* tree,
 dict_insert_result
                 hb_tree_insert(hb_tree* tree, void* key);
 void**		hb_tree_search(hb_tree* tree, const void* key);
+void**		hb_tree_search_le(hb_tree* tree, const void* key);
+void**		hb_tree_search_lt(hb_tree* tree, const void* key);
+void**		hb_tree_search_ge(hb_tree* tree, const void* key);
+void**		hb_tree_search_gt(hb_tree* tree, const void* key);
 bool		hb_tree_remove(hb_tree* tree, const void* key);
 size_t		hb_tree_clear(hb_tree* tree);
 size_t		hb_tree_traverse(hb_tree* tree, dict_visit_func visit);

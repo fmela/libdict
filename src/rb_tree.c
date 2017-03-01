@@ -236,7 +236,7 @@ rb_tree_search_le_node(rb_tree* tree, const void* key)
     return ret;
 }
 
-void*
+void**
 rb_tree_search_le(rb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -263,7 +263,7 @@ rb_tree_search_lt_node(rb_tree* tree, const void* key)
     return ret;
 }
 
-void*
+void**
 rb_tree_search_lt(rb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -293,7 +293,7 @@ rb_tree_search_ge_node(rb_tree* tree, const void* key)
     return ret;
 }
 
-void*
+void**
 rb_tree_search_ge(rb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -320,7 +320,7 @@ rb_tree_search_gt_node(rb_tree* tree, const void* key)
     return ret;
 }
 
-void*
+void**
 rb_tree_search_gt(rb_tree* tree, const void* key)
 {
     rb_node* node = rb_tree_search_gt_node(tree, key);
