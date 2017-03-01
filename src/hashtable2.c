@@ -55,7 +55,6 @@ struct hashtable2 {
     size_t		    count;
     dict_compare_func	    cmp_func;
     dict_hash_func	    hash_func;
-    dict_delete_func	    del_func;
     hash_node*		    table;
     unsigned		    size;
 };
@@ -103,8 +102,7 @@ static itor_vtable hashtable2_itor_vtable = {
 };
 
 hashtable2*
-hashtable2_new(dict_compare_func cmp_func, dict_hash_func hash_func,
-	       dict_delete_func del_func, unsigned initial_size)
+hashtable2_new(dict_compare_func cmp_func, dict_hash_func hash_func, unsigned initial_size)
 {
     ASSERT(hash_func != NULL);
     ASSERT(initial_size != 0);
@@ -120,22 +118,20 @@ hashtable2_new(dict_compare_func cmp_func, dict_hash_func hash_func,
 	memset(table->table, 0, table->size * sizeof(hash_node));
 	table->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
 	table->hash_func = hash_func;
-	table->del_func = del_func;
 	table->count = 0;
     }
     return table;
 }
 
 dict*
-hashtable2_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func,
-		    dict_delete_func del_func, unsigned initial_size)
+hashtable2_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func, unsigned initial_size)
 {
     ASSERT(hash_func != NULL);
     ASSERT(initial_size != 0);
 
     dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
-	dct->_object = hashtable2_new(cmp_func, hash_func, del_func, initial_size);
+	dct->_object = hashtable2_new(cmp_func, hash_func, initial_size);
 	if (!dct->_object) {
 	    FREE(dct);
 	    return NULL;
@@ -146,11 +142,11 @@ hashtable2_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func,
 }
 
 size_t
-hashtable2_free(hashtable2* table)
+hashtable2_free(hashtable2* table, dict_delete_func delete_func)
 {
     ASSERT(table != NULL);
 
-    size_t count = hashtable2_clear(table);
+    size_t count = hashtable2_clear(table, delete_func);
     FREE(table->table);
     FREE(table);
     return count;
@@ -275,7 +271,7 @@ remove_cleanup(hashtable2* table, hash_node* const first, hash_node* node)
     } while (node != first);
 }
 
-bool
+dict_remove_result
 hashtable2_remove(hashtable2* table, const void* key)
 {
     ASSERT(table != NULL);
@@ -286,11 +282,10 @@ hashtable2_remove(hashtable2* table, const void* key)
     hash_node* node = first;
     do {
 	if (!node->hash) /* Not occupied. */
-	    return NULL;
+	    break;
 
 	if (node->hash == hash && table->cmp_func(key, node->key) == 0) {
-	    if (table->del_func)
-		table->del_func(node->key, node->datum);
+	    dict_remove_result result = { node->key, node->datum, true };
 	    node->key = node->datum = NULL;
 	    node->hash = 0;
 	    table->count--;
@@ -298,17 +293,17 @@ hashtable2_remove(hashtable2* table, const void* key)
 	    if (++node == table_end)
 		node = table->table;
 	    remove_cleanup(table, first, node);
-	    return true;
+	    return result;
 	}
 
 	if (++node == table_end)
 	    node = table->table;
     } while (node != first);
-    return false;
+    return (dict_remove_result) { NULL, NULL, false };
 }
 
 size_t
-hashtable2_clear(hashtable2* table)
+hashtable2_clear(hashtable2* table, dict_delete_func delete_func)
 {
     ASSERT(table != NULL);
 
@@ -316,8 +311,8 @@ hashtable2_clear(hashtable2* table)
     hash_node *const end = table->table + table->size;
     for (; node != end; ++node) {
 	if (node->hash) {
-	    if (table->del_func)
-		table->del_func(node->key, node->datum);
+	    if (delete_func)
+		delete_func(node->key, node->datum);
 	    node->key = node->datum = NULL;
 	    node->hash = 0;
 	}

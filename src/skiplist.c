@@ -51,7 +51,6 @@ struct skiplist {
     unsigned		    max_link;
     unsigned		    top_link;
     dict_compare_func	    cmp_func;
-    dict_delete_func	    del_func;
     size_t		    count;
 };
 
@@ -102,8 +101,7 @@ static void**	    node_insert(skiplist* list, void* key, skip_node** update);
 static unsigned	    rand_link_count(skiplist* list);
 
 skiplist*
-skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func,
-	     unsigned max_link)
+skiplist_new(dict_compare_func cmp_func, unsigned max_link)
 {
     ASSERT(max_link > 0);
 
@@ -120,19 +118,17 @@ skiplist_new(dict_compare_func cmp_func, dict_delete_func del_func,
 	list->max_link = max_link;
 	list->top_link = 0;
 	list->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
-	list->del_func = del_func;
 	list->count = 0;
     }
     return list;
 }
 
 dict*
-skiplist_dict_new(dict_compare_func cmp_func, dict_delete_func del_func,
-		  unsigned max_link)
+skiplist_dict_new(dict_compare_func cmp_func, unsigned max_link)
 {
     dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
-	if (!(dct->_object = skiplist_new(cmp_func, del_func, max_link))) {
+	if (!(dct->_object = skiplist_new(cmp_func, max_link))) {
 	    FREE(dct);
 	    return NULL;
 	}
@@ -142,11 +138,11 @@ skiplist_dict_new(dict_compare_func cmp_func, dict_delete_func del_func,
 }
 
 size_t
-skiplist_free(skiplist* list)
+skiplist_free(skiplist* list, dict_delete_func delete_func)
 {
     ASSERT(list != NULL);
 
-    size_t count = skiplist_clear(list);
+    size_t count = skiplist_clear(list, delete_func);
     FREE(list->head);
     FREE(list);
     return count;
@@ -221,7 +217,7 @@ skiplist_search(skiplist* list, const void* key)
     return NULL;
 }
 
-bool
+dict_remove_result
 skiplist_remove(skiplist* list, const void* key)
 {
     ASSERT(list != NULL);
@@ -236,7 +232,7 @@ skiplist_remove(skiplist* list, const void* key)
     }
     x = x->link[0];
     if (!x || list->cmp_func(key, x->key) != 0)
-	return false;
+	return (dict_remove_result) { NULL, NULL, false };
     for (unsigned k = 0; k <= list->top_link; k++) {
 	ASSERT(update[k] != NULL);
 	ASSERT(update[k]->link_count > k);
@@ -248,25 +244,24 @@ skiplist_remove(skiplist* list, const void* key)
 	x->prev->link[0] = x->link[0];
     if (x->link[0])
 	x->link[0]->prev = x->prev;
-    if (list->del_func)
-	list->del_func(x->key, x->datum);
+    dict_remove_result result = { x->key, x->datum, true };
     FREE(x);
     while (list->top_link > 0 && !list->head->link[list->top_link-1])
 	list->top_link--;
     list->count--;
-    return true;
+    return result;
 }
 
 size_t
-skiplist_clear(skiplist* list)
+skiplist_clear(skiplist* list, dict_delete_func delete_func)
 {
     ASSERT(list != NULL);
 
     skip_node* node = list->head->link[0];
     while (node) {
 	skip_node* next = node->link[0];
-	if (list->del_func)
-	    list->del_func(node->key, node->datum);
+	if (delete_func)
+	    delete_func(node->key, node->datum);
 	FREE(node);
 	node = next;
     }

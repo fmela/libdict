@@ -34,11 +34,9 @@ BEGIN_DECL
 
 typedef struct hb_tree hb_tree;
 
-hb_tree*	hb_tree_new(dict_compare_func cmp_func,
-			    dict_delete_func del_func);
-dict*		hb_dict_new(dict_compare_func cmp_func,
-			    dict_delete_func del_func);
-size_t		hb_tree_free(hb_tree* tree);
+hb_tree*	hb_tree_new(dict_compare_func cmp_func);
+dict*		hb_dict_new(dict_compare_func cmp_func);
+size_t		hb_tree_free(hb_tree* tree, dict_delete_func delete_func);
 
 dict_insert_result
                 hb_tree_insert(hb_tree* tree, void* key);
@@ -47,8 +45,9 @@ void**		hb_tree_search_le(hb_tree* tree, const void* key);
 void**		hb_tree_search_lt(hb_tree* tree, const void* key);
 void**		hb_tree_search_ge(hb_tree* tree, const void* key);
 void**		hb_tree_search_gt(hb_tree* tree, const void* key);
-bool		hb_tree_remove(hb_tree* tree, const void* key);
-size_t		hb_tree_clear(hb_tree* tree);
+dict_remove_result
+		hb_tree_remove(hb_tree* tree, const void* key);
+size_t		hb_tree_clear(hb_tree* tree, dict_delete_func delete_func);
 size_t		hb_tree_traverse(hb_tree* tree, dict_visit_func visit);
 size_t		hb_tree_count(const hb_tree* tree);
 size_t		hb_tree_height(const hb_tree* tree);

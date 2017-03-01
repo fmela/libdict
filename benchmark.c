@@ -240,8 +240,11 @@ main(int argc, char **argv)
 
     timer_start(&start);
     for (unsigned i = 0; i < nwords; i++) {
-	if (!dict_remove(dct, words[i]))
+	dict_remove_result result = dict_remove(dct, words[i]);
+	if (!result.removed)
 	    quit("removing #%d '%s' failed!\n", i, words[i]);
+	ASSERT(result.key == words[i]);
+	ASSERT(result.datum == words[i]);
     }
     timer_end(&start, &end, &total);
     printf("       %s remove: %6.03fs %9zu cmp (%.2f/remove)",
@@ -265,7 +268,7 @@ main(int argc, char **argv)
     if ((n = dict_count(dct)) != 0)
 	quit("error - count not zero (%u)!", n);
 
-    dict_free(dct);
+    dict_free(dct, key_str_free);
 
     printf("        %s total: %6.03fs %9zu cmp",
 	   container_name,
@@ -293,39 +296,39 @@ create_dictionary(char type, const char **container_name)
     switch (type) {
 	case 'h':
 	    *container_name = "hb";
-	    return hb_dict_new(cmp_func, key_str_free);
+	    return hb_dict_new(cmp_func);
 
 	case 'p':
 	    *container_name = "pr";
-	    return pr_dict_new(cmp_func, key_str_free);
+	    return pr_dict_new(cmp_func);
 
 	case 'r':
 	    *container_name = "rb";
-	    return rb_dict_new(cmp_func, key_str_free);
+	    return rb_dict_new(cmp_func);
 
 	case 't':
 	    *container_name = "tr";
-	    return tr_dict_new(cmp_func, NULL, key_str_free);
+	    return tr_dict_new(cmp_func, NULL);
 
 	case 's':
 	    *container_name = "sp";
-	    return sp_dict_new(cmp_func, key_str_free);
+	    return sp_dict_new(cmp_func);
 
 	case 'S':
 	    *container_name = "sk";
-	    return skiplist_dict_new(cmp_func, key_str_free, 12);
+	    return skiplist_dict_new(cmp_func, 12);
 
 	case 'w':
 	    *container_name = "wb";
-	    return wb_dict_new(cmp_func, key_str_free);
+	    return wb_dict_new(cmp_func);
 
 	case 'H':
 	    *container_name = "ht";
-	    return hashtable_dict_new(cmp_func, hash_func, key_str_free, HASHTABLE_SIZE);
+	    return hashtable_dict_new(cmp_func, hash_func, HASHTABLE_SIZE);
 
 	case '2':
 	    *container_name = "h2";
-	    return hashtable2_dict_new(cmp_func, hash_func, key_str_free, HASHTABLE_SIZE);
+	    return hashtable2_dict_new(cmp_func, hash_func, HASHTABLE_SIZE);
 
 	default:
 	    quit("type must be one of h, p, r, t, s, w or H");

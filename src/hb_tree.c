@@ -90,25 +90,24 @@ static size_t	node_pathlen(const hb_node* node, size_t level);
 static hb_node*	node_new(void* key);
 
 hb_tree*
-hb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
+hb_tree_new(dict_compare_func cmp_func)
 {
     hb_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = NULL;
 	tree->count = 0;
 	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
-	tree->del_func = del_func;
 	tree->rotation_count = 0;
     }
     return tree;
 }
 
 dict*
-hb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
+hb_dict_new(dict_compare_func cmp_func)
 {
     dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
-	if (!(dct->_object = hb_tree_new(cmp_func, del_func))) {
+	if (!(dct->_object = hb_tree_new(cmp_func))) {
 	    FREE(dct);
 	    return NULL;
 	}
@@ -118,19 +117,17 @@ hb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 }
 
 size_t
-hb_tree_free(hb_tree* tree)
+hb_tree_free(hb_tree* tree, dict_delete_func delete_func)
 {
     ASSERT(tree != NULL);
 
-    if (!tree->root)
-	return 0;
-    const size_t count = hb_tree_clear(tree);
+    const size_t count = hb_tree_clear(tree, delete_func);
     FREE(tree);
     return count;
 }
 
 size_t
-hb_tree_clear(hb_tree* tree)
+hb_tree_clear(hb_tree* tree, dict_delete_func delete_func)
 {
     ASSERT(tree != NULL);
 
@@ -146,8 +143,8 @@ hb_tree_clear(hb_tree* tree)
 	    continue;
 	}
 
-	if (tree->del_func)
-	    tree->del_func(node->key, node->datum);
+	if (delete_func)
+	    delete_func(node->key, node->datum);
 
 	hb_node* parent = node->parent;
 	FREE(node);
@@ -305,7 +302,7 @@ hb_tree_insert(hb_tree* tree, void* key)
     return (dict_insert_result) { &add->datum, true };
 }
 
-bool
+dict_remove_result
 hb_tree_remove(hb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -322,7 +319,7 @@ hb_tree_remove(hb_tree* tree, const void* key)
 	    break;
     }
     if (!node)
-	return false;
+	return (dict_remove_result) { NULL, NULL, false };
 
     if (node->llink && node->rlink) {
 	hb_node* out;
@@ -342,16 +339,15 @@ hb_tree_remove(hb_tree* tree, const void* key)
 	parent = out->parent;
     }
 
+    dict_remove_result result = { node->key, node->datum, true };
     hb_node* child = node->llink ? node->llink : node->rlink;
-    if (tree->del_func)
-	tree->del_func(node->key, node->datum);
     FREE(node);
     if (child)
 	child->parent = parent;
     if (!parent) {
 	tree->root = child;
 	tree->count--;
-	return true;
+	return result;
     }
 
     bool left = parent->llink == node;
@@ -415,7 +411,7 @@ higher:
     }
     tree->rotation_count += rotations;
     tree->count--;
-    return true;
+    return result;
 }
 
 const void*

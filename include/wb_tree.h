@@ -34,11 +34,9 @@ BEGIN_DECL
 
 typedef struct wb_tree wb_tree;
 
-wb_tree*	wb_tree_new(dict_compare_func cmp_func,
-			    dict_delete_func del_func);
-dict*		wb_dict_new(dict_compare_func cmp_func,
-			    dict_delete_func del_func);
-size_t		wb_tree_free(wb_tree* tree);
+wb_tree*	wb_tree_new(dict_compare_func cmp_func);
+dict*		wb_dict_new(dict_compare_func cmp_func);
+size_t		wb_tree_free(wb_tree* tree, dict_delete_func delete_func);
 
 dict_insert_result
                 wb_tree_insert(wb_tree* tree, void* key);
@@ -47,8 +45,9 @@ void**		wb_tree_search_le(wb_tree* tree, const void* key);
 void**		wb_tree_search_lt(wb_tree* tree, const void* key);
 void**		wb_tree_search_ge(wb_tree* tree, const void* key);
 void**		wb_tree_search_gt(wb_tree* tree, const void* key);
-bool		wb_tree_remove(wb_tree* tree, const void* key);
-size_t		wb_tree_clear(wb_tree* tree);
+dict_remove_result
+		wb_tree_remove(wb_tree* tree, const void* key);
+size_t		wb_tree_clear(wb_tree* tree, dict_delete_func delete_func);
 size_t		wb_tree_traverse(wb_tree* tree, dict_visit_func visit);
 size_t		wb_tree_count(const wb_tree* tree);
 size_t		wb_tree_height(const wb_tree* tree);

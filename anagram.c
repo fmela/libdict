@@ -29,7 +29,7 @@ main(int argc, char *argv[])
 	exit(1);
     }
 
-    rb_tree *tree = rb_tree_new(dict_str_cmp, NULL);
+    rb_tree *tree = rb_tree_new(dict_str_cmp);
 
     char buf[512];
     while (fgets(buf, sizeof(buf), fp)) {
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 	}
     } while (rb_itor_next(itor));
     rb_itor_free(itor);
-    rb_tree_free(tree);
+    rb_tree_free(tree, NULL);
 
     return 0;
 }

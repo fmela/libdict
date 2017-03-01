@@ -328,19 +328,19 @@ tree_traverse(void* Tree, dict_visit_func visit)
 }
 
 static void
-tree_node_free(tree* tree, tree_node* node)
+tree_node_free(tree_node* node, dict_delete_func delete_func)
 {
     ASSERT(node != NULL);
 
-    tree_node* llink = node->llink;
-    tree_node* rlink = node->rlink;
-    if (tree->del_func)
-	tree->del_func(node->key, node->datum);
+    tree_node* const llink = node->llink;
+    tree_node* const rlink = node->rlink;
+    if (delete_func)
+	delete_func(node->key, node->datum);
     FREE(node);
     if (llink)
-	tree_node_free(tree, llink);
+	tree_node_free(llink, delete_func);
     if (rlink)
-	tree_node_free(tree, rlink);
+	tree_node_free(rlink, delete_func);
 }
 
 size_t
@@ -351,14 +351,14 @@ tree_count(const void* Tree)
 }
 
 size_t
-tree_clear(void* Tree)
+tree_clear(void* Tree, dict_delete_func delete_func)
 {
     ASSERT(Tree != NULL);
 
     tree* t = Tree;
     const size_t count = t->count;
     if (t->root) {
-	tree_node_free(t, t->root);
+	tree_node_free(t->root, delete_func);
 	t->root = NULL;
 	t->count = 0;
     }
@@ -366,11 +366,11 @@ tree_clear(void* Tree)
 }
 
 size_t
-tree_free(void* Tree)
+tree_free(void* Tree, dict_delete_func delete_func)
 {
     ASSERT(Tree != NULL);
 
-    const size_t count = tree_clear(Tree);
+    const size_t count = tree_clear(Tree, delete_func);
     FREE(Tree);
     return count;
 }

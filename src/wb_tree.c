@@ -122,25 +122,24 @@ static size_t	node_pathlen(const wb_node* node, size_t level);
 static wb_node*	node_new(void* key);
 
 wb_tree*
-wb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
+wb_tree_new(dict_compare_func cmp_func)
 {
     wb_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = NULL;
 	tree->count = 0;
 	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
-	tree->del_func = del_func;
 	tree->rotation_count = 0;
     }
     return tree;
 }
 
 dict*
-wb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
+wb_dict_new(dict_compare_func cmp_func)
 {
     dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
-	if (!(dct->_object = wb_tree_new(cmp_func, del_func))) {
+	if (!(dct->_object = wb_tree_new(cmp_func))) {
 	    FREE(dct);
 	    return NULL;
 	}
@@ -150,11 +149,11 @@ wb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 }
 
 size_t
-wb_tree_free(wb_tree* tree)
+wb_tree_free(wb_tree* tree, dict_delete_func delete_func)
 {
     ASSERT(tree != NULL);
 
-    size_t count = tree_clear(tree);
+    size_t count = tree_clear(tree, delete_func);
     FREE(tree);
     return count;
 }
@@ -296,11 +295,11 @@ wb_tree_insert(wb_tree* tree, void* key)
 	}
 	tree->rotation_count += rotations;
     }
-    ++tree->count;
+    tree->count++;
     return (dict_insert_result) { &add->datum, true };
 }
 
-bool
+dict_remove_result
 wb_tree_remove(wb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -345,10 +344,9 @@ wb_tree_remove(wb_tree* tree, const void* key)
 		ASSERT(tree->root == node);
 		tree->root = child;
 	    }
-	    if (tree->del_func)
-		tree->del_func(node->key, node->datum);
+	    dict_remove_result result = { node->key, node->datum, true };
 	    FREE(node);
-	    --tree->count;
+	    tree->count--;
 	    /* Now move up the tree, decrementing weights. */
 	    unsigned rotations = 0;
 	    while (parent) {
@@ -358,18 +356,18 @@ wb_tree_remove(wb_tree* tree, const void* key)
 		parent = up;
 	    }
 	    tree->rotation_count += rotations;
-	    return true;
+	    return result;
 	}
     }
-    return false;
+    return (dict_remove_result) { NULL, NULL, false };
 }
 
 size_t
-wb_tree_clear(wb_tree* tree)
+wb_tree_clear(wb_tree* tree, dict_delete_func delete_func)
 {
     ASSERT(tree != NULL);
 
-    return tree_clear(tree);
+    return tree_clear(tree, delete_func);
 }
 
 const void*

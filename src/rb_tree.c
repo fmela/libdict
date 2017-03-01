@@ -119,25 +119,24 @@ static rb_node*	node_max(rb_node* node);
 static rb_node*	node_min(rb_node* node);
 
 rb_tree*
-rb_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
+rb_tree_new(dict_compare_func cmp_func)
 {
     rb_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = RB_NULL;
 	tree->count = 0;
 	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
-	tree->del_func = del_func;
 	tree->rotation_count = 0;
     }
     return tree;
 }
 
 dict*
-rb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
+rb_dict_new(dict_compare_func cmp_func)
 {
     dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
-	if (!(dct->_object = rb_tree_new(cmp_func, del_func))) {
+	if (!(dct->_object = rb_tree_new(cmp_func))) {
 	    FREE(dct);
 	    return NULL;
 	}
@@ -147,11 +146,11 @@ rb_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 }
 
 size_t
-rb_tree_free(rb_tree* tree)
+rb_tree_free(rb_tree* tree, dict_delete_func delete_func)
 {
     ASSERT(tree != NULL);
 
-    size_t count = rb_tree_clear(tree);
+    size_t count = rb_tree_clear(tree, delete_func);
     FREE(tree);
     return count;
 }
@@ -328,7 +327,7 @@ rb_tree_insert(rb_tree* tree, void* key)
 
 	tree->rotation_count += insert_fixup(tree, node);
     }
-    ++tree->count;
+    tree->count++;
     return (dict_insert_result) { &node->datum, true };
 }
 
@@ -389,7 +388,7 @@ insert_fixup(rb_tree* tree, rb_node* node)
     return rotations;
 }
 
-bool
+dict_remove_result
 rb_tree_remove(rb_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -405,7 +404,7 @@ rb_tree_remove(rb_tree* tree, const void* key)
 	    break;
     }
     if (node == RB_NULL)
-	return false;
+	return (dict_remove_result) { NULL, NULL, false };
 
     rb_node* out;
     if (node->llink == RB_NULL || RLINK(node) == RB_NULL) {
@@ -432,13 +431,10 @@ rb_tree_remove(rb_tree* tree, const void* key)
 
     if (COLOR(out) == RB_BLACK)
 	tree->rotation_count += delete_fixup(tree, temp);
-    if (tree->del_func)
-	tree->del_func(out->key, out->datum);
+    dict_remove_result result = { out->key, out->datum, true };
     FREE(out);
-
     tree->count--;
-
-    return true;
+    return result;
 }
 
 static unsigned
@@ -519,7 +515,7 @@ delete_fixup(rb_tree* tree, rb_node* node)
 }
 
 size_t
-rb_tree_clear(rb_tree* tree)
+rb_tree_clear(rb_tree* tree, dict_delete_func delete_func)
 {
     ASSERT(tree != NULL);
 
@@ -535,8 +531,8 @@ rb_tree_clear(rb_tree* tree)
 	    continue;
 	}
 
-	if (tree->del_func)
-	    tree->del_func(node->key, node->datum);
+	if (delete_func)
+	    delete_func(node->key, node->datum);
 
 	rb_node* parent = node->parent;
 	FREE(node);

@@ -51,35 +51,31 @@ main(int argc, char **argv)
     ++argv;
     switch (argv[0][0]) {
 	case 'h':
-	    dct = hb_dict_new((dict_compare_func)strcmp, key_val_free);
+	    dct = hb_dict_new((dict_compare_func)strcmp);
 	    break;
 	case 'p':
-	    dct = pr_dict_new((dict_compare_func)strcmp, key_val_free);
+	    dct = pr_dict_new((dict_compare_func)strcmp);
 	    break;
 	case 'r':
-	    dct = rb_dict_new((dict_compare_func)strcmp, key_val_free);
+	    dct = rb_dict_new((dict_compare_func)strcmp);
 	    break;
 	case 't':
-	    dct = tr_dict_new((dict_compare_func)strcmp, NULL, key_val_free);
+	    dct = tr_dict_new((dict_compare_func)strcmp, NULL);
 	    break;
 	case 's':
-	    dct = sp_dict_new((dict_compare_func)strcmp, key_val_free);
+	    dct = sp_dict_new((dict_compare_func)strcmp);
 	    break;
 	case 'w':
-	    dct = wb_dict_new((dict_compare_func)strcmp, key_val_free);
+	    dct = wb_dict_new((dict_compare_func)strcmp);
 	    break;
-        case 'S':
-            dct = skiplist_dict_new((dict_compare_func)strcmp, key_val_free, SKIPLINKS);
-            break;
+	case 'S':
+	    dct = skiplist_dict_new((dict_compare_func)strcmp, SKIPLINKS);
+	    break;
 	case 'H':
-	    dct = hashtable_dict_new((dict_compare_func)strcmp,
-				     dict_str_hash,
-				     key_val_free, HSIZE);
+	    dct = hashtable_dict_new((dict_compare_func)strcmp, dict_str_hash, HSIZE);
 	    break;
 	case '2':
-	    dct = hashtable2_dict_new((dict_compare_func)strcmp,
-				      dict_str_hash,
-				      key_val_free, HSIZE);
+	    dct = hashtable2_dict_new((dict_compare_func)strcmp, dict_str_hash, HSIZE);
 	    break;
 	default:
 	    quit("type must be one of h, p, r, t, s, w, S, H, or 2");
@@ -193,9 +189,12 @@ main(int argc, char **argv)
 		printf("usage: remove <key>\n");
 		continue;
 	    }
-	    if (dict_remove(dct, ptr))
-		printf("removed '%s' from dict\n", ptr);
-	    else
+	    dict_remove_result result = dict_remove(dct, ptr);
+	    if (result.removed) {
+		printf("removed '%s' from dict: %s\n", result.key, result.datum);
+		free(result.key);
+		free(result.datum);
+	    } else
 		printf("key '%s' not in dict!\n", ptr);
 	} else if (strcmp(buf, "show") == 0) {
 	    if (ptr) {
@@ -226,7 +225,7 @@ main(int argc, char **argv)
 		printf("usage: clear\n");
 		continue;
 	    }
-	    dict_clear(dct);
+	    dict_clear(dct, key_val_free);
 	} else if (strcmp(buf, "count") == 0) {
 	    if (ptr) {
 		printf("usage: count\n");
@@ -252,7 +251,7 @@ main(int argc, char **argv)
 	}
     }
 
-    dict_free(dct);
+    dict_free(dct, key_val_free);
 
     exit(0);
 }

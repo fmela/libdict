@@ -104,15 +104,13 @@ static size_t	node_pathlen(const tr_node* node, size_t level);
 static tr_node*	node_new(void* key);
 
 tr_tree*
-tr_tree_new(dict_compare_func cmp_func, dict_prio_func prio_func,
-	    dict_delete_func del_func)
+tr_tree_new(dict_compare_func cmp_func, dict_prio_func prio_func)
 {
     tr_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = NULL;
 	tree->count = 0;
 	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
-	tree->del_func = del_func;
 	tree->rotation_count = 0;
 	tree->prio_func = prio_func;
     }
@@ -120,12 +118,11 @@ tr_tree_new(dict_compare_func cmp_func, dict_prio_func prio_func,
 }
 
 dict*
-tr_dict_new(dict_compare_func cmp_func, dict_prio_func prio_func,
-	    dict_delete_func del_func)
+tr_dict_new(dict_compare_func cmp_func, dict_prio_func prio_func)
 {
     dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
-	if (!(dct->_object = tr_tree_new(cmp_func, prio_func, del_func))) {
+	if (!(dct->_object = tr_tree_new(cmp_func, prio_func))) {
 	    FREE(dct);
 	    return NULL;
 	}
@@ -135,21 +132,21 @@ tr_dict_new(dict_compare_func cmp_func, dict_prio_func prio_func,
 }
 
 size_t
-tr_tree_free(tr_tree* tree)
+tr_tree_free(tr_tree* tree, dict_delete_func delete_func)
 {
     ASSERT(tree != NULL);
 
-    size_t count = tree_clear(tree);
+    size_t count = tree_clear(tree, delete_func);
     FREE(tree);
     return count;
 }
 
 size_t
-tr_tree_clear(tr_tree* tree)
+tr_tree_clear(tr_tree* tree, dict_delete_func delete_func)
 {
     ASSERT(tree != NULL);
 
-    return tree_clear(tree);
+    return tree_clear(tree, delete_func);
 }
 
 dict_insert_result
@@ -196,11 +193,11 @@ tr_tree_insert(tr_tree* tree, void* key)
 	}
 	tree->rotation_count += rotations;
     }
-    ++tree->count;
+    tree->count++;
     return (dict_insert_result) { &node->datum, true };
 }
 
-bool
+dict_remove_result
 tr_tree_remove(tr_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -216,7 +213,7 @@ tr_tree_remove(tr_tree* tree, const void* key)
 	    break;
     }
     if (!node)
-	return false;
+	return (dict_remove_result) { NULL, NULL, false };
 
     unsigned rotations = 0;
     while (node->llink && node->rlink) {
@@ -240,12 +237,10 @@ tr_tree_remove(tr_tree* tree, const void* key)
 	tree->root = out;
     }
 
-    if (tree->del_func)
-	tree->del_func(node->key, node->datum);
+    dict_remove_result result = { node->key, node->datum, true };
     FREE(node);
-
-    --tree->count;
-    return true;
+    tree->count--;
+    return result;
 }
 
 void**

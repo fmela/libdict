@@ -96,25 +96,24 @@ static size_t	node_pathlen(const pr_node* node, size_t level);
 static pr_node*	node_new(void* key);
 
 pr_tree*
-pr_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
+pr_tree_new(dict_compare_func cmp_func)
 {
     pr_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = NULL;
 	tree->count = 0;
 	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
-	tree->del_func = del_func;
 	tree->rotation_count = 0;
     }
     return tree;
 }
 
 dict*
-pr_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
+pr_dict_new(dict_compare_func cmp_func)
 {
     dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
-	if (!(dct->_object = pr_tree_new(cmp_func, del_func))) {
+	if (!(dct->_object = pr_tree_new(cmp_func))) {
 	    FREE(dct);
 	    return NULL;
 	}
@@ -124,11 +123,11 @@ pr_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 }
 
 size_t
-pr_tree_free(pr_tree* tree)
+pr_tree_free(pr_tree* tree, dict_delete_func delete_func)
 {
     ASSERT(tree != NULL);
 
-    size_t count = pr_tree_clear(tree);
+    size_t count = pr_tree_clear(tree, delete_func);
     FREE(tree);
     return count;
 }
@@ -315,7 +314,7 @@ pr_tree_insert(pr_tree* tree, void* key)
     return (dict_insert_result) { &add->datum, true };
 }
 
-bool
+dict_remove_result
 pr_tree_remove(pr_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -360,10 +359,9 @@ pr_tree_remove(pr_tree* tree, const void* key)
 		ASSERT(tree->root == node);
 		tree->root = child;
 	    }
-	    if (tree->del_func)
-		tree->del_func(node->key, node->datum);
+	    dict_remove_result result = { node->key, node->datum, true };
 	    FREE(node);
-	    --tree->count;
+	    tree->count--;
 	    /* Now move up the tree, decrementing weights. */
 	    unsigned rotations = 0;
 	    while (parent) {
@@ -373,14 +371,14 @@ pr_tree_remove(pr_tree* tree, const void* key)
 		parent = up;
 	    }
 	    tree->rotation_count += rotations;
-	    return true;
+	    return result;
 	}
     }
-    return false;
+    return (dict_remove_result) { NULL, NULL, false };
 }
 
 size_t
-pr_tree_clear(pr_tree* tree)
+pr_tree_clear(pr_tree* tree, dict_delete_func delete_func)
 {
     ASSERT(tree != NULL);
 
@@ -392,8 +390,8 @@ pr_tree_clear(pr_tree* tree)
 	    continue;
 	}
 
-	if (tree->del_func)
-	    tree->del_func(node->key, node->datum);
+	if (delete_func)
+	    delete_func(node->key, node->datum);
 
 	pr_node* parent = node->parent;
 	FREE(node);

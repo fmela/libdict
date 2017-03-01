@@ -429,10 +429,17 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
 
     for (unsigned i = 0; i < nkeys; ++i) {
 	test_search(dct, itor, keys[i].key, keys[i].alt);
-	CU_ASSERT_TRUE(dict_remove(dct, keys[i].key));
+
+	dict_remove_result result = dict_remove(dct, keys[i].key);
+	CU_ASSERT_TRUE(result.removed);
+	CU_ASSERT_EQUAL(result.key, keys[i].key);
+	CU_ASSERT_EQUAL(result.datum, keys[i].alt);
 	CU_ASSERT_TRUE(dict_verify(dct));
 
-	CU_ASSERT_EQUAL(dict_remove(dct, keys[i].key), false);
+	result = dict_remove(dct, keys[i].key);
+	CU_ASSERT_FALSE(result.removed);
+	CU_ASSERT_PTR_NULL(result.key);
+	CU_ASSERT_PTR_NULL(result.datum);
 	for (unsigned j = 0; j <= i; ++j) {
 	    test_search(dct, itor, keys[j].key, NULL);
 	}
@@ -451,7 +458,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
 	CU_ASSERT_TRUE(dict_verify(dct));
     }
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
-    CU_ASSERT_EQUAL(dict_clear(dct), nkeys);
+    CU_ASSERT_EQUAL(dict_clear(dct, NULL), nkeys);
 
     for (unsigned i = 0; i < nkeys; ++i) {
 	dict_insert_result result = dict_insert(dct, keys[i].key);
@@ -465,94 +472,94 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
     test_closest_lookup(dct, cl_infos, n_cl_infos);
     dict_itor_free(itor);
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
-    CU_ASSERT_EQUAL(dict_free(dct), nkeys);
+    CU_ASSERT_EQUAL(dict_free(dct, NULL), nkeys);
 }
 
 void test_basic_hashtable_1bucket()
 {
-    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, NULL, 1),
+    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 1),
 	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, NULL, 1),
+    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 1),
 	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_hashtable2_1bucket()
 {
-    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, NULL, 1),
+    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 1),
 	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, NULL, 1),
+    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 1),
 	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_hashtable_nbuckets()
 {
-    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, NULL, 7),
+    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 7),
 	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, NULL, 7),
+    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 7),
 	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_hashtable2_nbuckets()
 {
-    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, NULL, 7),
+    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 7),
 	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, NULL, 7),
+    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 7),
 	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_height_balanced_tree()
 {
-    test_basic(hb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
+    test_basic(hb_dict_new(dict_str_cmp), keys1, NKEYS1,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
+    test_basic(hb_dict_new(dict_str_cmp), keys2, NKEYS2,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_path_reduction_tree()
 {
-    test_basic(pr_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
+    test_basic(pr_dict_new(dict_str_cmp), keys1, NKEYS1,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(pr_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
+    test_basic(pr_dict_new(dict_str_cmp), keys2, NKEYS2,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_red_black_tree()
 {
-    test_basic(rb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
+    test_basic(rb_dict_new(dict_str_cmp), keys1, NKEYS1,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(rb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
+    test_basic(rb_dict_new(dict_str_cmp), keys2, NKEYS2,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_skiplist()
 {
-    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 13), keys1, NKEYS1,
+    test_basic(skiplist_dict_new(dict_str_cmp, 13), keys1, NKEYS1,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(skiplist_dict_new(dict_str_cmp, NULL, 13), keys2, NKEYS2,
+    test_basic(skiplist_dict_new(dict_str_cmp, 13), keys2, NKEYS2,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_splay_tree()
 {
-    test_basic(sp_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
+    test_basic(sp_dict_new(dict_str_cmp), keys1, NKEYS1,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(sp_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
+    test_basic(sp_dict_new(dict_str_cmp), keys2, NKEYS2,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_treap()
 {
-    test_basic(tr_dict_new(dict_str_cmp, NULL, NULL), keys1, NKEYS1,
+    test_basic(tr_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(tr_dict_new(dict_str_cmp, NULL, NULL), keys2, NKEYS2,
+    test_basic(tr_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 
 void test_basic_weight_balanced_tree()
 {
-    test_basic(wb_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
+    test_basic(wb_dict_new(dict_str_cmp), keys1, NKEYS1,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(wb_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
+    test_basic(wb_dict_new(dict_str_cmp), keys2, NKEYS2,
 	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
 }
 

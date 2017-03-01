@@ -34,19 +34,16 @@ BEGIN_DECL
 
 typedef struct hashtable hashtable;
 
-hashtable*	hashtable_new(dict_compare_func cmp_func,
-			      dict_hash_func hash_func,
-			      dict_delete_func del_func, unsigned size);
-dict*		hashtable_dict_new(dict_compare_func cmp_func,
-				   dict_hash_func hash_func,
-				   dict_delete_func del_func, unsigned size);
-size_t		hashtable_free(hashtable* table);
+hashtable*	hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func, unsigned size);
+dict*		hashtable_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func, unsigned size);
+size_t		hashtable_free(hashtable* table, dict_delete_func delete_func);
 
 dict_insert_result
                 hashtable_insert(hashtable* table, void* key);
 void**		hashtable_search(hashtable* table, const void* key);
-bool		hashtable_remove(hashtable* table, const void* key);
-size_t		hashtable_clear(hashtable* table);
+dict_remove_result
+		hashtable_remove(hashtable* table, const void* key);
+size_t		hashtable_clear(hashtable* table, dict_delete_func delete_func);
 size_t		hashtable_traverse(hashtable* table, dict_visit_func visit);
 size_t		hashtable_count(const hashtable* table);
 size_t		hashtable_size(const hashtable* table);

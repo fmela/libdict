@@ -34,11 +34,9 @@ BEGIN_DECL
 
 typedef struct rb_tree rb_tree;
 
-rb_tree*	rb_tree_new(dict_compare_func cmp_func,
-			    dict_delete_func del_func);
-dict*		rb_dict_new(dict_compare_func cmp_func,
-			    dict_delete_func del_func);
-size_t		rb_tree_free(rb_tree* tree);
+rb_tree*	rb_tree_new(dict_compare_func cmp_func);
+dict*		rb_dict_new(dict_compare_func cmp_func);
+size_t		rb_tree_free(rb_tree* tree, dict_delete_func delete_func);
 
 dict_insert_result
                 rb_tree_insert(rb_tree* tree, void* key);
@@ -47,8 +45,9 @@ void**		rb_tree_search_le(rb_tree* tree, const void* key);
 void**		rb_tree_search_lt(rb_tree* tree, const void* key);
 void**		rb_tree_search_ge(rb_tree* tree, const void* key);
 void**		rb_tree_search_gt(rb_tree* tree, const void* key);
-bool		rb_tree_remove(rb_tree* tree, const void* key);
-size_t		rb_tree_clear(rb_tree* tree);
+dict_remove_result
+		rb_tree_remove(rb_tree* tree, const void* key);
+size_t		rb_tree_clear(rb_tree* tree, dict_delete_func delete_func);
 size_t		rb_tree_traverse(rb_tree* tree, dict_visit_func visit);
 size_t		rb_tree_count(const rb_tree* tree);
 size_t		rb_tree_height(const rb_tree* tree);

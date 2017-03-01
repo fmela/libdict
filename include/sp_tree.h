@@ -34,11 +34,9 @@ BEGIN_DECL
 
 typedef struct sp_tree sp_tree;
 
-sp_tree*	sp_tree_new(dict_compare_func cmp_func,
-			    dict_delete_func del_func);
-dict*		sp_dict_new(dict_compare_func cmp_func,
-			    dict_delete_func del_func);
-size_t		sp_tree_free(sp_tree* tree);
+sp_tree*	sp_tree_new(dict_compare_func cmp_func);
+dict*		sp_dict_new(dict_compare_func cmp_func);
+size_t		sp_tree_free(sp_tree* tree, dict_delete_func delete_func);
 
 dict_insert_result
                 sp_tree_insert(sp_tree* tree, void* key);
@@ -47,8 +45,9 @@ void**		sp_tree_search_le(sp_tree* tree, const void* key);
 void**		sp_tree_search_lt(sp_tree* tree, const void* key);
 void**		sp_tree_search_ge(sp_tree* tree, const void* key);
 void**		sp_tree_search_gt(sp_tree* tree, const void* key);
-bool		sp_tree_remove(sp_tree* tree, const void* key);
-size_t		sp_tree_clear(sp_tree* tree);
+dict_remove_result
+		sp_tree_remove(sp_tree* tree, const void* key);
+size_t		sp_tree_clear(sp_tree* tree, dict_delete_func delete_func);
 size_t		sp_tree_traverse(sp_tree* tree, dict_visit_func visit);
 size_t		sp_tree_count(const sp_tree* tree);
 size_t		sp_tree_height(const sp_tree* tree);

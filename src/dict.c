@@ -100,11 +100,11 @@ dict_str_hash(const void* k)
 }
 
 size_t
-dict_free(dict* dct)
+dict_free(dict* dct, dict_delete_func delete_func)
 {
     ASSERT(dct != NULL);
 
-    size_t count = dct->_vtable->dfree(dct->_object);
+    size_t count = dct->_vtable->dfree(dct->_object, delete_func);
     FREE(dct);
     return count;
 }

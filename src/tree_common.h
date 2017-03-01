@@ -45,7 +45,6 @@ typedef struct tree_node_base {
     node_type*		root; \
     size_t		count; \
     dict_compare_func	cmp_func; \
-    dict_delete_func	del_func; \
     size_t		rotation_count
 
 typedef struct tree_base {
@@ -105,9 +104,9 @@ size_t	    tree_traverse(void *tree, dict_visit_func visit);
 /* Return a count of the elements in |tree|. */
 size_t	    tree_count(const void *tree);
 /* Remove all elements from |tree|. */
-size_t	    tree_clear(void *tree);
+size_t	    tree_clear(void *tree, dict_delete_func delete_func);
 /* Remove all elements from |tree| and free its memory. */
-size_t	    tree_free(void *tree);
+size_t	    tree_free(void *tree, dict_delete_func delete_func);
 /* Returns the depth of the leaf with minimal depth, or 0 for an empty tree. */
 size_t	    tree_min_leaf_depth(const void *tree);
 /* Returns the depth of the leaf with maximal depth, or 0 for an empty tree. */

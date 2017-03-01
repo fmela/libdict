@@ -107,25 +107,24 @@ static size_t	node_pathlen(const sp_node* node, size_t level);
 static void	splay(sp_tree* t, sp_node* n);
 
 sp_tree*
-sp_tree_new(dict_compare_func cmp_func, dict_delete_func del_func)
+sp_tree_new(dict_compare_func cmp_func)
 {
     sp_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = NULL;
 	tree->count = 0;
 	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
-	tree->del_func = del_func;
 	tree->rotation_count = 0;
     }
     return tree;
 }
 
 dict*
-sp_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
+sp_dict_new(dict_compare_func cmp_func)
 {
     dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
-	if (!(dct->_object = sp_tree_new(cmp_func, del_func))) {
+	if (!(dct->_object = sp_tree_new(cmp_func))) {
 	    FREE(dct);
 	    return NULL;
 	}
@@ -135,17 +134,17 @@ sp_dict_new(dict_compare_func cmp_func, dict_delete_func del_func)
 }
 
 size_t
-sp_tree_free(sp_tree* tree)
+sp_tree_free(sp_tree* tree, dict_delete_func delete_func)
 {
     ASSERT(tree != NULL);
 
-    size_t count = sp_tree_clear(tree);
+    size_t count = sp_tree_clear(tree, delete_func);
     FREE(tree);
     return count;
 }
 
 size_t
-sp_tree_clear(sp_tree* tree)
+sp_tree_clear(sp_tree* tree, dict_delete_func delete_func)
 {
     ASSERT(tree != NULL);
 
@@ -161,16 +160,16 @@ sp_tree_clear(sp_tree* tree)
 	    continue;
 	}
 
-	if (tree->del_func)
-	    tree->del_func(node->key, node->datum);
-	--tree->count;
+	if (delete_func)
+	    delete_func(node->key, node->datum);
+	tree->count--;
 
 	sp_node* parent = node->parent;
 	if (parent) {
 	    if (parent->llink == node)
-	parent->llink = NULL;
+		parent->llink = NULL;
 	    else
-	parent->rlink = NULL;
+		parent->rlink = NULL;
 	}
 	FREE(node);
 	node = parent;
@@ -316,7 +315,7 @@ sp_tree_insert(sp_tree* tree, void* key)
 	else
 	    parent->rlink = node;
 	splay(tree, node);
-	++tree->count;
+	tree->count++;
     }
     ASSERT(tree->root == node);
     return (dict_insert_result) { &node->datum, true };
@@ -349,7 +348,7 @@ sp_tree_search(sp_tree* tree, const void* key)
     return NULL;
 }
 
-bool
+dict_remove_result
 sp_tree_remove(sp_tree* tree, const void* key)
 {
     ASSERT(tree != NULL);
@@ -365,7 +364,7 @@ sp_tree_remove(sp_tree* tree, const void* key)
 	    break;
     }
     if (!node)
-	return false;
+	return (dict_remove_result) { NULL, NULL, false };
 
     sp_node* out;
     if (!node->llink || !node->rlink) {
@@ -392,8 +391,6 @@ sp_tree_remove(sp_tree* tree, const void* key)
     } else {
 	tree->root = temp;
     }
-    if (tree->del_func)
-	tree->del_func(out->key, out->datum);
 
     /* Splay an adjacent node to the root, if possible. */
     temp =
@@ -405,9 +402,10 @@ sp_tree_remove(sp_tree* tree, const void* key)
 	ASSERT(tree->root == temp);
     }
 
+    dict_remove_result result = { out->key, out->datum, true };
     FREE(out);
-    --tree->count;
-    return true;
+    tree->count--;
+    return result;
 }
 
 size_t
