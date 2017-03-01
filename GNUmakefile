@@ -34,7 +34,7 @@ endif
 INCLUDES := -I$(HEADER_DIR) -I$(SOURCE_DIR)
 WARNINGS := -Wno-padded -Wno-format-nonliteral -Wno-disabled-macro-expansion -Werror -ansi -pedantic
 ifeq ($(findstring clang,$(CC)),clang)
-WARNINGS += -Weverything 
+WARNINGS += -Weverything
 else # gcc
 WARNINGS += -Wall -Wextra
 endif
@@ -80,8 +80,8 @@ $(OUTPUT_DIR)/%.po: $(SOURCE_DIR)/%.c $(HEADER) GNUmakefile $(OUTPUT_DIR)
 $(OUTPUT_DIR)/%.So: $(SOURCE_DIR)/%.c $(HEADER) GNUmakefile $(OUTPUT_DIR)
 	$(CC) $(CFLAGS) -fPIC -DPIC -c -o $(@) $(<)
 
-$(OUTPUT_DIR)/unit_tests: unit_tests.c $(SOURCE) GNUmakefile $(OUTPUT_DIR)
-	$(CC) $(CFLAGS) $(TEST_CFLAGS) -o $(@) $(<) $(SOURCE) $(LDFLAGS) $(TEST_LDFLAGS) -lcunit
+$(OUTPUT_DIR)/unit_tests: unit_tests.c $(STATIC_LIB)
+	$(CC) $(CFLAGS) $(TEST_CFLAGS) -o $(@) $(<) $(STATIC_LIB) $(LDFLAGS) $(TEST_LDFLAGS) -lcunit
 
 $(OUTPUT_DIR)/%: %.c $(STATIC_LIB) GNUmakefile
 	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_LIB) $(LDFLAGS)
