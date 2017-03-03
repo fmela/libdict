@@ -191,7 +191,7 @@ main(int argc, char **argv)
 	    }
 	    dict_remove_result result = dict_remove(dct, ptr);
 	    if (result.removed) {
-		printf("removed '%s' from dict: %s\n", result.key, result.datum);
+		printf("removed '%s' from dict: %s\n", (char *)result.key, (char *)result.datum);
 		free(result.key);
 		free(result.datum);
 	    } else
