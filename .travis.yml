@@ -29,5 +29,5 @@ before_install:
   - export CC=${COMPILER}
 
 script: 
-  - make && make test
+  - make test
 
