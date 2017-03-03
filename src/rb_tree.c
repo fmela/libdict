@@ -99,7 +99,7 @@ static itor_vtable rb_tree_itor_vtable = {
     (dict_isearch_func)	    rb_itor_search_ge,
     (dict_isearch_func)	    rb_itor_search_gt,
     (dict_iremove_func)	    NULL,/* rb_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL /* rb_itor_compare not implemented yet */
+    (dict_icompare_func)    NULL,/* rb_itor_compare not implemented yet */
 };
 
 static rb_node rb_null = { NULL, NULL, NULL, NULL, { RB_BLACK } };

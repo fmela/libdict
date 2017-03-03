@@ -39,7 +39,7 @@ dict*		wb_dict_new(dict_compare_func cmp_func);
 size_t		wb_tree_free(wb_tree* tree, dict_delete_func delete_func);
 
 dict_insert_result
-                wb_tree_insert(wb_tree* tree, void* key);
+		wb_tree_insert(wb_tree* tree, void* key);
 void**		wb_tree_search(wb_tree* tree, const void* key);
 void**		wb_tree_search_le(wb_tree* tree, const void* key);
 void**		wb_tree_search_lt(wb_tree* tree, const void* key);

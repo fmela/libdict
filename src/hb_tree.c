@@ -79,7 +79,7 @@ static itor_vtable hb_tree_itor_vtable = {
     (dict_isearch_func)	    tree_iterator_search_ge,
     (dict_isearch_func)	    tree_iterator_search_gt,
     (dict_iremove_func)	    NULL,/* hb_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL /* hb_itor_compare not implemented yet */
+    (dict_icompare_func)    NULL,/* hb_itor_compare not implemented yet */
 };
 
 static bool	rot_left(hb_tree* tree, hb_node* node);

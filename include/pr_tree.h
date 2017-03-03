@@ -39,7 +39,7 @@ dict*		pr_dict_new(dict_compare_func cmp_func);
 size_t		pr_tree_free(pr_tree* tree, dict_delete_func delete_func);
 
 dict_insert_result
-                pr_tree_insert(pr_tree* tree, void* key);
+		pr_tree_insert(pr_tree* tree, void* key);
 void**		pr_tree_search(pr_tree* tree, const void* key);
 void**		pr_tree_search_le(pr_tree* tree, const void* key);
 void**		pr_tree_search_lt(pr_tree* tree, const void* key);

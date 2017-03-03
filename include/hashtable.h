@@ -39,7 +39,7 @@ dict*		hashtable_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func, 
 size_t		hashtable_free(hashtable* table, dict_delete_func delete_func);
 
 dict_insert_result
-                hashtable_insert(hashtable* table, void* key);
+		hashtable_insert(hashtable* table, void* key);
 void**		hashtable_search(hashtable* table, const void* key);
 dict_remove_result
 		hashtable_remove(hashtable* table, const void* key);

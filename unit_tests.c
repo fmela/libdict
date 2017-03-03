@@ -223,10 +223,10 @@ test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
 {
     void **search = dict_search(dct, key);
     if (value == NULL) {
-        CU_ASSERT_PTR_NULL(search);
+	CU_ASSERT_PTR_NULL(search);
     } else {
-        CU_ASSERT_PTR_NOT_NULL(search);
-        CU_ASSERT_EQUAL(*search, value);
+	CU_ASSERT_PTR_NOT_NULL(search);
+	CU_ASSERT_EQUAL(*search, value);
     }
 
     if (itor != NULL) {
@@ -308,7 +308,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
     CU_ASSERT_TRUE(dict_verify(dct));
 
     for (unsigned i = 0; i < nkeys; ++i) {
-        dict_insert_result result = dict_insert(dct, keys[i].key);
+	dict_insert_result result = dict_insert(dct, keys[i].key);
 	CU_ASSERT_TRUE(result.inserted);
 	CU_ASSERT_PTR_NOT_NULL(result.datum_ptr);
 	CU_ASSERT_PTR_NULL(*result.datum_ptr);
@@ -330,7 +330,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
 	    CU_ASSERT_TRUE(hashtable_resize(dict_private(dct), 3));
 	} else {
 	    CU_ASSERT_TRUE(hashtable2_resize(dict_private(dct),
-                                             dict_prime_geq(nkeys * 5)));
+					     dict_prime_geq(nkeys * 5)));
 	}
 	CU_ASSERT_TRUE(dict_verify(dct));
 	CU_ASSERT_EQUAL(dict_count(dct), nkeys);
@@ -579,10 +579,10 @@ bool is_prime(unsigned n)
 	}
 	if (n % f == 0)
 	    return false;
-        if (f2 + (4 * f + 4) < f2)
-            return true; /* Overflow */
-        f2 += 4 * f + 4;
-        f += 2;
+	if (f2 + (4 * f + 4) < f2)
+	    return true; /* Overflow */
+	f2 += 4 * f + 4;
+	f += 2;
     }
 }
 
@@ -597,11 +597,11 @@ void test_primes_geq()
 
     unsigned value = 0;
     do {
-        const unsigned prime_geq_value = dict_prime_geq(value+1);
-        CU_ASSERT_TRUE(prime_geq_value >= value+1);
-        CU_ASSERT_TRUE(is_prime(prime_geq_value));
-        CU_ASSERT_TRUE(dict_prime_geq(prime_geq_value) == prime_geq_value);
-        value = prime_geq_value;
+	const unsigned prime_geq_value = dict_prime_geq(value+1);
+	CU_ASSERT_TRUE(prime_geq_value >= value+1);
+	CU_ASSERT_TRUE(is_prime(prime_geq_value));
+	CU_ASSERT_TRUE(dict_prime_geq(prime_geq_value) == prime_geq_value);
+	value = prime_geq_value;
     } while (value != 4294967291U);
 }
 

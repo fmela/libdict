@@ -39,7 +39,7 @@ dict*		skiplist_dict_new(dict_compare_func cmp_func, unsigned max_link);
 size_t		skiplist_free(skiplist* list, dict_delete_func delete_func);
 
 dict_insert_result
-                skiplist_insert(skiplist* list, void* key);
+		skiplist_insert(skiplist* list, void* key);
 void**		skiplist_search(skiplist* list, const void* key);
 void**		skiplist_search_le(skiplist* tree, const void* key);
 void**		skiplist_search_lt(skiplist* tree, const void* key);
@@ -57,8 +57,8 @@ bool		skiplist_verify(const skiplist* list);
  * links, and the maximal link count will be returned. If the return value is
  * greater than or equal to |ncounts|, not all link counts could be stored in
  * |counts| (i.e. the array was not large enough). */
-size_t          skiplist_link_count_histogram(const skiplist* list,
-                                              size_t counts[], size_t ncounts);
+size_t		skiplist_link_count_histogram(const skiplist* list,
+					      size_t counts[], size_t ncounts);
 
 typedef struct skiplist_itor skiplist_itor;
 

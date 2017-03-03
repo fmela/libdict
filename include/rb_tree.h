@@ -39,7 +39,7 @@ dict*		rb_dict_new(dict_compare_func cmp_func);
 size_t		rb_tree_free(rb_tree* tree, dict_delete_func delete_func);
 
 dict_insert_result
-                rb_tree_insert(rb_tree* tree, void* key);
+		rb_tree_insert(rb_tree* tree, void* key);
 void**		rb_tree_search(rb_tree* tree, const void* key);
 void**		rb_tree_search_le(rb_tree* tree, const void* key);
 void**		rb_tree_search_lt(rb_tree* tree, const void* key);

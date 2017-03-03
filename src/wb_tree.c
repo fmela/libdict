@@ -113,7 +113,7 @@ static itor_vtable wb_tree_itor_vtable = {
     (dict_isearch_func)	    tree_iterator_search_ge,
     (dict_isearch_func)	    tree_iterator_search_gt,
     (dict_iremove_func)	    NULL,/* wb_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL /* wb_itor_compare not implemented yet */
+    (dict_icompare_func)    NULL,/* wb_itor_compare not implemented yet */
 };
 
 static size_t	node_height(const wb_node* node);

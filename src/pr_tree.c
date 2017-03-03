@@ -84,7 +84,7 @@ static itor_vtable pr_tree_itor_vtable = {
     (dict_isearch_func)	    tree_iterator_search_ge,
     (dict_isearch_func)	    tree_iterator_search_gt,
     (dict_iremove_func)	    NULL,/* pr_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL /* pr_itor_compare not implemented yet */
+    (dict_icompare_func)    NULL,/* pr_itor_compare not implemented yet */
 };
 
 static unsigned	fixup(pr_tree* tree, pr_node* node);

@@ -93,7 +93,7 @@ static itor_vtable skiplist_itor_vtable = {
     (dict_isearch_func)	    NULL,/* itor_search_ge: not implemented */
     (dict_isearch_func)	    NULL,/* itor_search_gt: not implemented */
     (dict_iremove_func)	    NULL,/* skiplist_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL/* skiplist_itor_compare not implemented yet */
+    (dict_icompare_func)    NULL,/* skiplist_itor_compare not implemented yet */
 };
 
 static skip_node*   node_new(void* key, unsigned link_count);

@@ -84,7 +84,7 @@ typedef struct {
 typedef dict_itor*  (*dict_inew_func)(void* obj);
 typedef size_t      (*dict_dfree_func)(void* obj, dict_delete_func delete_func);
 typedef dict_insert_result
-                    (*dict_insert_func)(void* obj, void* key);
+		    (*dict_insert_func)(void* obj, void* key);
 typedef void**      (*dict_search_func)(void* obj, const void* key);
 typedef dict_remove_result
 		    (*dict_remove_func)(void* obj, const void* key);

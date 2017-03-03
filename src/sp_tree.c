@@ -97,7 +97,7 @@ static itor_vtable sp_tree_itor_vtable = {
     (dict_isearch_func)	    tree_iterator_search_ge,
     (dict_isearch_func)	    tree_iterator_search_gt,
     (dict_iremove_func)	    NULL,/* sp_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL /* sp_itor_compare not implemented yet */
+    (dict_icompare_func)    NULL,/* sp_itor_compare not implemented yet */
 };
 
 static sp_node*	node_new(void* key);

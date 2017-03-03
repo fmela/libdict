@@ -101,7 +101,7 @@ static itor_vtable hashtable_itor_vtable = {
     (dict_isearch_func)	    NULL,/* itor_search_ge: not implemented */
     (dict_isearch_func)	    NULL,/* itor_search_gt: not implemented */
     (dict_iremove_func)	    NULL,/* hashtable_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL/* hashtable_itor_compare not implemented yet */
+    (dict_icompare_func)    NULL,/* hashtable_itor_compare not implemented yet */
 };
 
 hashtable*

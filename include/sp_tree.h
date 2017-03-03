@@ -39,7 +39,7 @@ dict*		sp_dict_new(dict_compare_func cmp_func);
 size_t		sp_tree_free(sp_tree* tree, dict_delete_func delete_func);
 
 dict_insert_result
-                sp_tree_insert(sp_tree* tree, void* key);
+		sp_tree_insert(sp_tree* tree, void* key);
 void**		sp_tree_search(sp_tree* tree, const void* key);
 void**		sp_tree_search_le(sp_tree* tree, const void* key);
 void**		sp_tree_search_lt(sp_tree* tree, const void* key);

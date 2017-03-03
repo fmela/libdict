@@ -39,7 +39,7 @@ dict*		tr_dict_new(dict_compare_func compare_func, dict_prio_func prio_func);
 size_t		tr_tree_free(tr_tree* tree, dict_delete_func delete_func);
 
 dict_insert_result
-                tr_tree_insert(tr_tree* tree, void* key);
+		tr_tree_insert(tr_tree* tree, void* key);
 void**		tr_tree_search(tr_tree* tree, const void* key);
 void**		tr_tree_search_le(tr_tree* tree, const void* key);
 void**		tr_tree_search_lt(tr_tree* tree, const void* key);
