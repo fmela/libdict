@@ -191,10 +191,9 @@ hashtable2_insert(hashtable2* table, void* key)
     ASSERT(table != NULL);
 
     if (LOADFACTOR_DENOMINATOR * table->count >= LOADFACTOR_NUMERATOR * table->size) {
-	/* Load factor too high: resize the table up to the next prime. */
+	/* Load factor too high: increase the table size. */
 	if (!hashtable2_resize(table, table->size + 1)) {
-	    /* Out of memory, or other error? */
-	    return (dict_insert_result) { NULL, false };
+	    /* No memory for a bigger table, but let the insert proceed anyway. */
 	}
     }
     const unsigned hash = safe_hash(table->hash_func, key);
@@ -215,7 +214,7 @@ hashtable2_search(hashtable2* table, const void* key)
     hash_node* node = first;
     do {
 	if (!node->hash) /* Not occupied. */
-	    return NULL;
+	    break;
 
 	if (node->hash == hash && table->cmp_func(key, node->key) == 0)
 	    return &node->datum;
