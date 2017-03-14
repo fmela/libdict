@@ -235,7 +235,7 @@ test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
 	} else {
 	    CU_ASSERT_EQUAL(dict_itor_search(itor, key), true);
 	    CU_ASSERT_EQUAL(dict_itor_key(itor), key);
-	    CU_ASSERT_EQUAL(*dict_itor_data(itor), value);
+	    CU_ASSERT_EQUAL(*dict_itor_datum(itor), value);
 	}
     }
 }
@@ -253,48 +253,48 @@ test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsig
 				   cl_infos[i].le_val);
 	    CU_ASSERT_EQUAL(dict_itor_search_le(itor, cl_infos[i].key), true);
 	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].le_key);
-	    CU_ASSERT_STRING_EQUAL(*dict_itor_data(itor), cl_infos[i].le_val);
+	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), cl_infos[i].le_val);
 	} else {
 	    CU_ASSERT_PTR_NULL(dict_search_le(dct, cl_infos[i].key));
 	    CU_ASSERT_EQUAL(dict_itor_search_le(itor, cl_infos[i].key), false);
 	    CU_ASSERT_PTR_NULL(dict_itor_key(itor));
-	    CU_ASSERT_PTR_NULL(dict_itor_data(itor));
+	    CU_ASSERT_PTR_NULL(dict_itor_datum(itor));
 	}
 	if (cl_infos[i].lt_key) {
 	    CU_ASSERT_STRING_EQUAL(*dict_search_lt(dct, cl_infos[i].key),
 				   cl_infos[i].lt_val);
 	    CU_ASSERT_EQUAL(dict_itor_search_lt(itor, cl_infos[i].key), true);
 	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].lt_key);
-	    CU_ASSERT_STRING_EQUAL(*dict_itor_data(itor), cl_infos[i].lt_val);
+	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), cl_infos[i].lt_val);
 	} else {
 	    CU_ASSERT_PTR_NULL(dict_search_lt(dct, cl_infos[i].key));
 	    CU_ASSERT_EQUAL(dict_itor_search_lt(itor, cl_infos[i].key), false);
 	    CU_ASSERT_PTR_NULL(dict_itor_key(itor));
-	    CU_ASSERT_PTR_NULL(dict_itor_data(itor));
+	    CU_ASSERT_PTR_NULL(dict_itor_datum(itor));
 	}
 	if (cl_infos[i].ge_key) {
 	    CU_ASSERT_STRING_EQUAL(*dict_search_ge(dct, cl_infos[i].key),
 				   cl_infos[i].ge_val);
 	    CU_ASSERT_EQUAL(dict_itor_search_ge(itor, cl_infos[i].key), true);
 	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].ge_key);
-	    CU_ASSERT_STRING_EQUAL(*dict_itor_data(itor), cl_infos[i].ge_val);
+	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), cl_infos[i].ge_val);
 	} else {
 	    CU_ASSERT_PTR_NULL(dict_search_ge(dct, cl_infos[i].key));
 	    CU_ASSERT_EQUAL(dict_itor_search_ge(itor, cl_infos[i].key), false);
 	    CU_ASSERT_PTR_NULL(dict_itor_key(itor));
-	    CU_ASSERT_PTR_NULL(dict_itor_data(itor));
+	    CU_ASSERT_PTR_NULL(dict_itor_datum(itor));
 	}
 	if (cl_infos[i].gt_key) {
 	    CU_ASSERT_STRING_EQUAL(*dict_search_gt(dct, cl_infos[i].key),
 				   cl_infos[i].gt_val);
 	    CU_ASSERT_EQUAL(dict_itor_search_gt(itor, cl_infos[i].key), true);
 	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].gt_key);
-	    CU_ASSERT_STRING_EQUAL(*dict_itor_data(itor), cl_infos[i].gt_val);
+	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), cl_infos[i].gt_val);
 	} else {
 	    CU_ASSERT_PTR_NULL(dict_search_gt(dct, cl_infos[i].key));
 	    CU_ASSERT_EQUAL(dict_itor_search_gt(itor, cl_infos[i].key), false);
 	    CU_ASSERT_PTR_NULL(dict_itor_key(itor));
-	    CU_ASSERT_PTR_NULL(dict_itor_data(itor));
+	    CU_ASSERT_PTR_NULL(dict_itor_datum(itor));
 	}
     }
     dict_itor_free(itor);
@@ -356,17 +356,17 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
     unsigned n = 0;
     for (dict_itor_first(itor); dict_itor_valid(itor); dict_itor_next(itor)) {
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_key(itor));
-	CU_ASSERT_PTR_NOT_NULL(dict_itor_data(itor));
-	CU_ASSERT_PTR_NOT_NULL(*dict_itor_data(itor));
+	CU_ASSERT_PTR_NOT_NULL(dict_itor_datum(itor));
+	CU_ASSERT_PTR_NOT_NULL(*dict_itor_datum(itor));
 
 	char *key = dict_itor_key(itor);
 	unsigned keys_matched = 0;
 	for (unsigned i = 0; i < nkeys; ++i) {
 	    if (keys[i].key == key) {
-		CU_ASSERT_EQUAL(*dict_itor_data(itor), keys[i].value);
+		CU_ASSERT_EQUAL(*dict_itor_datum(itor), keys[i].value);
 		keys_matched++;
 	    } else {
-		CU_ASSERT_NOT_EQUAL(*dict_itor_data(itor), keys[i].value);
+		CU_ASSERT_NOT_EQUAL(*dict_itor_datum(itor), keys[i].value);
 	    }
 	}
 	CU_ASSERT_EQUAL(keys_matched, 1);
@@ -386,17 +386,17 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
     n = 0;
     for (dict_itor_last(itor); dict_itor_valid(itor); dict_itor_prev(itor)) {
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_key(itor));
-	CU_ASSERT_PTR_NOT_NULL(dict_itor_data(itor));
-	CU_ASSERT_PTR_NOT_NULL(*dict_itor_data(itor));
+	CU_ASSERT_PTR_NOT_NULL(dict_itor_datum(itor));
+	CU_ASSERT_PTR_NOT_NULL(*dict_itor_datum(itor));
 
 	char *key = dict_itor_key(itor);
 	unsigned keys_matched = 0;
 	for (unsigned i = 0; i < nkeys; ++i) {
 	    if (keys[i].key == key) {
-		CU_ASSERT_EQUAL(*dict_itor_data(itor), keys[i].value);
+		CU_ASSERT_EQUAL(*dict_itor_datum(itor), keys[i].value);
 		keys_matched++;
 	    } else {
-		CU_ASSERT_NOT_EQUAL(*dict_itor_data(itor), keys[i].value);
+		CU_ASSERT_NOT_EQUAL(*dict_itor_datum(itor), keys[i].value);
 	    }
 	}
 	CU_ASSERT_EQUAL(keys_matched, 1);

@@ -77,7 +77,7 @@ static itor_vtable pr_tree_itor_vtable = {
     (dict_first_func)	    tree_iterator_first,
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
-    (dict_data_func)	    tree_iterator_data,
+    (dict_datum_func)	    tree_iterator_datum,
     (dict_isearch_func)	    tree_iterator_search,
     (dict_isearch_func)	    tree_iterator_search_le,
     (dict_isearch_func)	    tree_iterator_search_lt,
@@ -753,7 +753,7 @@ pr_itor_key(const pr_itor* itor)
 }
 
 void**
-pr_itor_data(pr_itor* itor)
+pr_itor_datum(pr_itor* itor)
 {
     ASSERT(itor != NULL);
 

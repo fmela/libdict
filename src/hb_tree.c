@@ -72,7 +72,7 @@ static itor_vtable hb_tree_itor_vtable = {
     (dict_first_func)	    tree_iterator_first,
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
-    (dict_data_func)	    tree_iterator_data,
+    (dict_datum_func)	    tree_iterator_datum,
     (dict_isearch_func)	    tree_iterator_search,
     (dict_isearch_func)	    tree_iterator_search_le,
     (dict_isearch_func)	    tree_iterator_search_lt,
@@ -750,7 +750,7 @@ hb_itor_key(const hb_itor* itor)
 }
 
 void**
-hb_itor_data(hb_itor* itor)
+hb_itor_datum(hb_itor* itor)
 {
     ASSERT(itor != NULL);
 

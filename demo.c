@@ -206,7 +206,7 @@ main(int argc, char **argv)
 	    for (; dict_itor_valid(itor); dict_itor_next(itor))
 		printf("'%s': '%s'\n",
 		       (char *)dict_itor_key(itor),
-		       (char *)*dict_itor_data(itor));
+		       (char *)*dict_itor_datum(itor));
 	    dict_itor_free(itor);
 	} else if (strcmp(buf, "reverse") == 0) {
 	    if (ptr) {
@@ -218,7 +218,7 @@ main(int argc, char **argv)
 	    for (; dict_itor_valid(itor); dict_itor_prev(itor))
 		printf("'%s': '%s'\n",
 		       (char *)dict_itor_key(itor),
-		       (char *)*dict_itor_data(itor));
+		       (char *)*dict_itor_datum(itor));
 	    dict_itor_free(itor);
 	} else if (strcmp(buf, "clear") == 0) {
 	    if (ptr) {

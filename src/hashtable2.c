@@ -91,7 +91,7 @@ static itor_vtable hashtable2_itor_vtable = {
     (dict_first_func)	    hashtable2_itor_first,
     (dict_last_func)	    hashtable2_itor_last,
     (dict_key_func)	    hashtable2_itor_key,
-    (dict_data_func)	    hashtable2_itor_data,
+    (dict_datum_func)	    hashtable2_itor_datum,
     (dict_isearch_func)	    hashtable2_itor_search,
     (dict_isearch_func)	    NULL,/* itor_search_le: not implemented */
     (dict_isearch_func)	    NULL,/* itor_search_lt: not implemented */
@@ -598,7 +598,7 @@ hashtable2_itor_key(const hashtable2_itor* itor)
 }
 
 void**
-hashtable2_itor_data(hashtable2_itor* itor)
+hashtable2_itor_datum(hashtable2_itor* itor)
 {
     ASSERT(itor != NULL);
 

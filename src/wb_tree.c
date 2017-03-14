@@ -106,7 +106,7 @@ static itor_vtable wb_tree_itor_vtable = {
     (dict_first_func)	    tree_iterator_first,
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
-    (dict_data_func)	    tree_iterator_data,
+    (dict_datum_func)	    tree_iterator_datum,
     (dict_isearch_func)	    tree_iterator_search,
     (dict_isearch_func)	    tree_iterator_search_le,
     (dict_isearch_func)	    tree_iterator_search_lt,
@@ -677,7 +677,7 @@ wb_itor_key(const wb_itor* itor)
 }
 
 void**
-wb_itor_data(wb_itor* itor)
+wb_itor_datum(wb_itor* itor)
 {
     ASSERT(itor != NULL);
 

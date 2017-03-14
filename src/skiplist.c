@@ -86,7 +86,7 @@ static itor_vtable skiplist_itor_vtable = {
     (dict_first_func)	    skiplist_itor_first,
     (dict_last_func)	    skiplist_itor_last,
     (dict_key_func)	    skiplist_itor_key,
-    (dict_data_func)	    skiplist_itor_data,
+    (dict_datum_func)	    skiplist_itor_datum,
     (dict_isearch_func)	    skiplist_itor_search,
     (dict_isearch_func)	    NULL,/* itor_search_le: not implemented */
     (dict_isearch_func)	    NULL,/* itor_search_lt: not implemented */
@@ -515,7 +515,7 @@ skiplist_itor_key(const skiplist_itor* itor)
 }
 
 void**
-skiplist_itor_data(skiplist_itor* itor)
+skiplist_itor_datum(skiplist_itor* itor)
 {
     ASSERT(itor != NULL);
 

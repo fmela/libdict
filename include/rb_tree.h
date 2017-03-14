@@ -77,7 +77,7 @@ bool		rb_itor_search_lt(rb_itor* itor, const void* key);
 bool		rb_itor_search_ge(rb_itor* itor, const void* key);
 bool		rb_itor_search_gt(rb_itor* itor, const void* key);
 const void*	rb_itor_key(const rb_itor* itor);
-void**		rb_itor_data(rb_itor* itor);
+void**		rb_itor_datum(rb_itor* itor);
 bool		rb_itor_remove(rb_itor* itor);
 
 END_DECL

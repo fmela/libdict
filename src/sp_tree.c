@@ -90,7 +90,7 @@ static itor_vtable sp_tree_itor_vtable = {
     (dict_first_func)	    tree_iterator_first,
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
-    (dict_data_func)	    tree_iterator_data,
+    (dict_datum_func)	    tree_iterator_datum,
     (dict_isearch_func)	    sp_itor_search,
     (dict_isearch_func)	    tree_iterator_search_le,
     (dict_isearch_func)	    tree_iterator_search_lt,
@@ -682,9 +682,9 @@ sp_itor_key(const sp_itor* itor)
 }
 
 void**
-sp_itor_data(sp_itor* itor)
+sp_itor_datum(sp_itor* itor)
 {
     ASSERT(itor != NULL);
 
-    return tree_iterator_data(itor);
+    return tree_iterator_datum(itor);
 }

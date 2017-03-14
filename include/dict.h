@@ -119,7 +119,7 @@ typedef bool	    (*dict_prevn_func)(void* itor, size_t count);
 typedef bool	    (*dict_first_func)(void* itor);
 typedef bool	    (*dict_last_func)(void* itor);
 typedef void*	    (*dict_key_func)(void* itor);
-typedef void**	    (*dict_data_func)(void* itor);
+typedef void**	    (*dict_datum_func)(void* itor);
 typedef bool	    (*dict_isearch_func)(void* itor, const void* key);
 typedef bool	    (*dict_iremove_func)(void* itor);
 typedef int	    (*dict_icompare_func)(void* itor1, void* itor2);
@@ -135,7 +135,7 @@ typedef struct {
     dict_first_func	    first;
     dict_last_func	    last;
     dict_key_func	    key;
-    dict_data_func	    data;
+    dict_datum_func	    datum;
     dict_isearch_func       search;
     dict_isearch_func       search_le;
     dict_isearch_func       search_lt;
@@ -186,7 +186,7 @@ struct dict_itor {
 #define dict_itor_search_ge(i,k)    ((i)->_vtable->search_ge((i)->_itor, (k)))
 #define dict_itor_search_gt(i,k)    ((i)->_vtable->search_gt((i)->_itor, (k)))
 #define dict_itor_key(i)	    ((i)->_vtable->key((i)->_itor))
-#define dict_itor_data(i)	    ((i)->_vtable->data((i)->_itor))
+#define dict_itor_datum(i)	    ((i)->_vtable->datum((i)->_itor))
 #define dict_itor_remove(i)	    ((i)->_vtable->remove((i)->_itor))
 void dict_itor_free(dict_itor* itor);
 

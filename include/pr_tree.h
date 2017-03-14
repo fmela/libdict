@@ -72,7 +72,7 @@ bool		pr_itor_prevn(pr_itor* itor, size_t count);
 bool		pr_itor_first(pr_itor* itor);
 bool		pr_itor_last(pr_itor* itor);
 const void*	pr_itor_key(const pr_itor* itor);
-void**		pr_itor_data(pr_itor* itor);
+void**		pr_itor_datum(pr_itor* itor);
 bool		pr_itor_remove(pr_itor* itor);
 
 END_DECL

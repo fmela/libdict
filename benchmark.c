@@ -164,7 +164,7 @@ main(int argc, char **argv)
     ASSERT(dict_itor_first(itor));
     do {
 	ASSERT(dict_itor_valid(itor));
-	ASSERT(dict_itor_key(itor) == *dict_itor_data(itor));
+	ASSERT(dict_itor_key(itor) == *dict_itor_datum(itor));
 	++n;
     } while (dict_itor_next(itor));
     timer_end(&start, &end, &total);
@@ -179,7 +179,7 @@ main(int argc, char **argv)
     ASSERT(dict_itor_last(itor));
     do {
 	ASSERT(dict_itor_valid(itor));
-	ASSERT(dict_itor_key(itor) == *dict_itor_data(itor));
+	ASSERT(dict_itor_key(itor) == *dict_itor_datum(itor));
 	++n;
     } while (dict_itor_prev(itor));
     timer_end(&start, &end, &total);

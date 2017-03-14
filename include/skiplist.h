@@ -76,7 +76,7 @@ bool		skiplist_itor_first(skiplist_itor* itor);
 bool		skiplist_itor_last(skiplist_itor* itor);
 bool		skiplist_itor_search(skiplist_itor* itor, const void* key);
 const void*	skiplist_itor_key(const skiplist_itor* itor);
-void**		skiplist_itor_data(skiplist_itor* itor);
+void**		skiplist_itor_datum(skiplist_itor* itor);
 bool		skiplist_itor_remove(skiplist_itor* itor);
 
 END_DECL

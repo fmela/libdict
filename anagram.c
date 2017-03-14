@@ -66,21 +66,21 @@ main(int argc, char *argv[])
 
     rb_itor *itor = rb_itor_new(tree);
     for (rb_itor_first(itor); rb_itor_valid(itor); rb_itor_next(itor)) {
-	WordList *word = *rb_itor_data(itor);
+	WordList *word = *rb_itor_datum(itor);
 	ASSERT(word != NULL);
 	if (word->next) {
 	    int count = 1;
 	    while (word->next)
 		count++, word = word->next;
 	    printf("%2d:[", count);
-	    word = *rb_itor_data(itor);
+	    word = *rb_itor_datum(itor);
 	    while (word) {
 		printf("%s%c", word->word, word->next ? ',' : ']');
 		word = word->next;
 	    }
 	    printf("\n");
 	}
-	word = *rb_itor_data(itor);
+	word = *rb_itor_datum(itor);
 	while (word) {
 	    WordList *next = word->next;
 	    free(word->word);

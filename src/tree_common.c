@@ -578,7 +578,7 @@ tree_iterator_key(const void* Iterator)
 }
 
 void**
-tree_iterator_data(void* Iterator)
+tree_iterator_datum(void* Iterator)
 {
     ASSERT(Iterator != NULL);
     tree_iterator* iterator = Iterator;

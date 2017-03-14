@@ -72,7 +72,7 @@ bool		hb_itor_prevn(hb_itor* itor, size_t count);
 bool		hb_itor_first(hb_itor* itor);
 bool		hb_itor_last(hb_itor* itor);
 const void*	hb_itor_key(const hb_itor* itor);
-void**		hb_itor_data(hb_itor* itor);
+void**		hb_itor_datum(hb_itor* itor);
 bool		hb_itor_remove(hb_itor* itor);
 
 END_DECL

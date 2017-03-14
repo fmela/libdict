@@ -92,7 +92,7 @@ static itor_vtable rb_tree_itor_vtable = {
     (dict_first_func)	    rb_itor_first,
     (dict_last_func)	    rb_itor_last,
     (dict_key_func)	    rb_itor_key,
-    (dict_data_func)	    rb_itor_data,
+    (dict_datum_func)	    rb_itor_datum,
     (dict_isearch_func)	    rb_itor_search,
     (dict_isearch_func)	    rb_itor_search_le,
     (dict_isearch_func)	    rb_itor_search_lt,
@@ -1009,7 +1009,7 @@ rb_itor_key(const rb_itor* itor)
 }
 
 void**
-rb_itor_data(rb_itor* itor)
+rb_itor_datum(rb_itor* itor)
 {
     ASSERT(itor != NULL);
 

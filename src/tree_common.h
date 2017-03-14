@@ -127,6 +127,6 @@ bool	    tree_iterator_search_lt(void *iterator, const void *key);
 bool	    tree_iterator_search_ge(void *iterator, const void *key);
 bool	    tree_iterator_search_gt(void *iterator, const void *key);
 const void* tree_iterator_key(const void *iterator);
-void**	    tree_iterator_data(void *iterator);
+void**	    tree_iterator_datum(void *iterator);
 
 #endif /* !LIBDICT_TREE_COMMON_H__ */
