@@ -121,11 +121,13 @@ static rb_node*	node_min(rb_node* node);
 rb_tree*
 rb_tree_new(dict_compare_func cmp_func)
 {
+    ASSERT(cmp_func != NULL);
+
     rb_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = RB_NULL;
 	tree->count = 0;
-	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
+	tree->cmp_func = cmp_func;
 	tree->rotation_count = 0;
     }
     return tree;

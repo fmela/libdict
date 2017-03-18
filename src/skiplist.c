@@ -103,6 +103,7 @@ static unsigned	    rand_link_count(skiplist* list);
 skiplist*
 skiplist_new(dict_compare_func cmp_func, unsigned max_link)
 {
+    ASSERT(cmp_func != NULL);
     ASSERT(max_link > 0);
 
     if (max_link > MAX_LINK)
@@ -117,7 +118,7 @@ skiplist_new(dict_compare_func cmp_func, unsigned max_link)
 
 	list->max_link = max_link;
 	list->top_link = 0;
-	list->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
+	list->cmp_func = cmp_func;
 	list->count = 0;
     }
     return list;

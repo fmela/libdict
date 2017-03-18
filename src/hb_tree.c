@@ -92,11 +92,13 @@ static hb_node*	node_new(void* key);
 hb_tree*
 hb_tree_new(dict_compare_func cmp_func)
 {
+    ASSERT(cmp_func != NULL);
+
     hb_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = NULL;
 	tree->count = 0;
-	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
+	tree->cmp_func = cmp_func;
 	tree->rotation_count = 0;
     }
     return tree;

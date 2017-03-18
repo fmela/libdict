@@ -106,11 +106,13 @@ static tr_node*	node_new(void* key);
 tr_tree*
 tr_tree_new(dict_compare_func cmp_func, dict_prio_func prio_func)
 {
+    ASSERT(cmp_func != NULL);
+
     tr_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = NULL;
 	tree->count = 0;
-	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
+	tree->cmp_func = cmp_func;
 	tree->rotation_count = 0;
 	tree->prio_func = prio_func;
     }

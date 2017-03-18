@@ -98,11 +98,13 @@ static pr_node*	node_new(void* key);
 pr_tree*
 pr_tree_new(dict_compare_func cmp_func)
 {
+    ASSERT(cmp_func != NULL);
+
     pr_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = NULL;
 	tree->count = 0;
-	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
+	tree->cmp_func = cmp_func;
 	tree->rotation_count = 0;
     }
     return tree;

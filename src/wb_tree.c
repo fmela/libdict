@@ -124,11 +124,13 @@ static wb_node*	node_new(void* key);
 wb_tree*
 wb_tree_new(dict_compare_func cmp_func)
 {
+    ASSERT(cmp_func != NULL);
+
     wb_tree* tree = MALLOC(sizeof(*tree));
     if (tree) {
 	tree->root = NULL;
 	tree->count = 0;
-	tree->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
+	tree->cmp_func = cmp_func;
 	tree->rotation_count = 0;
     }
     return tree;

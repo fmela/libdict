@@ -107,6 +107,7 @@ static itor_vtable hashtable_itor_vtable = {
 hashtable*
 hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func, unsigned size)
 {
+    ASSERT(cmp_func != NULL);
     ASSERT(hash_func != NULL);
     ASSERT(size != 0);
 
@@ -119,7 +120,7 @@ hashtable_new(dict_compare_func cmp_func, dict_hash_func hash_func, unsigned siz
 	    return NULL;
 	}
 	memset(table->table, 0, table->size * sizeof(hash_node*));
-	table->cmp_func = cmp_func ? cmp_func : dict_ptr_cmp;
+	table->cmp_func = cmp_func;
 	table->hash_func = hash_func;
 	table->count = 0;
     }
