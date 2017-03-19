@@ -326,10 +326,9 @@ hashtable_resize(hashtable* table, unsigned new_size)
     memset(ntable, 0, new_size * sizeof(hash_node*));
 
     for (unsigned i = 0; i < table->size; i++) {
-	hash_node* node = table->table[i];
-	while (node) {
-	    hash_node* next = node->next;
-	    unsigned mhash = node->hash % new_size;
+	for (hash_node* node = table->table[i]; node;) {
+	    hash_node* const next = node->next;
+	    const unsigned mhash = node->hash % new_size;
 
 	    hash_node* search = ntable[mhash];
 	    hash_node* prev = NULL;

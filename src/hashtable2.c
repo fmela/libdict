@@ -153,7 +153,7 @@ hashtable2_free(hashtable2* table, dict_delete_func delete_func)
     return count;
 }
 
-static dict_insert_result
+static inline dict_insert_result
 insert(hashtable2* table, void *key, unsigned hash)
 {
     ASSERT(hash != 0);
@@ -180,7 +180,7 @@ insert(hashtable2* table, void *key, unsigned hash)
 }
 
 static inline unsigned
-safe_hash(dict_hash_func hash_func, const void *key)
+nonzero_hash(dict_hash_func hash_func, const void *key)
 {
     const unsigned hash = hash_func(key);
     return hash ? hash : ~(unsigned)0;
@@ -197,7 +197,7 @@ hashtable2_insert(hashtable2* table, void* key)
 	    /* No memory for a bigger table, but let the insert proceed anyway. */
 	}
     }
-    const unsigned hash = safe_hash(table->hash_func, key);
+    const unsigned hash = nonzero_hash(table->hash_func, key);
     dict_insert_result result = insert(table, key, hash);
     if (result.inserted)
 	table->count++;
@@ -209,7 +209,7 @@ hashtable2_search(hashtable2* table, const void* key)
 {
     ASSERT(table != NULL);
 
-    const unsigned hash = safe_hash(table->hash_func, key);
+    const unsigned hash = nonzero_hash(table->hash_func, key);
     hash_node* const first = table->table + (hash % table->size);
     hash_node* const table_end = table->table + table->size;
     hash_node* node = first;
@@ -276,7 +276,7 @@ hashtable2_remove(hashtable2* table, const void* key)
 {
     ASSERT(table != NULL);
 
-    const unsigned hash = safe_hash(table->hash_func, key);
+    const unsigned hash = nonzero_hash(table->hash_func, key);
     hash_node* const first = table->table + (hash % table->size);
     hash_node* const table_end = table->table + table->size;
     hash_node* node = first;
@@ -572,7 +572,7 @@ hashtable2_itor_last(hashtable2_itor* itor)
 bool
 hashtable2_itor_search(hashtable2_itor* itor, const void* key)
 {
-    const unsigned hash = safe_hash(itor->table->hash_func, key);
+    const unsigned hash = nonzero_hash(itor->table->hash_func, key);
     const unsigned truncated_hash = hash % itor->table->size;
     unsigned index = truncated_hash;
     do {
