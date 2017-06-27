@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "dict.h"
+#include <dict.h>
 
 /* A feature (or bug) of this macro is that the expression is always evaluated,
  * regardless of whether NDEBUG is defined or not. This is intentional and
