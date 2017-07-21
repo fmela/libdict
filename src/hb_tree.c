@@ -33,9 +33,34 @@
 typedef struct hb_node hb_node;
 
 struct hb_node {
-    TREE_NODE_FIELDS(hb_node);
-    signed char		    bal;    /* TODO: store in unused low bits. */
+    void*	    key;
+    void*	    datum;
+    hb_node*	    parent;
+    union {
+	intptr_t    lbal;
+	hb_node*    lptr;
+    };
+    union {
+	intptr_t    rbal;
+	hb_node*    rptr;
+    };
 };
+
+#define LBAL(node)	    ((node)->lbal & (intptr_t)1)
+#define RBAL(node)	    ((node)->rbal & (intptr_t)1)
+#define BAL(node)	    ((int) (RBAL(node) - LBAL(node)))
+#define LLINK(node)	    ((hb_node*) ((node)->lbal & ~(intptr_t)1))
+#define RLINK(node)	    ((hb_node*) ((node)->rbal & ~(intptr_t)1))
+#define SET_BAL(node,bal) do { \
+    const int __bal = (bal); \
+    switch (__bal) { \
+	case -1: node->lbal |=  (intptr_t)1; node->rbal &= ~(intptr_t)1; break; \
+	case  0: node->lbal &= ~(intptr_t)1; node->rbal &= ~(intptr_t)1; break; \
+	case +1: node->lbal &= ~(intptr_t)1; node->rbal |=  (intptr_t)1; break; \
+	default: ASSERT("This should never happen." && false); \
+    } } while (0)
+#define SET_LLINK(node,l) (node)->lbal = LBAL(node) | (intptr_t)(l)
+#define SET_RLINK(node,r) (node)->rbal = RBAL(node) | (intptr_t)(r)
 
 struct hb_tree {
     TREE_FIELDS(hb_node);
@@ -47,47 +72,51 @@ struct hb_itor {
 
 static dict_vtable hb_tree_vtable = {
     (dict_inew_func)	    hb_dict_itor_new,
-    (dict_dfree_func)	    tree_free,
+    (dict_dfree_func)	    hb_tree_free,
     (dict_insert_func)	    hb_tree_insert,
-    (dict_search_func)	    tree_search,
-    (dict_search_func)	    tree_search_le,
-    (dict_search_func)	    tree_search_lt,
-    (dict_search_func)	    tree_search_ge,
-    (dict_search_func)	    tree_search_gt,
+    (dict_search_func)	    hb_tree_search,
+    (dict_search_func)	    hb_tree_search_le,
+    (dict_search_func)	    hb_tree_search_lt,
+    (dict_search_func)	    hb_tree_search_ge,
+    (dict_search_func)	    hb_tree_search_gt,
     (dict_remove_func)	    hb_tree_remove,
-    (dict_clear_func)	    tree_clear,
-    (dict_traverse_func)    tree_traverse,
-    (dict_count_func)	    tree_count,
+    (dict_clear_func)	    hb_tree_clear,
+    (dict_traverse_func)    hb_tree_traverse,
+    (dict_count_func)	    hb_tree_count,
     (dict_verify_func)	    hb_tree_verify,
 };
 
 static itor_vtable hb_tree_itor_vtable = {
-    (dict_ifree_func)	    tree_iterator_free,
-    (dict_valid_func)	    tree_iterator_valid,
-    (dict_invalidate_func)  tree_iterator_invalidate,
-    (dict_next_func)	    tree_iterator_next,
-    (dict_prev_func)	    tree_iterator_prev,
-    (dict_nextn_func)	    tree_iterator_next_n,
-    (dict_prevn_func)	    tree_iterator_prev_n,
-    (dict_first_func)	    tree_iterator_first,
-    (dict_last_func)	    tree_iterator_last,
-    (dict_key_func)	    tree_iterator_key,
-    (dict_datum_func)	    tree_iterator_datum,
-    (dict_isearch_func)	    tree_iterator_search,
-    (dict_isearch_func)	    tree_iterator_search_le,
-    (dict_isearch_func)	    tree_iterator_search_lt,
-    (dict_isearch_func)	    tree_iterator_search_ge,
-    (dict_isearch_func)	    tree_iterator_search_gt,
+    (dict_ifree_func)	    hb_itor_free,
+    (dict_valid_func)	    hb_itor_valid,
+    (dict_invalidate_func)  hb_itor_invalidate,
+    (dict_next_func)	    hb_itor_next,
+    (dict_prev_func)	    hb_itor_prev,
+    (dict_nextn_func)	    hb_itor_nextn,
+    (dict_prevn_func)	    hb_itor_prevn,
+    (dict_first_func)	    hb_itor_first,
+    (dict_last_func)	    hb_itor_last,
+    (dict_key_func)	    hb_itor_key,
+    (dict_datum_func)	    hb_itor_datum,
+    (dict_isearch_func)	    hb_itor_search,
+    (dict_isearch_func)	    hb_itor_search_le,
+    (dict_isearch_func)	    hb_itor_search_lt,
+    (dict_isearch_func)	    hb_itor_search_ge,
+    (dict_isearch_func)	    hb_itor_search_gt,
     (dict_iremove_func)	    NULL,/* hb_itor_remove not implemented yet */
     (dict_icompare_func)    NULL,/* hb_itor_compare not implemented yet */
 };
 
-static bool	rot_left(hb_tree* tree, hb_node* node);
-static bool	rot_right(hb_tree* tree, hb_node* node);
+static hb_node* node_min(hb_node* node);
+static hb_node* node_max(hb_node* node);
+static hb_node* node_prev(hb_node* node);
+static hb_node* node_next(hb_node* node);
 static size_t	node_height(const hb_node* node);
 static size_t	node_mheight(const hb_node* node);
 static size_t	node_pathlen(const hb_node* node, size_t level);
 static hb_node*	node_new(void* key);
+static bool	node_verify(const hb_tree* tree, const hb_node* parent, const hb_node* node,
+			    unsigned* height, size_t *count);
 
 hb_tree*
 hb_tree_new(dict_compare_func cmp_func)
@@ -136,12 +165,12 @@ hb_tree_clear(hb_tree* tree, dict_delete_func delete_func)
     hb_node* node = tree->root;
     const size_t count = tree->count;
     while (node) {
-	if (node->llink) {
-	    node = node->llink;
+	if (LLINK(node)) {
+	    node = LLINK(node);
 	    continue;
 	}
-	if (node->rlink) {
-	    node = node->rlink;
+	if (RLINK(node)) {
+	    node = RLINK(node);
 	    continue;
 	}
 
@@ -153,10 +182,10 @@ hb_tree_clear(hb_tree* tree, dict_delete_func delete_func)
 	tree->count--;
 
 	if (parent) {
-	    if (parent->llink == node)
-		parent->llink = NULL;
+	    if (LLINK(parent) == node)
+		SET_LLINK(parent, NULL);
 	    else
-		parent->rlink = NULL;
+		SET_RLINK(parent, NULL);
 	}
 	node = parent;
     }
@@ -167,10 +196,123 @@ hb_tree_clear(hb_tree* tree, dict_delete_func delete_func)
     return count;
 }
 
+static hb_node*
+search_node(hb_tree* tree, const void* key)
+{
+    hb_node* node = tree->root;
+    while (node) {
+	int cmp = tree->cmp_func(key, node->key);
+	if (cmp < 0)
+	    node = LLINK(node);
+	else if (cmp > 0)
+	    node = RLINK(node);
+	else
+	    return node;
+    }
+    return NULL;
+}
+
 void**
 hb_tree_search(hb_tree* tree, const void* key)
 {
-    return tree_search(tree, key);
+    hb_node* node = search_node(tree, key);
+    return node ? &node->datum : NULL;
+}
+
+static hb_node*
+search_le_node(hb_tree* tree, const void* key)
+{
+    hb_node* node = tree->root, *ret = NULL;
+    while (node) {
+	int cmp = tree->cmp_func(key, node->key);
+	if (cmp < 0) {
+	    node = LLINK(node);
+	} else {
+	    ret = node;
+	    if (cmp == 0)
+		break;
+	    node = RLINK(node);
+	}
+    }
+    return ret;
+}
+
+void**
+hb_tree_search_le(hb_tree* tree, const void *key)
+{
+    hb_node* ret = search_le_node(tree, key);
+    return ret ? &ret->datum : NULL;
+}
+
+static hb_node*
+search_lt_node(hb_tree* tree, const void* key)
+{
+    hb_node* node = tree->root, *ret = NULL;
+    while (node) {
+	int cmp = tree->cmp_func(key, node->key);
+	if (cmp > 0) {
+	    ret = node;
+	    node = RLINK(node);
+	} else {
+	    node = LLINK(node);
+	}
+    }
+    return ret;
+}
+
+void**
+hb_tree_search_lt(hb_tree* tree, const void *key)
+{
+    hb_node* ret = search_lt_node(tree, key);
+    return ret ? &ret->datum : NULL;
+}
+
+static hb_node*
+search_ge_node(hb_tree* tree, const void* key)
+{
+    hb_node* node = tree->root, *ret = NULL;
+    while (node) {
+	int cmp = tree->cmp_func(key, node->key);
+	if (cmp > 0) {
+	    node = RLINK(node);
+	} else {
+	    ret = node;
+	    if (cmp == 0)
+		break;
+	    node = LLINK(node);
+	}
+    }
+    return ret;
+}
+
+void**
+hb_tree_search_ge(hb_tree* tree, const void *key)
+{
+    hb_node* ret = search_ge_node(tree, key);
+    return ret ? &ret->datum : NULL;
+}
+
+static hb_node*
+search_gt_node(hb_tree* tree, const void* key)
+{
+    hb_node* node = tree->root, *ret = NULL;
+    while (node) {
+	int cmp = tree->cmp_func(key, node->key);
+	if (cmp < 0) {
+	    ret = node;
+	    node = LLINK(node);
+	} else {
+	    node = RLINK(node);
+	}
+    }
+    return ret;
+}
+
+void**
+hb_tree_search_gt(hb_tree* tree, const void *key)
+{
+    hb_node* ret = search_gt_node(tree, key);
+    return ret ? &ret->datum : NULL;
 }
 
 dict_insert_result
@@ -184,15 +326,13 @@ hb_tree_insert(hb_tree* tree, void* key)
     hb_node* q = NULL;
     while (node) {
 	cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    parent = node, node = node->llink;
-	else if (cmp)
-	    parent = node, node = node->rlink;
-	else
+	if (cmp == 0)
 	    return (dict_insert_result) { &node->datum, false };
 
-	if (parent->bal)
+	parent = node;
+	if (BAL(parent))
 	    q = parent;
+	node = (cmp < 0) ? LLINK(node) : RLINK(node);
     }
 
     hb_node* const add = node = node_new(key);
@@ -205,97 +345,142 @@ hb_tree_insert(hb_tree* tree, void* key)
 	tree->root = node;
     } else {
 	if (cmp < 0)
-	    parent->llink = node;
+	    SET_LLINK(parent, node);
 	else
-	    parent->rlink = node;
+	    SET_RLINK(parent, node);
 
 	while (parent != q) {
-	    ASSERT(parent->bal == 0);
-	    parent->bal = (parent->rlink == node) ? 1 : -1;
+	    ASSERT(BAL(parent) == 0);
+	    SET_BAL(parent, (RLINK(parent) == node) ? +1 : -1);
 	    node = parent;
-	    parent = node->parent;
+	    parent = parent->parent;
 	}
 	if (q) {
-	    if (q->llink == node) {
-		if (--q->bal == -2) {
-		    if (q->llink->bal > 0) {
+	    const int qbal = BAL(q);
+	    if (LLINK(q) == node) {
+		if (qbal == -1) {
+		    hb_node* const qp = q->parent;
+		    hb_node* const ql = LLINK(q);
+		    if (BAL(ql) > 0) {
 			/* LR: rotate q->llink left, then rotate q right. */
-			hb_node* const ql = q->llink;
-			hb_node* const qlr = ql->rlink;
+			hb_node* const qlr = RLINK(ql);
 
-			hb_node *const qp = q->parent;
-			*(qp == NULL ? &tree->root : qp->llink == q ? &qp->llink : &qp->rlink) = qlr;
+			if (qp) {
+			    if (LLINK(qp) == q)
+				SET_LLINK(qp, qlr);
+			    else {
+				ASSERT(RLINK(qp) == q);
+				SET_RLINK(qp, qlr);
+			    }
+			} else {
+			    tree->root = qlr;
+			}
 			qlr->parent = qp;
 
-			if ((q->llink = qlr->rlink) != NULL)
-			    q->llink->parent = q;
-			if ((ql->rlink = qlr->llink) != NULL)
-			    ql->rlink->parent = ql;
-			qlr->llink = ql;
-			qlr->rlink = q;
+			SET_LLINK(q, RLINK(qlr));
+			if (LLINK(q))
+			    LLINK(q)->parent = q;
+			SET_RLINK(ql, LLINK(qlr));
+			if (RLINK(ql))
+			    RLINK(ql)->parent = ql;
+			SET_LLINK(qlr, ql);
+			SET_RLINK(qlr, q);
 			ql->parent = q->parent = qlr;
-			q->bal = (qlr->bal == -1);
-			ql->bal = -(qlr->bal == 1);
-			qlr->bal = 0;
+			const int qlr_bal = BAL(qlr);
+			SET_BAL(q, (qlr_bal == -1));
+			SET_BAL(ql, -(qlr_bal == 1));
+			SET_BAL(qlr, 0);
 
 			tree->rotation_count += 2;
 		    } else {
 			/* R: rotate q right. */
-			hb_node* const ql = q->llink;
-
-			hb_node *const qp = q->parent;
-			*(qp == NULL ? &tree->root : qp->llink == q ? &qp->llink : &qp->rlink) = ql;
+			if (qp) {
+			    if (LLINK(qp) == q)
+				SET_LLINK(qp, ql);
+			    else {
+				ASSERT(RLINK(qp) == q);
+				SET_RLINK(qp, ql);
+			    }
+			} else {
+			    tree->root = ql;
+			}
 			ql->parent = qp;
 
-			if ((q->llink = ql->rlink) != NULL)
-			    q->llink->parent = q;
-			ql->rlink = q;
+			SET_LLINK(q, RLINK(ql));
+			if (LLINK(q))
+			    LLINK(q)->parent = q;
+			SET_RLINK(ql, q);
 			q->parent = ql;
-			q->bal = ql->bal = 0;
+			SET_BAL(q, 0);
+			SET_BAL(ql, 0);
 
 			tree->rotation_count += 1;
 		    }
+		} else {
+		    SET_BAL(q, qbal - 1);
 		}
 	    } else {
-		ASSERT(q->rlink == node);
-		if (++q->bal == +2) {
-		    if (q->rlink->bal < 0) {
-			/* Rotate q->rlink right, then q left. */
-			hb_node* const qr = q->rlink;
-			hb_node* const qrl = qr->llink;
+		ASSERT(RLINK(q) == node);
+		if (qbal == 1) {
+		    hb_node* const qp = q->parent;
+		    hb_node* const qr = RLINK(q);
+		    if (BAL(qr) < 0) {
+			/* RL: Rotate q->rlink right, then q left. */
+			hb_node* const qrl = LLINK(qr);
 
-			hb_node *const qp = q->parent;
-			*(qp == NULL ? &tree->root : qp->llink == q ? &qp->llink : &qp->rlink) = qrl;
+			if (qp) {
+			    if (LLINK(qp) == q)
+				SET_LLINK(qp, qrl);
+			    else {
+				ASSERT(RLINK(qp) == q);
+				SET_RLINK(qp, qrl);
+			    }
+			} else {
+			    tree->root = qrl;
+			}
 			qrl->parent = qp;
 
-			if ((q->rlink = qrl->llink) != NULL)
-			    q->rlink->parent = q;
-			if ((qr->llink = qrl->rlink) != NULL)
-			    qr->llink->parent = qr;
-			qrl->llink = q;
-			qrl->rlink = qr;
+			SET_RLINK(q, LLINK(qrl));
+			if (RLINK(q))
+			    RLINK(q)->parent = q;
+			SET_LLINK(qr, RLINK(qrl));
+			if (LLINK(qr))
+			    LLINK(qr)->parent = qr;
+			SET_LLINK(qrl, q);
+			SET_RLINK(qrl, qr);
 			qr->parent = q->parent = qrl;
-			q->bal = -(qrl->bal == 1);
-			qr->bal = (qrl->bal == -1);
-			qrl->bal = 0;
+			const int qrl_bal = BAL(qrl);
+			SET_BAL(q, -(qrl_bal == 1));
+			SET_BAL(qr, (qrl_bal == -1));
+			SET_BAL(qrl, 0);
 
 			tree->rotation_count += 2;
 		    } else {
-			/* R: rotate q left */
-			hb_node* const qr = q->rlink;
-
-			hb_node *const qp = q->parent;
-			*(qp == NULL ? &tree->root : qp->llink == q ? &qp->llink : &qp->rlink) = qr;
+			/* L: rotate q left */
+			if (qp) {
+			    if (LLINK(qp) == q)
+				SET_LLINK(qp, qr);
+			    else {
+				ASSERT(RLINK(qp) == q);
+				SET_RLINK(qp, qr);
+			    }
+			} else {
+			    tree->root = qr;
+			}
 			qr->parent = qp;
 
-			if ((q->rlink = qr->llink) != NULL)
-			    q->rlink->parent = q;
-			qr->llink = q;
+			SET_RLINK(q, LLINK(qr));
+			if (RLINK(q))
+			    RLINK(q)->parent = q;
+			SET_LLINK(qr, q);
 			q->parent = qr;
-			q->bal = qr->bal = 0;
+			SET_BAL(q, 0);
+			SET_BAL(qr, 0);
 
 			tree->rotation_count += 1;
 		    }
+		} else {
+		    SET_BAL(q, qbal + 1);
 		}
 	    }
 	}
@@ -310,109 +495,198 @@ hb_tree_remove(hb_tree* tree, const void* key)
     ASSERT(tree != NULL);
 
     hb_node* node = tree->root;
-    hb_node* parent = NULL;
     while (node) {
 	int cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    parent = node, node = node->llink;
-	else if (cmp)
-	    parent = node, node = node->rlink;
-	else
+	if (cmp == 0)
 	    break;
+	node = (cmp < 0) ? LLINK(node) : RLINK(node);
     }
     if (!node)
 	return (dict_remove_result) { NULL, NULL, false };
 
-    if (node->llink && node->rlink) {
-	hb_node* out;
-	if (node->bal > 0) {
-	    out = node->rlink;
-	    while (out->llink)
-		out = out->llink;
-	} else {
-	    out = node->llink;
-	    while (out->rlink)
-		out = out->rlink;
-	}
+    if (LLINK(node) && RLINK(node)) {
+	hb_node* out = (BAL(node) > 0) ? node_min(RLINK(node)) : node_max(LLINK(node));
 	void* tmp;
 	SWAP(node->key, out->key, tmp);
 	SWAP(node->datum, out->datum, tmp);
 	node = out;
-	parent = out->parent;
     }
 
-    dict_remove_result result = { node->key, node->datum, true };
-    hb_node* child = node->llink ? node->llink : node->rlink;
+    const dict_remove_result result = { node->key, node->datum, true };
+    hb_node* p = node->parent;
+    hb_node* child = LLINK(node) ? LLINK(node) : RLINK(node);
     FREE(node);
+    tree->count--;
     if (child)
-	child->parent = parent;
-    if (!parent) {
+	child->parent = p;
+    if (!p) {
 	tree->root = child;
-	tree->count--;
 	return result;
     }
 
-    bool left = parent->llink == node;
+    bool left = (LLINK(p) == node);
     if (left)
-	parent->llink = child;
+	SET_LLINK(p, child);
     else
-	parent->rlink = child;
+	SET_RLINK(p, child);
+    node = child;
 
     unsigned rotations = 0;
     for (;;) {
 	if (left) {
-	    if (++parent->bal == 0) {
-		node = parent;
-		goto higher;
-	    }
-	    if (parent->bal == +2) {
-		ASSERT(parent->rlink != NULL);
-		if (parent->rlink->bal < 0) {
+	    ASSERT(LLINK(p) == node);
+	    if (BAL(p) == +1) {
+		hb_node* const pp = p->parent;
+		hb_node* const pr = RLINK(p);
+		if (BAL(pr) < 0) {
+		    /* RL: rotate |pr| right, then |p| left. */
 		    rotations += 2;
-		    rot_right(tree, parent->rlink);
-		    rot_left(tree, parent);
+
+		    hb_node* const prl = LLINK(pr);
+		    if (pp) {
+			if (LLINK(pp) == p)
+			    SET_LLINK(pp, prl);
+			else {
+			    ASSERT(RLINK(pp) == p);
+			    SET_RLINK(pp, prl);
+			}
+		    } else {
+			tree->root = prl;
+		    }
+		    prl->parent = pp;
+
+		    SET_RLINK(p, LLINK(prl));
+		    if (RLINK(p))
+			RLINK(p)->parent = p;
+		    SET_LLINK(pr, RLINK(prl));
+		    if (LLINK(pr))
+			LLINK(pr)->parent = pr;
+		    SET_LLINK(prl, p);
+		    SET_RLINK(prl, pr);
+		    pr->parent = p->parent = prl;
+		    const int prl_bal = BAL(prl);
+		    SET_BAL(p, -(prl_bal == 1));
+		    SET_BAL(pr, (prl_bal == -1));
+		    SET_BAL(prl, 0);
 		} else {
+		    /* L: rotate |p| left. */
 		    rotations += 1;
-		    ASSERT(parent->rlink->rlink != NULL);
-		    if (!rot_left(tree, parent))
+
+		    if (pp) {
+			if (LLINK(pp) == p)
+			    SET_LLINK(pp, pr);
+			else {
+			    ASSERT(RLINK(pp) == p);
+			    SET_RLINK(pp, pr);
+			}
+		    } else {
+			tree->root = pr;
+		    }
+		    pr->parent = pp;
+
+		    SET_RLINK(p, LLINK(pr));
+		    if (RLINK(p))
+			RLINK(p)->parent = p;
+		    SET_LLINK(pr, p);
+		    p->parent = pr;
+		    const int pr_bal = BAL(pr);
+		    SET_BAL(p, (pr_bal == 0));
+		    SET_BAL(pr, -(pr_bal == 0));
+		    if (pr_bal == 0)
 			break;
 		}
-	    } else {
+		node = p->parent;
+	    } else if (BAL(p) == 0) {
+		SET_BAL(p, +1);
 		break;
+	    } else {
+		ASSERT(BAL(p) == -1);
+		SET_BAL(p, 0);
+		node = p;
 	    }
 	} else {
-	    if (--parent->bal == 0) {
-		node = parent;
-		goto higher;
-	    }
-	    if (parent->bal == -2) {
-		ASSERT(parent->llink != NULL);
-		if (parent->llink->bal > 0) {
+	    ASSERT(RLINK(p) == node);
+	    if (BAL(p) == -1) {
+		hb_node* const pp = p->parent;
+		hb_node* const pl = LLINK(p);
+		if (BAL(pl) > 0) {
+		    /* LR: rotate |pl| left, then |p| right. */
 		    rotations += 2;
-		    rot_left(tree, parent->llink);
-		    rot_right(tree, parent);
+
+		    hb_node* const plr = RLINK(pl);
+		    if (pp) {
+			if (LLINK(pp) == p)
+			    SET_LLINK(pp, plr);
+			else {
+			    ASSERT(RLINK(pp) == p);
+			    SET_RLINK(pp, plr);
+			}
+		    } else {
+			tree->root = plr;
+		    }
+		    plr->parent = pp;
+
+		    SET_LLINK(p, RLINK(plr));
+		    if (LLINK(p))
+			LLINK(p)->parent = p;
+		    SET_RLINK(pl, LLINK(plr));
+		    if (RLINK(pl))
+			RLINK(pl)->parent = pl;
+		    SET_LLINK(plr, pl);
+		    SET_RLINK(plr, p);
+		    pl->parent = p->parent = plr;
+		    const int plr_bal = BAL(plr);
+		    SET_BAL(p, (plr_bal == -1));
+		    SET_BAL(pl, -(plr_bal == 1));
+		    SET_BAL(plr, 0);
 		} else {
+		    /* R: rotate |p| right. */
 		    rotations += 1;
-		    ASSERT(parent->llink->llink != NULL);
-		    if (!rot_right(tree, parent))
+
+		    if (pp) {
+			if (LLINK(pp) == p)
+			    SET_LLINK(pp, pl);
+			else {
+			    ASSERT(RLINK(pp) == p);
+			    SET_RLINK(pp, pl);
+			}
+		    } else {
+			tree->root = pl;
+		    }
+		    pl->parent = pp;
+
+		    SET_LLINK(p, RLINK(pl));
+		    if (LLINK(p))
+			LLINK(p)->parent = p;
+		    SET_RLINK(pl, p);
+		    p->parent = pl;
+		    const int pl_bal = BAL(pl);
+		    SET_BAL(p, -(pl_bal == 0));
+		    SET_BAL(pl, (pl_bal == 0));
+		    if (pl_bal == 0)
 			break;
 		}
-	    } else {
+		node = p->parent;
+	    } else if (BAL(p) == 0) {
+		SET_BAL(p, -1);
 		break;
+	    } else {
+		ASSERT(BAL(p) == +1);
+		SET_BAL(p, 0);
+		node = p;
 	    }
 	}
 
-	/* Only get here on double rotations or single rotations that changed
-	 * subtree height - in either event, `parent->parent' is positioned
-	 * where `parent' was positioned before any rotations. */
-	node = parent->parent;
-higher:
-	if (!(parent = node->parent))
+	if (!(p = node->parent))
 	    break;
-	left = (parent->llink == node);
+	if (LLINK(p) == node) {
+	    left = true;
+	} else {
+	    ASSERT(RLINK(p) == node);
+	    left = false;
+	}
     }
     tree->rotation_count += rotations;
-    tree->count--;
     return result;
 }
 
@@ -421,12 +695,7 @@ hb_tree_min(const hb_tree* tree)
 {
     ASSERT(tree != NULL);
 
-    const hb_node* node = tree->root;
-    if (!node)
-	return NULL;
-    for (; node->llink; node = node->llink)
-	/* void */;
-    return node->key;
+    return tree->root ? node_min(tree->root)->key : NULL;
 }
 
 const void*
@@ -434,12 +703,7 @@ hb_tree_max(const hb_tree* tree)
 {
     ASSERT(tree != NULL);
 
-    const hb_node* node = tree->root;
-    if (!node)
-	return NULL;
-    for (; node->rlink; node = node->rlink)
-	/* void */;
-    return node->key;
+    return tree->root ? node_max(tree->root)->key : NULL;
 }
 
 size_t
@@ -487,12 +751,11 @@ node_new(void* key)
 {
     hb_node* node = MALLOC(sizeof(*node));
     if (node) {
+	ASSERT((((intptr_t)node) & 1) == 0); /* Ensure malloc returns aligned result. */
 	node->key = key;
 	node->datum = NULL;
 	node->parent = NULL;
-	node->llink = NULL;
-	node->rlink = NULL;
-	node->bal = 0;
+	node->lbal = node->rbal = 0;
     }
     return node;
 }
@@ -502,8 +765,8 @@ node_height(const hb_node* node)
 {
     ASSERT(node != NULL);
 
-    size_t l = node->llink ? node_height(node->llink) + 1 : 0;
-    size_t r = node->rlink ? node_height(node->rlink) + 1 : 0;
+    size_t l = LLINK(node) ? node_height(LLINK(node)) + 1 : 0;
+    size_t r = RLINK(node) ? node_height(RLINK(node)) + 1 : 0;
     return MAX(l, r);
 }
 
@@ -512,8 +775,8 @@ node_mheight(const hb_node* node)
 {
     ASSERT(node != NULL);
 
-    size_t l = node->llink ? node_mheight(node->llink) + 1 : 0;
-    size_t r = node->rlink ? node_mheight(node->rlink) + 1 : 0;
+    size_t l = LLINK(node) ? node_mheight(LLINK(node)) + 1 : 0;
+    size_t r = RLINK(node) ? node_mheight(RLINK(node)) + 1 : 0;
     return MIN(l, r);
 }
 
@@ -523,94 +786,99 @@ node_pathlen(const hb_node* node, size_t level)
     ASSERT(node != NULL);
 
     size_t n = 0;
-    if (node->llink)
-	n += level + node_pathlen(node->llink, level + 1);
-    if (node->rlink)
-	n += level + node_pathlen(node->rlink, level + 1);
+    if (LLINK(node))
+	n += level + node_pathlen(LLINK(node), level + 1);
+    if (RLINK(node))
+	n += level + node_pathlen(RLINK(node), level + 1);
     return n;
 }
 
-/*
- * rot_left(T, B):
- *
- *     /	     /
- *    B	     D
- *   / \	   / \
- *  A   D   ==>   B   E
- *     / \       / \
- *    C   E     A   C
- *
- */
-static bool
-rot_left(hb_tree* tree, hb_node* node)
+static hb_node*
+node_min(hb_node* node)
 {
-    ASSERT(tree != NULL);
     ASSERT(node != NULL);
-    ASSERT(node->rlink != NULL);
-
-    hb_node* rlink = node->rlink;
-    tree_node_rot_left(tree, node);
-
-    bool height_changed = (rlink->bal != 0);
-    node->bal  -= 1 + MAX(rlink->bal, 0);
-    rlink->bal -= 1 - MIN(node->bal, 0);
-    return height_changed;
+    while (LLINK(node))
+	node = LLINK(node);
+    return node;
 }
 
-/*
- * rot_right(T, D):
- *
- *       /	   /
- *      D	   B
- *     / \	 / \
- *    B   E  ==>  A   D
- *   / \	     / \
- *  A   C	   C   E
- *
- */
-static bool
-rot_right(hb_tree* tree, hb_node* node)
+static hb_node*
+node_max(hb_node* node)
 {
-    ASSERT(tree != NULL);
     ASSERT(node != NULL);
-    ASSERT(node->llink != NULL);
+    while (RLINK(node))
+	node = RLINK(node);
+    return node;
+}
 
-    hb_node* llink = node->llink;
-    tree_node_rot_right(tree, node);
+static hb_node*
+node_prev(hb_node* node)
+{
+    ASSERT(node != NULL);
+    if (LLINK(node))
+	return node_max(LLINK(node));
+    hb_node* parent = node->parent;
+    while (parent && LLINK(parent) == node) {
+	node = parent;
+	parent = parent->parent;
+    }
+    return parent;
+}
 
-    bool height_changed = (llink->bal != 0);
-    node->bal  += 1 - MIN(llink->bal, 0);
-    llink->bal += 1 + MAX(node->bal, 0);
-    return height_changed;
+static hb_node*
+node_next(hb_node* node)
+{
+    ASSERT(node != NULL);
+    if (RLINK(node))
+	return node_min(RLINK(node));
+    hb_node* parent = node->parent;
+    while (parent && RLINK(parent) == node) {
+	node = parent;
+	parent = parent->parent;
+    }
+    return parent;
 }
 
 static bool
 node_verify(const hb_tree* tree, const hb_node* parent, const hb_node* node,
-	    unsigned* height)
+	    unsigned* height, size_t *count)
 {
     ASSERT(tree != NULL);
 
     if (!parent) {
-	VERIFY(tree->root == node);
+	ASSERT(tree->root == node);
     } else {
-	VERIFY(parent->llink == node || parent->rlink == node);
+	if (LLINK(parent) == node) {
+	    if (node)
+		ASSERT(tree->cmp_func(parent->key, node->key) > 0);
+	} else {
+	    ASSERT(RLINK(parent) == node);
+	    if (node)
+		ASSERT(tree->cmp_func(parent->key, node->key) < 0);
+	}
     }
+    bool verified = true;
     if (node) {
-	VERIFY(node->parent == parent);
-	VERIFY(node->bal >= -1);
-	VERIFY(node->bal <= 1);
+	const int bal = BAL(node);
+	ASSERT(bal >= -1);
+	ASSERT(bal <= +1);
+	if (RBAL(node))
+	    ASSERT(LBAL(node) == 0);
+	if (LBAL(node))
+	    ASSERT(RBAL(node) == 0);
+	ASSERT(node->parent == parent);
 	unsigned lheight, rheight;
-	if (!node_verify(tree, node, node->llink, &lheight) ||
-	    !node_verify(tree, node, node->rlink, &rheight))
-	    return false;
-	VERIFY(node->bal == (int)rheight - (int)lheight);
+	verified &= node_verify(tree, node, LLINK(node), &lheight, count);
+	verified &= node_verify(tree, node, RLINK(node), &rheight, count);
+	ASSERT(bal == (int)rheight - (int)lheight);
 	if (height)
 	    *height = MAX(lheight, rheight) + 1;
+	*count += 1;
     } else {
 	if (height)
 	    *height = 0;
     }
-    return true;
+    return verified;
 }
 
 bool
@@ -618,12 +886,10 @@ hb_tree_verify(const hb_tree* tree)
 {
     ASSERT(tree != NULL);
 
-    if (tree->root) {
-	VERIFY(tree->count > 0);
-    } else {
-	VERIFY(tree->count == 0);
-    }
-    return node_verify(tree, NULL, tree->root, NULL);
+    size_t count = 0;
+    bool verified = node_verify(tree, NULL, tree->root, NULL, &count);
+    VERIFY(tree->count == count);
+    return verified;
 }
 
 hb_itor*
@@ -687,7 +953,7 @@ hb_itor_next(hb_itor* itor)
     if (!itor->node)
 	hb_itor_first(itor);
     else
-	itor->node = tree_node_next(itor->node);
+	itor->node = node_next(itor->node);
     return itor->node != NULL;
 }
 
@@ -699,7 +965,7 @@ hb_itor_prev(hb_itor* itor)
     if (!itor->node)
 	hb_itor_last(itor);
     else
-	itor->node = tree_node_prev(itor->node);
+	itor->node = node_prev(itor->node);
     return itor->node != NULL;
 }
 
@@ -730,7 +996,7 @@ hb_itor_first(hb_itor* itor)
 {
     ASSERT(itor != NULL);
 
-    itor->node = itor->tree->root ? tree_node_min(itor->tree->root) : NULL;
+    itor->node = itor->tree->root ? node_min(itor->tree->root) : NULL;
     return itor->node != NULL;
 }
 
@@ -739,8 +1005,43 @@ hb_itor_last(hb_itor* itor)
 {
     ASSERT(itor != NULL);
 
-    itor->node = itor->tree->root ? tree_node_max(itor->tree->root) : NULL;
+    itor->node = itor->tree->root ? node_max(itor->tree->root) : NULL;
     return itor->node != NULL;
+}
+
+bool
+hb_itor_search(hb_itor* itor, const void* key)
+{
+    ASSERT(itor != NULL);
+    return (itor->node = search_node(itor->tree, key)) != NULL;
+}
+
+bool
+hb_itor_search_le(hb_itor* itor, const void* key)
+{
+    ASSERT(itor != NULL);
+    return (itor->node = search_le_node(itor->tree, key)) != NULL;
+}
+
+bool
+hb_itor_search_lt(hb_itor* itor, const void* key)
+{
+    ASSERT(itor != NULL);
+    return (itor->node = search_lt_node(itor->tree, key)) != NULL;
+}
+
+bool
+hb_itor_search_ge(hb_itor* itor, const void* key)
+{
+    ASSERT(itor != NULL);
+    return (itor->node = search_ge_node(itor->tree, key)) != NULL;
+}
+
+bool
+hb_itor_search_gt(hb_itor* itor, const void* key)
+{
+    ASSERT(itor != NULL);
+    return (itor->node = search_gt_node(itor->tree, key)) != NULL;
 }
 
 const void*
