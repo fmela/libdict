@@ -174,6 +174,8 @@ main(int argc, char **argv)
     if (n != nwords)
 	warn("Fwd iteration returned %u items - should be %u", n, nwords);
 
+    ASSERT(dict_verify(dct));
+
     timer_start(&start);
     n = 0;
     ASSERT(dict_itor_last(itor));
@@ -192,6 +194,8 @@ main(int argc, char **argv)
     dict_itor_free(itor);
 
     /* shuffle(words, nwords); */
+
+    ASSERT(dict_verify(dct));
 
     timer_start(&start);
     for (unsigned i = 0; i < nwords; i++) {
@@ -218,6 +222,8 @@ main(int argc, char **argv)
 	tree->rotation_count = 0;
     }
 
+    ASSERT(dict_verify(dct));
+
     timer_start(&start);
     for (unsigned i = 0; i < nwords; i++) {
 	unsigned rv = dict_rand() % strlen(words[i]);
@@ -235,6 +241,8 @@ main(int argc, char **argv)
     printf("\n");
     total_comp += comp_count; comp_count = 0;
     total_hash += hash_count; hash_count = 0;
+
+    ASSERT(dict_verify(dct));
 
     /* shuffle(words, nwords); */
 

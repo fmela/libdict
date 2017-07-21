@@ -85,6 +85,7 @@ main(int argc, char **argv)
 	quit("can't create container");
 
     for (;;) {
+	dict_verify(dct);
 	printf("> ");
 	fflush(stdout);
 
