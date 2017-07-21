@@ -80,11 +80,11 @@ $(OUTPUT_DIR)/%.po: $(SOURCE_DIR)/%.c $(HEADER) GNUmakefile $(OUTPUT_DIR)
 $(OUTPUT_DIR)/%.So: $(SOURCE_DIR)/%.c $(HEADER) GNUmakefile $(OUTPUT_DIR)
 	$(CC) $(CFLAGS) -fPIC -DPIC -c -o $(@) $(<)
 
-$(OUTPUT_DIR)/unit_tests: unit_tests.c $(STATIC_LIB)
-	$(CC) $(CFLAGS) $(TEST_CFLAGS) -o $(@) $(<) $(STATIC_LIB) $(LDFLAGS) $(TEST_LDFLAGS) -lcunit
+$(OUTPUT_DIR)/unit_tests: unit_tests.c $(STATIC_OBJ) GNUmakefile
+	$(CC) $(CFLAGS) $(TEST_CFLAGS) -o $(@) $(<) $(STATIC_OBJ) $(LDFLAGS) $(TEST_LDFLAGS) -lcunit
 
-$(OUTPUT_DIR)/%: %.c $(STATIC_LIB) GNUmakefile
-	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_LIB) $(LDFLAGS)
+$(OUTPUT_DIR)/%: %.c $(STATIC_OBJ) GNUmakefile
+	$(CC) $(CFLAGS) -o $(@) $(<) $(STATIC_OBJ) $(LDFLAGS)
 
 test: $(OUTPUT_DIR)/unit_tests
 	./$(OUTPUT_DIR)/unit_tests
