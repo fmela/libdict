@@ -81,6 +81,8 @@ main(int argc, char **argv)
 	quit("can't create container");
 
     ASSERT(dict_verify(dct));
+    ASSERT(comp_count == 0);
+    ASSERT(hash_count == 0);
 
     const size_t malloced_save = malloced;
 
@@ -152,6 +154,7 @@ main(int argc, char **argv)
     }
 
     ASSERT(dict_verify(dct));
+    comp_count = hash_count = 0; /* Ignore comparisons/hashes incurred by dict_verify() */
 
     size_t n = dict_count(dct);
     if (n != nwords)
@@ -175,6 +178,7 @@ main(int argc, char **argv)
 	warn("Fwd iteration returned %u items - should be %u", n, nwords);
 
     ASSERT(dict_verify(dct));
+    comp_count = hash_count = 0; /* Ignore comparisons/hashes incurred by dict_verify() */
 
     timer_start(&start);
     n = 0;
@@ -196,6 +200,7 @@ main(int argc, char **argv)
     /* shuffle(words, nwords); */
 
     ASSERT(dict_verify(dct));
+    comp_count = hash_count = 0; /* Ignore comparisons/hashes incurred by dict_verify() */
 
     timer_start(&start);
     for (unsigned i = 0; i < nwords; i++) {
@@ -223,6 +228,7 @@ main(int argc, char **argv)
     }
 
     ASSERT(dict_verify(dct));
+    comp_count = hash_count = 0; /* Ignore comparisons/hashes incurred by dict_verify() */
 
     timer_start(&start);
     for (unsigned i = 0; i < nwords; i++) {
@@ -243,6 +249,7 @@ main(int argc, char **argv)
     total_hash += hash_count; hash_count = 0;
 
     ASSERT(dict_verify(dct));
+    comp_count = hash_count = 0; /* Ignore comparisons/hashes incurred by dict_verify() */
 
     /* shuffle(words, nwords); */
 
@@ -272,6 +279,7 @@ main(int argc, char **argv)
     }
 
     ASSERT(dict_verify(dct));
+    comp_count = hash_count = 0; /* Ignore comparisons/hashes incurred by dict_verify() */
 
     if ((n = dict_count(dct)) != 0)
 	quit("error - count not zero (%u)!", n);
