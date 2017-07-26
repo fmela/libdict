@@ -324,8 +324,23 @@ rotate_l(hb_tree* restrict const tree, hb_node* restrict const q)
     hb_node* restrict const qp = q->parent;
     hb_node* restrict const qr = RLINK(q);
 
-    qr->parent = qp;
-    if (qp) {
+    ASSERT(RBAL(q));
+
+    hb_node *restrict const qrl = LLINK(qr);
+    const int qr_bal = BAL(qr);
+
+    q->parent = qr;
+    /* q->rlink <- qrl;
+       q->bal <- (qr_bal == 0); */
+    q->rbal = (intptr_t)qrl | (qr_bal == 0);
+    if (qrl)
+	qrl->parent = q;
+
+    /* qr->llink <- q;
+       qr->bal <- -(qr_bal == 0); */
+    qr->lbal = (intptr_t)q | (qr_bal == 0);
+    qr->rbal &= ~BAL_MASK;
+    if ((qr->parent = qp) != NULL) {
 	if (LLINK(qp) == q)
 	    SET_LLINK(qp, qr);
 	else {
@@ -336,16 +351,6 @@ rotate_l(hb_tree* restrict const tree, hb_node* restrict const q)
 	tree->root = qr;
     }
 
-    hb_node *restrict const qrl = LLINK(qr);
-    SET_RLINK(q, qrl);
-    if (qrl)
-	qrl->parent = q;
-    SET_LLINK(qr, q);
-    q->parent = qr;
-
-    const int qr_bal = BAL(qr);
-    SET_BAL(q, (qr_bal == 0));
-    SET_BAL(qr, -(qr_bal == 0));
     return (qr_bal == 0);
 }
 
@@ -356,8 +361,23 @@ rotate_r(hb_tree* restrict const tree, hb_node* restrict const q)
     hb_node* restrict const qp = q->parent;
     hb_node* restrict const ql = LLINK(q);
 
-    ql->parent = qp;
-    if (qp) {
+    ASSERT(LBAL(q));
+
+    hb_node* restrict const qlr = RLINK(ql);
+    const int ql_bal = BAL(ql);
+
+    q->parent = ql;
+    /* q->llink <- qlr;
+       q->bal <- -(ql_bal == 0); */
+    q->lbal = (intptr_t)qlr | (ql_bal == 0);
+    if (qlr)
+	qlr->parent = q;
+
+    /* ql->rlink <- q;
+       ql->bal <- (ql_bal == 0); */
+    ql->lbal &= ~BAL_MASK;
+    ql->rbal = (intptr_t)q | (ql_bal == 0);
+    if ((ql->parent = qp) != NULL) {
 	if (LLINK(qp) == q)
 	    SET_LLINK(qp, ql);
 	else {
@@ -368,16 +388,6 @@ rotate_r(hb_tree* restrict const tree, hb_node* restrict const q)
 	tree->root = ql;
     }
 
-    hb_node* restrict const qlr = RLINK(ql);
-    SET_LLINK(q, qlr);
-    if (qlr)
-	qlr->parent = q;
-    SET_RLINK(ql, q);
-    q->parent = ql;
-
-    const int ql_bal = BAL(ql);
-    SET_BAL(q, -(ql_bal == 0));
-    SET_BAL(ql, (ql_bal == 0));
     return (ql_bal == 0);
 }
 
@@ -389,8 +399,10 @@ rotate_rl(hb_tree* restrict const tree, hb_node* restrict const q)
     hb_node* restrict const qr = RLINK(q);
     hb_node* restrict const qrl = LLINK(qr);
 
-    qrl->parent = qp;
-    if (qp) {
+    ASSERT(RBAL(q));
+    ASSERT(LBAL(qr));
+
+    if ((qrl->parent = qp) != NULL) {
 	if (LLINK(qp) == q)
 	    SET_LLINK(qp, qrl);
 	else {
@@ -401,22 +413,27 @@ rotate_rl(hb_tree* restrict const tree, hb_node* restrict const q)
 	tree->root = qrl;
     }
 
-    hb_node* restrict const qrll = LLINK(qrl);
-    SET_RLINK(q, qrll);
-    if (qrll)
-	qrll->parent = q;
-    hb_node* restrict const qrlr = RLINK(qrl);
-    SET_LLINK(qr, qrlr);
-    if (qrlr)
-	qrlr->parent = qr;
-    qr->parent = q->parent = qrl;
-
     const int qrl_bal = BAL(qrl);
-    SET_BAL(q, -(qrl_bal == 1));
-    SET_BAL(qr, (qrl_bal == -1));
-    /* Implicitly zero balance of |qrl| */
+    hb_node* restrict const qrlr = RLINK(qrl);
+    hb_node* restrict const qrll = LLINK(qrl);
+    /* qrl->bal <- 0; */
     qrl->lptr = q;
     qrl->rptr = qr;
+
+    q->parent = qrl;
+    if ((q->rptr = qrll) != NULL)
+	qrll->parent = q;
+
+    qr->parent = qrl;
+    if ((qr->lptr = qrlr) != NULL)
+	qrlr->parent = qr;
+
+    /* q->bal <- -(qrl_bal == 1);
+       qr->bal <- (qrl_bal == -1); */
+    if (qrl_bal == +1)
+	q->lbal |= BAL_MASK;
+    else if (qrl_bal == -1)
+	qr->rbal |= BAL_MASK;
 }
 
 /* LR: rotate |q->llink| left, then rotate |q| right. */
@@ -427,8 +444,10 @@ rotate_lr(hb_tree* restrict const tree, hb_node* restrict const q)
     hb_node* restrict const ql = LLINK(q);
     hb_node* restrict const qlr = RLINK(ql);
 
-    qlr->parent = qp;
-    if (qp) {
+    ASSERT(LBAL(q));
+    ASSERT(RBAL(ql));
+
+    if ((qlr->parent = qp) != NULL) {
 	if (LLINK(qp) == q)
 	    SET_LLINK(qp, qlr);
 	else {
@@ -439,22 +458,27 @@ rotate_lr(hb_tree* restrict const tree, hb_node* restrict const q)
 	tree->root = qlr;
     }
 
-    hb_node* restrict const qlrr = RLINK(qlr);
-    SET_LLINK(q, qlrr);
-    if (qlrr)
-	qlrr->parent = q;
-    hb_node* restrict const qlrl = LLINK(qlr);
-    SET_RLINK(ql, qlrl);
-    if (qlrl)
-	qlrl->parent = ql;
-    ql->parent = q->parent = qlr;
-
     const int qlr_bal = BAL(qlr);
-    SET_BAL(q, (qlr_bal == -1));
-    SET_BAL(ql, -(qlr_bal == 1));
-    /* Implicitly zero balance of |qlr| */
+    hb_node* restrict const qlrr = RLINK(qlr);
+    hb_node* restrict const qlrl = LLINK(qlr);
+    /* qlr->bal <- 0; */
     qlr->lptr = ql;
     qlr->rptr = q;
+
+    q->parent = qlr;
+    if ((q->lptr = qlrr) != NULL)
+	qlrr->parent = q;
+
+    ql->parent = qlr;
+    if ((ql->rptr = qlrl) != NULL)
+	qlrl->parent = ql;
+
+    /* q->bal <- (qlr_bal == -1);
+       ql->bal <- -(qlr_bal == 1); */
+    if (qlr_bal == -1)
+	q->rbal |= BAL_MASK;
+    else if (qlr_bal == +1)
+	ql->lbal |= BAL_MASK;
 }
 
 dict_insert_result
@@ -504,7 +528,7 @@ hb_tree_insert(hb_tree* tree, void* key)
 	    const int qbal = BAL(q);
 	    if (LLINK(q) == node) {
 		if (qbal == -1) {
-		    if (BAL(LLINK(q)) > 0) {
+		    if (RBAL(LLINK(q))) {
 			tree->rotation_count += 2;
 			rotate_lr(tree, q);
 		    } else {
@@ -517,7 +541,7 @@ hb_tree_insert(hb_tree* tree, void* key)
 	    } else {
 		ASSERT(RLINK(q) == node);
 		if (qbal == +1) {
-		    if (BAL(RLINK(q)) < 0) {
+		    if (LBAL(RLINK(q))) {
 			tree->rotation_count += 2;
 			rotate_rl(tree, q);
 		    } else {
@@ -550,7 +574,7 @@ hb_tree_remove(hb_tree* tree, const void* key)
 	return (dict_remove_result) { NULL, NULL, false };
 
     if (LLINK(node) && RLINK(node)) {
-	hb_node* restrict out = (BAL(node) > 0) ? node_min(RLINK(node)) : node_max(LLINK(node));
+	hb_node* restrict out = RBAL(node) ? node_min(RLINK(node)) : node_max(LLINK(node));
 	void* tmp;
 	SWAP(node->key, out->key, tmp);
 	SWAP(node->datum, out->datum, tmp);
@@ -582,8 +606,8 @@ hb_tree_remove(hb_tree* tree, const void* key)
     for (;;) {
 	if (left) {
 	    ASSERT(LLINK(p) == node);
-	    if (BAL(p) == +1) {
-		if (BAL(RLINK(p)) < 0) {
+	    if (RBAL(p)) { /* if BAL(p) == +1 */
+		if (LBAL(RLINK(p))) { /* if BAL(RLINK(p)) < 0 */
 		    rotations += 2;
 		    rotate_rl(tree, p);
 		} else {
@@ -592,19 +616,18 @@ hb_tree_remove(hb_tree* tree, const void* key)
 			break;
 		}
 		node = p->parent;
-	    } else if (BAL(p) == 0) {
+	    } else if (LBAL(p)) { /* else if BAL(p) == -1 */
+		p->lbal &= PTR_MASK; /* BAL(p) <- 0 */
+		node = p;
+	    } else {
+		ASSERT(((p->lbal | p->rbal) & BAL_MASK) == 0);
 		p->rbal |= BAL_MASK; /* BAL(p) <- +1 */
 		break;
-	    } else {
-		ASSERT(BAL(p) == -1);
-		p->lbal &= PTR_MASK; /* BAL(p) <- 0 */
-		p->rbal &= PTR_MASK;
-		node = p;
 	    }
 	} else {
 	    ASSERT(RLINK(p) == node);
-	    if (BAL(p) == -1) {
-		if (BAL(LLINK(p)) > 0) {
+	    if (LBAL(p)) { /* if BAL(p) == -1 */
+		if (RBAL(LLINK(p))) { /* if BAL(LLINK(p)) > 0 */
 		    rotations += 2;
 		    rotate_lr(tree, p);
 		} else {
@@ -613,14 +636,13 @@ hb_tree_remove(hb_tree* tree, const void* key)
 			break;
 		}
 		node = p->parent;
-	    } else if (BAL(p) == 0) {
+	    } else if (RBAL(p)) { /* else if BAL(p) == +1 */
+		p->rbal &= ~BAL_MASK; /* BAL(p) <- 0 */
+		node = p;
+	    } else {
+		ASSERT(((p->lbal | p->rbal) & BAL_MASK) == 0);
 		p->lbal |= BAL_MASK; /* BAL(p) <- -1 */
 		break;
-	    } else {
-		ASSERT(BAL(p) == +1);
-		p->lbal &= PTR_MASK; /* BAL(p) <- 0 */
-		p->rbal &= PTR_MASK;
-		node = p;
 	    }
 	}
 
