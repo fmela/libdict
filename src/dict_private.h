@@ -41,7 +41,7 @@
 # if defined(__GNUC__) || defined(__clang__)
 #  define ASSERT(expr) \
     do { \
-	if (!__builtin_expect((expr), 0)) { \
+	if (!__builtin_expect((expr), 1)) { \
 	    fprintf(stderr, "\n%s:%d (%s) assertion failed: %s\n", \
 		    __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
 	    abort(); \
@@ -61,14 +61,29 @@
 # define ASSERT(expr)	(void)(expr)
 #endif
 
-#define VERIFY(expr) \
+#if defined(__GNUC__) || defined(__clang__)
+# define LIKELY(expr)	    __builtin_expect((expr), 1)
+# define UNLIKELY(expr)	    __builtin_expect((expr), 0)
+# define VERIFY(expr) \
     do { \
-	if (!(expr)) { \
+	if (!__builtin_expect((expr), 1)) { \
 	    fprintf(stderr, "\n%s:%d (%s) verification failed: %s\n", \
 		    __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
 	    return false; \
 	} \
     } while (0)
+#else
+# define LIKELY(expr)	    (expr)
+# define UNLIKELY(expr)	    (expr)
+# define VERIFY(expr) \
+    do { \
+	if (!(expr)) { \
+	    fprintf(stderr, "\n%s:%d verification failed: %s\n", \
+		    __FILE__, __LINE__, #expr); \
+	    return false; \
+	} \
+    } while (0)
+#endif
 
 #define MALLOC(n)	(*dict_malloc_func)(n)
 #define FREE(p)		(*dict_free_func)(p)
