@@ -41,7 +41,7 @@
 # if defined(__GNUC__) || defined(__clang__)
 #  define ASSERT(expr) \
     do { \
-	if (!__builtin_expect((expr), 0)) { \
+	if (!__builtin_expect((expr), 1)) { \
 	    fprintf(stderr, "\n%s:%d (%s) assertion failed: %s\n", \
 		    __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
 	    abort(); \
@@ -66,7 +66,7 @@
 # define UNLIKELY(expr)	    __builtin_expect((expr), 0)
 # define VERIFY(expr) \
     do { \
-	if (!__builtin_expect((expr), 0)) { \
+	if (!__builtin_expect((expr), 1)) { \
 	    fprintf(stderr, "\n%s:%d (%s) verification failed: %s\n", \
 		    __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
 	    return false; \
