@@ -43,7 +43,7 @@
     do { \
 	if (!__builtin_expect((expr), 1)) { \
 	    fprintf(stderr, "\n%s:%d (%s) assertion failed: %s\n", \
-		    __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
+		    __FILE__, __LINE__, __func__, #expr); \
 	    abort(); \
 	} \
     } while (0)
@@ -68,7 +68,7 @@
     do { \
 	if (!__builtin_expect((expr), 1)) { \
 	    fprintf(stderr, "\n%s:%d (%s) verification failed: %s\n", \
-		    __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
+		    __FILE__, __LINE__, __func__, #expr); \
 	    return false; \
 	} \
     } while (0)
@@ -101,13 +101,7 @@
 # define GCC_CONST
 #endif
 
-static inline unsigned dict_rand() {
-#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
-    extern long random();
-    return (unsigned) random();
-#else
-    return (unsigned) rand();
-#endif
-}
+extern long random(void);
+static inline unsigned dict_rand() { return (unsigned) random(); }
 
 #endif /* !LIBDICT_DICT_PRIVATE_H__ */
