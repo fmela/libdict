@@ -295,11 +295,11 @@ sp_tree_insert(sp_tree* tree, void* key)
     sp_node* parent = NULL;
     while (node) {
 	cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    parent = node, node = node->llink;
-	else if (cmp)
-	    parent = node, node = node->rlink;
-	else
+	if (cmp < 0) {
+	    parent = node; node = node->llink;
+	} else if (cmp > 0) {
+	    parent = node; node = node->rlink;
+	} else
 	    return (dict_insert_result) { &node->datum, false };
     }
 
@@ -332,11 +332,11 @@ sp_tree_search(sp_tree* tree, const void* key)
     sp_node* parent = NULL;
     while (node) {
 	int cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    parent = node, node = node->llink;
-	else if (cmp)
-	    parent = node, node = node->rlink;
-	else {
+	if (cmp < 0) {
+	    parent = node; node = node->llink;
+	} else if (cmp > 0) {
+	    parent = node; node = node->rlink;
+	} else {
 	    splay(tree, node);
 	    ASSERT(tree->root == node);
 	    return &node->datum;
