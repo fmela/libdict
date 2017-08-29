@@ -70,8 +70,8 @@ main(int argc, char *argv[])
 	ASSERT(word != NULL);
 	if (word->next) {
 	    int count = 1;
-	    while (word->next)
-		count++, word = word->next;
+	    for (; word->next; count++)
+		word = word->next;
 	    printf("%2d:[", count);
 	    word = *rb_itor_datum(itor);
 	    while (word) {

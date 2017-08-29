@@ -448,11 +448,13 @@ void
 timer_end(const struct rusage *start, struct rusage *end,
 	  struct timeval *total) {
     getrusage(RUSAGE_SELF, end);
-    if (end->ru_utime.tv_usec < start->ru_utime.tv_usec)
-	end->ru_utime.tv_usec += 1000000, end->ru_utime.tv_sec--;
+    if (end->ru_utime.tv_usec < start->ru_utime.tv_usec) {
+	end->ru_utime.tv_usec += 1000000; end->ru_utime.tv_sec--;
+    }
     end->ru_utime.tv_usec -= start->ru_utime.tv_usec;
     end->ru_utime.tv_sec -= start->ru_utime.tv_sec;
     total->tv_sec += end->ru_utime.tv_sec;
-    if ((total->tv_usec += end->ru_utime.tv_usec) > 1000000)
-	total->tv_usec -= 1000000, total->tv_sec++;
+    if ((total->tv_usec += end->ru_utime.tv_usec) > 1000000) {
+	total->tv_usec -= 1000000; total->tv_sec++;
+    }
 }
