@@ -32,12 +32,12 @@ ifeq ($(CC),cc)
   CC := $(shell which clang || which gcc)
 endif
 INCLUDES := -I$(HEADER_DIR) -I$(SOURCE_DIR)
-WARNINGS := -Wno-padded -Wno-format-nonliteral -Wno-disabled-macro-expansion -Werror -ansi -pedantic
 ifeq ($(findstring clang,$(CC)),clang)
-WARNINGS += -Weverything
+  WARNINGS := -Weverything -Wno-comma -Wno-padded -Wno-format-nonliteral -Wno-disabled-macro-expansion
 else # gcc
-WARNINGS += -Wall -Wextra
+  WARNINGS := -Wall -Wextra
 endif
+WARNINGS := $(WARNINGS) -Werror -ansi -pedantic
 CFLAGS := $(WARNINGS) -std=c11 -O2 -pipe $(INCLUDES)
 LDFLAGS :=
 
