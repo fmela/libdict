@@ -33,7 +33,7 @@ ifeq ($(CC),cc)
 endif
 INCLUDES := -I$(HEADER_DIR) -I$(SOURCE_DIR)
 ifeq ($(findstring clang,$(CC)),clang)
-  WARNINGS := -Weverything -Wno-comma -Wno-padded -Wno-format-nonliteral -Wno-disabled-macro-expansion
+  WARNINGS := -Weverything -Wno-padded -Wno-format-nonliteral -Wno-disabled-macro-expansion
 else # gcc
   WARNINGS := -Wall -Wextra
 endif

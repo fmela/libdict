@@ -305,11 +305,11 @@ rb_tree_insert(rb_tree* tree, void* key)
     rb_node* parent = RB_NULL;
     while (node != RB_NULL) {
 	cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    parent = node, node = node->llink;
-	else if (cmp)
-	    parent = node, node = RLINK(node);
-	else
+	if (cmp < 0) {
+	    parent = node; node = node->llink;
+	} else if (cmp > 0) {
+	    parent = node; node = RLINK(node);
+	} else
 	    return (dict_insert_result) { &node->datum, false };
     }
 

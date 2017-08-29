@@ -283,11 +283,11 @@ pr_tree_insert(pr_tree* tree, void* key)
     pr_node* parent = NULL;
     while (node) {
 	cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    parent = node, node = node->llink;
-	else if (cmp)
-	    parent = node, node = node->rlink;
-	else
+	if (cmp < 0) {
+	    parent = node; node = node->llink;
+	} else if (cmp > 0) {
+	    parent = node; node = node->rlink;
+	} else
 	    return (dict_insert_result) { &node->datum, false };
     }
 
