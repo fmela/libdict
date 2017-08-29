@@ -11,6 +11,10 @@ libdict is a C library that provides the following data structures with efficien
 * [hashtable, using separate chaining](http://en.wikipedia.org/wiki/Hashtable#Separate_chaining)
 * [hashtable, using open addressing with linear probing](http://en.wikipedia.org/wiki/Hashtable#Open_addressing)
 
+The API is designed with efficiency as its primary concern. For example, an insert call returns a boolean indicating whether or not the key was already present in the dictionary (i.e. whether there was an insertion or a collision), and a pointer to the location of the associated data. Thus, an insert-or-update operation can be supported with a single traversal of the data structure.
+
+All data structures support bidirectional iterators.
+
 ## Build status
 
 [![Build Status](https://travis-ci.org/fmela/libdict.svg?branch=master)](https://travis-ci.org/fmela/libdict)
