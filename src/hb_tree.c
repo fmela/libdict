@@ -602,33 +602,33 @@ node_verify(const hb_tree* tree, const hb_node* parent, const hb_node* node,
     ASSERT(tree != NULL);
 
     if (!parent) {
-	ASSERT(tree->root == node);
+	VERIFY(tree->root == node);
     } else {
 	if (parent->llink == node) {
 	    if (node)
-		ASSERT(tree->cmp_func(parent->key, node->key) > 0);
+		VERIFY(tree->cmp_func(parent->key, node->key) > 0);
 	} else {
 	    ASSERT(parent->rlink == node);
 	    if (node)
-		ASSERT(tree->cmp_func(parent->key, node->key) < 0);
+		VERIFY(tree->cmp_func(parent->key, node->key) < 0);
 	}
     }
-    bool verified = true;
     if (node) {
 	int bal = node->bal & BAL_MASK;
-	ASSERT(bal >= 0);
-	ASSERT(bal <= 2);
+	VERIFY(bal >= 0);
+	VERIFY(bal <= 2);
 	if (bal == 2) {
-	    ASSERT(node->llink != NULL);
+	    VERIFY(node->llink != NULL);
 	    bal = -1;
 	} else if (bal == 1) {
-	    ASSERT(node->rlink != NULL);
+	    VERIFY(node->rlink != NULL);
 	}
-	ASSERT(PARENT(node) == parent);
+	VERIFY(PARENT(node) == parent);
 	unsigned lheight, rheight;
-	verified &= node_verify(tree, node, node->llink, &lheight, count);
-	verified &= node_verify(tree, node, node->rlink, &rheight, count);
-	ASSERT(bal == (int)rheight - (int)lheight);
+	if (!node_verify(tree, node, node->llink, &lheight, count) ||
+	    !node_verify(tree, node, node->rlink, &rheight, count))
+	    return false;
+	VERIFY(bal == (int)rheight - (int)lheight);
 	if (height)
 	    *height = MAX(lheight, rheight) + 1;
 	*count += 1;
@@ -636,7 +636,7 @@ node_verify(const hb_tree* tree, const hb_node* parent, const hb_node* node,
 	if (height)
 	    *height = 0;
     }
-    return verified;
+    return true;
 }
 
 bool
