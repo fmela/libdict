@@ -305,12 +305,14 @@ hb_tree_insert(hb_tree* tree, void* key)
     hb_node* q = NULL;
     while (node) {
 	cmp = tree->cmp_func(key, node->key);
-	if (UNLIKELY(cmp == 0))
+	if (cmp < 0) {
+	    parent = node; node = node->llink;
+	} else if (cmp > 0) {
+	    parent = node; node = node->rlink;
+	} else
 	    return (dict_insert_result) { &node->datum, false };
-	if (node->bal & BAL_MASK)
-	    q = node;
-	parent = node;
-	node = (cmp < 0) ? node->llink : node->rlink;
+	if (parent->bal & BAL_MASK)
+	    q = parent;
     }
 
     hb_node* const add = node = node_new(key);
@@ -382,9 +384,12 @@ hb_tree_remove(hb_tree* tree, const void* key)
 	if (!node)
 	    return (dict_remove_result) { NULL, NULL, false };
 	int cmp = tree->cmp_func(key, node->key);
-	if (UNLIKELY(cmp == 0))
+	if (cmp < 0)
+	    node = node->llink;
+	else if (cmp > 0)
+	    node = node->rlink;
+	else
 	    break;
-	node = (cmp < 0) ? node->llink : node->rlink;
     }
 
     if (node->llink && node->rlink) {
