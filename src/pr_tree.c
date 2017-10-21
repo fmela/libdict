@@ -50,7 +50,7 @@ struct pr_itor {
     TREE_ITERATOR_FIELDS(pr_tree, pr_node);
 };
 
-static dict_vtable pr_tree_vtable = {
+static const dict_vtable pr_tree_vtable = {
     (dict_inew_func)	    pr_dict_itor_new,
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    pr_tree_insert,
@@ -66,7 +66,7 @@ static dict_vtable pr_tree_vtable = {
     (dict_verify_func)	    pr_tree_verify,
 };
 
-static itor_vtable pr_tree_itor_vtable = {
+static const itor_vtable pr_tree_itor_vtable = {
     (dict_ifree_func)	    tree_iterator_free,
     (dict_valid_func)	    tree_iterator_valid,
     (dict_invalidate_func)  tree_iterator_invalidate,

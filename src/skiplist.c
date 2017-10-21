@@ -59,7 +59,7 @@ struct skiplist_itor {
     skip_node*		    node;
 };
 
-static dict_vtable skiplist_vtable = {
+static const dict_vtable skiplist_vtable = {
     (dict_inew_func)	    skiplist_dict_itor_new,
     (dict_dfree_func)	    skiplist_free,
     (dict_insert_func)	    skiplist_insert,
@@ -75,7 +75,7 @@ static dict_vtable skiplist_vtable = {
     (dict_verify_func)	    skiplist_verify,
 };
 
-static itor_vtable skiplist_itor_vtable = {
+static const itor_vtable skiplist_itor_vtable = {
     (dict_ifree_func)	    skiplist_itor_free,
     (dict_valid_func)	    skiplist_itor_valid,
     (dict_invalidate_func)  skiplist_itor_invalidate,

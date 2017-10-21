@@ -63,7 +63,7 @@ struct sp_itor {
     TREE_ITERATOR_FIELDS(sp_tree, sp_node);
 };
 
-static dict_vtable sp_tree_vtable = {
+static const dict_vtable sp_tree_vtable = {
     (dict_inew_func)	    sp_dict_itor_new,
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    sp_tree_insert,
@@ -79,7 +79,7 @@ static dict_vtable sp_tree_vtable = {
     (dict_verify_func)	    sp_tree_verify,
 };
 
-static itor_vtable sp_tree_itor_vtable = {
+static const itor_vtable sp_tree_itor_vtable = {
     (dict_ifree_func)	    tree_iterator_free,
     (dict_valid_func)	    tree_iterator_valid,
     (dict_invalidate_func)  tree_iterator_invalidate,

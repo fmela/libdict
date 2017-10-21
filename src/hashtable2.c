@@ -64,7 +64,7 @@ struct hashtable2_itor {
     int			    slot;
 };
 
-static dict_vtable hashtable2_vtable = {
+static const dict_vtable hashtable2_vtable = {
     (dict_inew_func)	    hashtable2_dict_itor_new,
     (dict_dfree_func)	    hashtable2_free,
     (dict_insert_func)	    hashtable2_insert,
@@ -80,7 +80,7 @@ static dict_vtable hashtable2_vtable = {
     (dict_verify_func)	    hashtable2_verify,
 };
 
-static itor_vtable hashtable2_itor_vtable = {
+static const itor_vtable hashtable2_itor_vtable = {
     (dict_ifree_func)	    hashtable2_itor_free,
     (dict_valid_func)	    hashtable2_itor_valid,
     (dict_invalidate_func)  hashtable2_itor_invalidate,

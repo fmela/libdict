@@ -147,7 +147,7 @@ typedef struct {
 
 typedef struct {
     void*	    _object;
-    dict_vtable*    _vtable;
+    const dict_vtable*    _vtable;
 } dict;
 
 #define dict_private(dct)	    ((dct)->_object)
@@ -168,7 +168,7 @@ size_t dict_free(dict* dct, dict_delete_func delete_func);
 
 struct dict_itor {
     void*	    _itor;
-    itor_vtable*    _vtable;
+    const itor_vtable*    _vtable;
 };
 
 #define dict_itor_private(i)	    ((i)->_itor)

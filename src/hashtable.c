@@ -67,7 +67,7 @@ struct hashtable_itor {
     unsigned		    slot;
 };
 
-static dict_vtable hashtable_vtable = {
+static const dict_vtable hashtable_vtable = {
     (dict_inew_func)	    hashtable_dict_itor_new,
     (dict_dfree_func)	    hashtable_free,
     (dict_insert_func)	    hashtable_insert,
@@ -83,7 +83,7 @@ static dict_vtable hashtable_vtable = {
     (dict_verify_func)	    hashtable_verify,
 };
 
-static itor_vtable hashtable_itor_vtable = {
+static const itor_vtable hashtable_itor_vtable = {
     (dict_ifree_func)	    hashtable_itor_free,
     (dict_valid_func)	    hashtable_itor_valid,
     (dict_invalidate_func)  hashtable_itor_invalidate,

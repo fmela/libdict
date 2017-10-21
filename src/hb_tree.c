@@ -56,7 +56,7 @@ struct hb_itor {
     TREE_ITERATOR_FIELDS(hb_tree, hb_node);
 };
 
-static dict_vtable hb_tree_vtable = {
+static const dict_vtable hb_tree_vtable = {
     (dict_inew_func)	    hb_dict_itor_new,
     (dict_dfree_func)	    hb_tree_free,
     (dict_insert_func)	    hb_tree_insert,
@@ -72,7 +72,7 @@ static dict_vtable hb_tree_vtable = {
     (dict_verify_func)	    hb_tree_verify,
 };
 
-static itor_vtable hb_tree_itor_vtable = {
+static const itor_vtable hb_tree_itor_vtable = {
     (dict_ifree_func)	    hb_itor_free,
     (dict_valid_func)	    hb_itor_valid,
     (dict_invalidate_func)  hb_itor_invalidate,

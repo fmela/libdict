@@ -65,7 +65,7 @@ struct rb_itor {
     TREE_ITERATOR_FIELDS(rb_tree, rb_node);
 };
 
-static dict_vtable rb_tree_vtable = {
+static const dict_vtable rb_tree_vtable = {
     (dict_inew_func)	    rb_dict_itor_new,
     (dict_dfree_func)	    rb_tree_free,
     (dict_insert_func)	    rb_tree_insert,
@@ -81,7 +81,7 @@ static dict_vtable rb_tree_vtable = {
     (dict_verify_func)	    rb_tree_verify,
 };
 
-static itor_vtable rb_tree_itor_vtable = {
+static const itor_vtable rb_tree_itor_vtable = {
     (dict_ifree_func)	    rb_itor_free,
     (dict_valid_func)	    rb_itor_valid,
     (dict_invalidate_func)  rb_itor_invalidate,
