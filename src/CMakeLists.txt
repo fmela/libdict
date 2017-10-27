@@ -1,7 +1,7 @@
 
 
 
-add_library(dict
+add_library(mdict
   dict.c
   tr_tree.c
   wb_tree.c
