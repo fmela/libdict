@@ -256,7 +256,7 @@ test_closest_lookup(dict *dct)
 	const void* key = NULL;
 	void* datum = NULL;
 	CU_ASSERT_FALSE(dict_select(dct, NUM_SORTED_KEYS, &key, &datum));
-	CU_ASSERT_PTR_NULL(key);
+	CU_ASSERT_EQUAL(key, (const void*)NULL);
 	CU_ASSERT_PTR_NULL(datum);
     }
 
@@ -266,7 +266,7 @@ test_closest_lookup(dict *dct)
 	    const void* key = NULL;
 	    void* datum = NULL;
 	    CU_ASSERT_FALSE(dict_select(dct, i, &key, &datum));
-	    CU_ASSERT_PTR_NULL(key);
+	    CU_ASSERT_EQUAL(key, (const void*)NULL);
 	    CU_ASSERT_PTR_NULL(datum);
 	    CU_ASSERT_PTR_NULL(dict_search_le(dct, closest_lookup_infos[i].key));
 	    CU_ASSERT_PTR_NULL(dict_search_lt(dct, closest_lookup_infos[i].key));
