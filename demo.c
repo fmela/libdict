@@ -134,7 +134,7 @@ main(int argc, char **argv)
 		printf("usage: searchle <key>\n");
 		continue;
 	    }
-	    if (!dict_has_near_search(dct)) {
+	    if (!dict_is_sorted(dct)) {
 		printf("dict does not support that operation!");
 		continue;
 	    }
@@ -148,7 +148,7 @@ main(int argc, char **argv)
 		printf("usage: searchlt <key>\n");
 		continue;
 	    }
-	    if (!dict_has_near_search(dct)) {
+	    if (!dict_is_sorted(dct)) {
 		printf("dict does not support that operation!");
 		continue;
 	    }
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 		printf("usage: searchge <key>\n");
 		continue;
 	    }
-	    if (!dict_has_near_search(dct)) {
+	    if (!dict_is_sorted(dct)) {
 		printf("dict does not support that operation!");
 		continue;
 	    }
@@ -176,7 +176,7 @@ main(int argc, char **argv)
 		printf("usage: searchgt <key>\n");
 		continue;
 	    }
-	    if (!dict_has_near_search(dct)) {
+	    if (!dict_is_sorted(dct)) {
 		printf("dict does not support that operation!");
 		continue;
 	    }

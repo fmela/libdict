@@ -146,18 +146,18 @@ typedef struct {
 } itor_vtable;
 
 typedef struct {
-    void*	    _object;
-    const dict_vtable*    _vtable;
+    void*		_object;
+    const dict_vtable*  _vtable;
 } dict;
 
 #define dict_private(dct)	    ((dct)->_object)
 #define dict_insert(dct,key)	    ((dct)->_vtable->insert((dct)->_object, (key)))
 #define dict_search(dct,key)	    ((dct)->_vtable->search((dct)->_object, (key)))
-#define dict_has_near_search(dct)   ((dct)->_vtable->search_le != NULL)	/* Assumes all-or-none near search functions. */
-#define dict_search_le(dct,key)	    ((dct)->_vtable->search_le((dct)->_object, (key)))
-#define dict_search_lt(dct,key)	    ((dct)->_vtable->search_lt((dct)->_object, (key)))
-#define dict_search_ge(dct,key)	    ((dct)->_vtable->search_ge((dct)->_object, (key)))
-#define dict_search_gt(dct,key)	    ((dct)->_vtable->search_gt((dct)->_object, (key)))
+#define dict_is_sorted(dct)	    ((dct)->_vtable->search_le != NULL)	/* Assumes all-or-none near-search functions. */
+#define dict_search_le(dct,key)	    ((dct)->_vtable->search_le ? (dct)->_vtable->search_le((dct)->_object, (key)) : NULL)
+#define dict_search_lt(dct,key)	    ((dct)->_vtable->search_lt ? (dct)->_vtable->search_lt((dct)->_object, (key)) : NULL)
+#define dict_search_ge(dct,key)	    ((dct)->_vtable->search_ge ? (dct)->_vtable->search_ge((dct)->_object, (key)) : NULL)
+#define dict_search_gt(dct,key)	    ((dct)->_vtable->search_gt ? (dct)->_vtable->search_gt((dct)->_object, (key)) : NULL)
 #define dict_remove(dct,key)	    ((dct)->_vtable->remove((dct)->_object, (key)))
 #define dict_traverse(dct,func)	    ((dct)->_vtable->traverse((dct)->_object, (func)))
 #define dict_count(dct)		    ((dct)->_vtable->count((dct)->_object))
@@ -167,8 +167,8 @@ typedef struct {
 size_t dict_free(dict* dct, dict_delete_func delete_func);
 
 struct dict_itor {
-    void*	    _itor;
-    const itor_vtable*    _vtable;
+    void*		_itor;
+    const itor_vtable*  _vtable;
 };
 
 #define dict_itor_private(i)	    ((i)->_itor)

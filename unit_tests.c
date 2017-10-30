@@ -243,11 +243,15 @@ test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
 void
 test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsigned n_cl_infos)
 {
-    if (!dict_has_near_search(dct))
-	return;
-
     dict_itor* itor = dict_itor_new(dct);
     for (unsigned i = 0; i < n_cl_infos; i++) {
+	if (!dict_is_sorted(dct)) {
+	    CU_ASSERT_PTR_NULL(dict_search_le(dct, cl_infos[i].key));
+	    CU_ASSERT_PTR_NULL(dict_search_lt(dct, cl_infos[i].key));
+	    CU_ASSERT_PTR_NULL(dict_search_ge(dct, cl_infos[i].key));
+	    CU_ASSERT_PTR_NULL(dict_search_gt(dct, cl_infos[i].key));
+	    continue;
+	}
 	if (cl_infos[i].le_key) {
 	    CU_ASSERT_STRING_EQUAL(*dict_search_le(dct, cl_infos[i].key),
 				   cl_infos[i].le_val);
