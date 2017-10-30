@@ -62,6 +62,7 @@ static const dict_vtable pr_tree_vtable = {
     (dict_remove_func)	    pr_tree_remove,
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
+    (dict_select_func)	    tree_select,
     (dict_count_func)	    tree_count,
     (dict_verify_func)	    pr_tree_verify,
 };

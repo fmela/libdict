@@ -38,7 +38,7 @@ else # gcc
   WARNINGS := -Wall -Wextra
 endif
 WARNINGS := $(WARNINGS) -Werror -ansi -pedantic
-CFLAGS := $(WARNINGS) -std=c11 -O2 -pipe $(INCLUDES)
+CFLAGS := $(WARNINGS) -std=c11 -g2 -pipe $(INCLUDES)
 LDFLAGS :=
 
 INSTALL_PREFIX ?= /usr/local

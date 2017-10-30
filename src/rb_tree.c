@@ -77,6 +77,7 @@ static const dict_vtable rb_tree_vtable = {
     (dict_remove_func)	    rb_tree_remove,
     (dict_clear_func)	    rb_tree_clear,
     (dict_traverse_func)    rb_tree_traverse,
+    (dict_select_func)	    rb_tree_select,
     (dict_count_func)	    tree_count,
     (dict_verify_func)	    rb_tree_verify,
 };
@@ -631,6 +632,30 @@ rb_tree_traverse(rb_tree* tree, dict_visit_func visit)
     }
     return count;
 }
+
+bool
+rb_tree_select(rb_tree *tree, size_t n, const void **key, void **datum)
+{
+    ASSERT(tree != NULL);
+
+    if (n >= tree->count)
+	return false;
+    rb_node *node;
+    if (n >= tree->count / 2) {
+	node = node_max(tree->root);
+	n = tree->count - 1 - n;
+	while (n--)
+	    node = node_prev(node);
+    } else {
+	node = node_min(tree->root);
+	while (n--)
+	    node = node_next(node);
+    }
+    *key = node->key;
+    *datum = node->datum;
+    return true;
+}
+
 
 static size_t
 node_height(const rb_node* node)

@@ -49,6 +49,7 @@ dict_remove_result
 		wb_tree_remove(wb_tree* tree, const void* key);
 size_t		wb_tree_clear(wb_tree* tree, dict_delete_func delete_func);
 size_t		wb_tree_traverse(wb_tree* tree, dict_visit_func visit);
+bool		wb_tree_select(wb_tree* tree, size_t n, const void** key, void** datum);
 size_t		wb_tree_count(const wb_tree* tree);
 size_t		wb_tree_height(const wb_tree* tree);
 size_t		wb_tree_mheight(const wb_tree* tree);

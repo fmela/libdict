@@ -71,6 +71,7 @@ static const dict_vtable skiplist_vtable = {
     (dict_remove_func)	    skiplist_remove,
     (dict_clear_func)	    skiplist_clear,
     (dict_traverse_func)    skiplist_traverse,
+    (dict_select_func)	    NULL,
     (dict_count_func)	    skiplist_count,
     (dict_verify_func)	    skiplist_verify,
 };
