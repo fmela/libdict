@@ -90,6 +90,7 @@ typedef dict_remove_result
 		    (*dict_remove_func)(void* obj, const void* key);
 typedef size_t      (*dict_clear_func)(void* obj, dict_delete_func delete_func);
 typedef size_t      (*dict_traverse_func)(void* obj, dict_visit_func visit);
+typedef bool        (*dict_select_func)(void *obj, size_t n, const void** key, void** datum);
 typedef size_t      (*dict_count_func)(const void* obj);
 typedef bool	    (*dict_verify_func)(const void* obj);
 
@@ -105,6 +106,7 @@ typedef struct {
     dict_remove_func    remove;
     dict_clear_func     clear;
     dict_traverse_func  traverse;
+    dict_select_func    select;
     dict_count_func     count;
     dict_verify_func	verify;
 } dict_vtable;
@@ -159,10 +161,11 @@ typedef struct {
 #define dict_search_ge(dct,key)	    ((dct)->_vtable->search_ge ? (dct)->_vtable->search_ge((dct)->_object, (key)) : NULL)
 #define dict_search_gt(dct,key)	    ((dct)->_vtable->search_gt ? (dct)->_vtable->search_gt((dct)->_object, (key)) : NULL)
 #define dict_remove(dct,key)	    ((dct)->_vtable->remove((dct)->_object, (key)))
+#define dict_clear(dct,func)	    ((dct)->_vtable->clear((dct)->_object, (func)))
 #define dict_traverse(dct,func)	    ((dct)->_vtable->traverse((dct)->_object, (func)))
+#define dict_select(dct,n,key,d)    ((dct)->_vtable->select && (dct)->_vtable->select((dct)->_object, (n), (key), (d)))
 #define dict_count(dct)		    ((dct)->_vtable->count((dct)->_object))
 #define dict_verify(dct)	    ((dct)->_vtable->verify((dct)->_object))
-#define dict_clear(dct,func)	    ((dct)->_vtable->clear((dct)->_object, (func)))
 #define dict_itor_new(dct)	    (dct)->_vtable->inew((dct)->_object)
 size_t dict_free(dict* dct, dict_delete_func delete_func);
 

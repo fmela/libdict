@@ -91,6 +91,7 @@ static const dict_vtable wb_tree_vtable = {
     (dict_remove_func)	    wb_tree_remove,
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
+    (dict_select_func)	    wb_tree_select,
     (dict_count_func)	    tree_count,
     (dict_verify_func)	    wb_tree_verify,
 };
@@ -153,9 +154,7 @@ wb_dict_new(dict_compare_func cmp_func)
 size_t
 wb_tree_free(wb_tree* tree, dict_delete_func delete_func)
 {
-    ASSERT(tree != NULL);
-
-    size_t count = tree_clear(tree, delete_func);
+    const size_t count = tree_clear(tree, delete_func);
     FREE(tree);
     return count;
 }
@@ -163,8 +162,6 @@ wb_tree_free(wb_tree* tree, dict_delete_func delete_func)
 void**
 wb_tree_search(wb_tree* tree, const void* key)
 {
-    ASSERT(tree != NULL);
-
     return tree_search(tree, key);
 }
 
@@ -375,78 +372,71 @@ wb_tree_clear(wb_tree* tree, dict_delete_func delete_func)
 const void*
 wb_tree_min(const wb_tree* tree)
 {
-    ASSERT(tree != NULL);
-
-    if (!tree->root)
-	return NULL;
-
-    const wb_node* node = tree->root;
-    while (node->llink)
-	node = node->llink;
-    return node->key;
+    return tree_min(tree);
 }
 
 const void*
 wb_tree_max(const wb_tree* tree)
 {
-    ASSERT(tree != NULL);
-
-    if (!tree->root)
-	return NULL;
-
-    const wb_node* node = tree->root;
-    while (node->rlink)
-	node = node->rlink;
-    return node->key;
+    return tree_max(tree);
 }
 
 size_t
 wb_tree_traverse(wb_tree* tree, dict_visit_func visit)
 {
-    ASSERT(tree != NULL);
+    return tree_traverse(tree, visit);
+}
 
-    if (!tree->root)
-	return 0;
-    size_t count = 0;
-    wb_node* node = tree_node_min(tree->root);
-    while (node) {
-	++count;
-	if (!visit(node->key, node->datum))
-	    break;
-	node = tree_node_next(node);
+bool
+wb_tree_select(wb_tree* tree, size_t n, const void** key, void** datum)
+{
+    if (n >= tree->count) {
+	if (key)
+	    *key = NULL;
+	if (datum)
+	    *datum = NULL;
+	return false;
     }
-    return count;
+    wb_node* node = tree->root;
+    for (;;) {
+	const unsigned nw = WEIGHT(node->llink);
+	if (n + 1 >= nw) {
+	    if (n + 1 == nw) {
+		if (key)
+		    *key = node->key;
+		if (datum)
+		    *datum = node->datum;
+		return true;
+	    }
+	    n -= nw;
+	    node = node->rlink;
+	} else {
+	    node = node->llink;
+	}
+    }
 }
 
 size_t
 wb_tree_count(const wb_tree* tree)
 {
-    ASSERT(tree != NULL);
-
     return tree_count(tree);
 }
 
 size_t
 wb_tree_height(const wb_tree* tree)
 {
-    ASSERT(tree != NULL);
-
     return tree->root ? node_height(tree->root) : 0;
 }
 
 size_t
 wb_tree_mheight(const wb_tree* tree)
 {
-    ASSERT(tree != NULL);
-
     return tree->root ? node_mheight(tree->root) : 0;
 }
 
 size_t
 wb_tree_pathlen(const wb_tree* tree)
 {
-    ASSERT(tree != NULL);
-
     return tree->root ? node_pathlen(tree->root, 1) : 0;
 }
 
@@ -468,8 +458,6 @@ node_new(void* key)
 static size_t
 node_height(const wb_node* node)
 {
-    ASSERT(node != NULL);
-
     size_t l = node->llink ? node_height(node->llink) + 1 : 0;
     size_t r = node->rlink ? node_height(node->rlink) + 1 : 0;
     return MAX(l, r);
@@ -478,8 +466,6 @@ node_height(const wb_node* node)
 static size_t
 node_mheight(const wb_node* node)
 {
-    ASSERT(node != NULL);
-
     size_t l = node->llink ? node_mheight(node->llink) + 1 : 0;
     size_t r = node->rlink ? node_mheight(node->rlink) + 1 : 0;
     return MIN(l, r);
@@ -489,8 +475,6 @@ static size_t
 node_pathlen(const wb_node* node, size_t level)
 {
     size_t n = 0;
-
-    ASSERT(node != NULL);
 
     if (node->llink)
 	n += level + node_pathlen(node->llink, level + 1);
@@ -502,8 +486,6 @@ node_pathlen(const wb_node* node, size_t level)
 wb_itor*
 wb_itor_new(wb_tree* tree)
 {
-    ASSERT(tree != NULL);
-
     wb_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->tree = tree;
@@ -531,8 +513,6 @@ static bool
 node_verify(const wb_tree* tree, const wb_node* parent, const wb_node* node,
 	    unsigned *weight)
 {
-    ASSERT(tree != NULL);
-
     if (!parent) {
 	VERIFY(tree->root == node);
     } else {
@@ -563,6 +543,7 @@ wb_tree_verify(const wb_tree* tree)
 
     if (tree->root) {
 	VERIFY(tree->count > 0);
+	VERIFY(tree->count + 1 == tree->root->weight);
     } else {
 	VERIFY(tree->count == 0);
     }

@@ -1,6 +1,7 @@
 /* unit_tests.c
  * Copyright (C) 2012 Farooq Mela. All rights reserved. */
 
+#include <assert.h>
 #include <float.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -30,8 +31,7 @@ struct closest_lookup_info {
     const char *gt_key, *gt_val;
 };
 
-void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
-		const struct closest_lookup_info *cl_infos, unsigned n_cl_infos);
+void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bool keys_sorted);
 void test_basic_hashtable_1bucket(void);
 void test_basic_hashtable2_1bucket(void);
 void test_basic_hashtable_nbuckets(void);
@@ -44,7 +44,7 @@ void test_basic_splay_tree(void);
 void test_basic_treap(void);
 void test_basic_weight_balanced_tree(void);
 void test_search(dict *dct, dict_itor *itor, const char *key, const char *value);
-void test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsigned n_cl_infos);
+void test_closest_lookup(dict *dct, unsigned nkeys, bool keys_sorted);
 void test_primes_geq(void);
 void test_version_string(void);
 void shuffle(char **p, unsigned size);
@@ -95,7 +95,7 @@ shuffle(char **p, unsigned size)
     }
 }
 
-static const struct key_info keys1[] = {
+static const struct key_info unsorted_keys[] = {
     { "d", "D", "d" },
     { "b", "B", "b" },
     { "a", "A", "a" },
@@ -135,9 +135,9 @@ static const struct key_info keys1[] = {
     { "ta", "TA", "ta" },
     { "ua", "UA", "ua" },
 };
-#define NKEYS1 (sizeof(keys1) / sizeof(keys1[0]))
+#define NUM_UNSORTED_KEYS (sizeof(unsorted_keys) / sizeof(unsorted_keys[0]))
 
-static const struct key_info keys2[] = {
+static const struct key_info sorted_keys[] = {
     { "a", "A", "a" },
     { "aa", "AA", "aa" },
     { "b", "B", "b" },
@@ -177,7 +177,9 @@ static const struct key_info keys2[] = {
     { "z", "Z", "z" },
     { "za", "ZA", "za" },
 };
-#define NKEYS2 (sizeof(keys2) / sizeof(keys2[0]))
+#define NUM_SORTED_KEYS (sizeof(sorted_keys) / sizeof(sorted_keys[0]))
+
+static_assert(NUM_SORTED_KEYS == NUM_UNSORTED_KEYS, "sorted keys and unsorted keys count mismatch");
 
 static const struct closest_lookup_info closest_lookup_infos[] = {
     {.key = "_",
@@ -231,9 +233,9 @@ test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
 
     if (itor != NULL) {
 	if (value == NULL) {
-	    CU_ASSERT_EQUAL(dict_itor_search(itor, key), false);
+	    CU_ASSERT_FALSE(dict_itor_search(itor, key));
 	} else {
-	    CU_ASSERT_EQUAL(dict_itor_search(itor, key), true);
+	    CU_ASSERT_TRUE(dict_itor_search(itor, key));
 	    CU_ASSERT_EQUAL(dict_itor_key(itor), key);
 	    CU_ASSERT_EQUAL(*dict_itor_datum(itor), value);
 	}
@@ -241,62 +243,81 @@ test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
 }
 
 void
-test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsigned n_cl_infos)
+test_closest_lookup(dict *dct, unsigned nkeys, bool keys_sorted)
 {
+    if (dict_is_sorted(dct) && keys_sorted) {
+	for (unsigned i = 0; i < nkeys; ++i) {
+	    const void* key = NULL;
+	    void* datum = NULL;
+	    CU_ASSERT_TRUE(dict_select(dct, i, &key, &datum));
+	    CU_ASSERT_EQUAL(key, sorted_keys[i].key);
+	    CU_ASSERT_EQUAL(datum, sorted_keys[i].value);
+	}
+	const void* key = NULL;
+	void* datum = NULL;
+	CU_ASSERT_FALSE(dict_select(dct, nkeys, &key, &datum));
+	CU_ASSERT_EQUAL(key, (const void*)NULL);
+	CU_ASSERT_PTR_NULL(datum);
+    }
+
     dict_itor* itor = dict_itor_new(dct);
-    for (unsigned i = 0; i < n_cl_infos; i++) {
+    for (unsigned i = 0; i < NUM_CLOSEST_LOOKUP_INFOS; i++) {
+	const struct closest_lookup_info* const info = &closest_lookup_infos[i];
 	if (!dict_is_sorted(dct)) {
-	    CU_ASSERT_PTR_NULL(dict_search_le(dct, cl_infos[i].key));
-	    CU_ASSERT_PTR_NULL(dict_search_lt(dct, cl_infos[i].key));
-	    CU_ASSERT_PTR_NULL(dict_search_ge(dct, cl_infos[i].key));
-	    CU_ASSERT_PTR_NULL(dict_search_gt(dct, cl_infos[i].key));
+	    const void* key = NULL;
+	    void* datum = NULL;
+	    CU_ASSERT_FALSE(dict_select(dct, i, &key, &datum));
+	    CU_ASSERT_EQUAL(key, (const void*)NULL);
+	    CU_ASSERT_PTR_NULL(datum);
+	    CU_ASSERT_PTR_NULL(dict_search_le(dct, info->key));
+	    CU_ASSERT_PTR_NULL(dict_search_lt(dct, info->key));
+	    CU_ASSERT_PTR_NULL(dict_search_ge(dct, info->key));
+	    CU_ASSERT_PTR_NULL(dict_search_gt(dct, info->key));
 	    continue;
 	}
-	if (cl_infos[i].le_key) {
-	    CU_ASSERT_STRING_EQUAL(*dict_search_le(dct, cl_infos[i].key),
-				   cl_infos[i].le_val);
-	    CU_ASSERT_EQUAL(dict_itor_search_le(itor, cl_infos[i].key), true);
-	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].le_key);
-	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), cl_infos[i].le_val);
+	if (nkeys < NUM_SORTED_KEYS)
+	    continue;
+	if (info->le_key) {
+	    CU_ASSERT_STRING_EQUAL(*dict_search_le(dct, info->key), info->le_val);
+	    CU_ASSERT_TRUE(dict_itor_search_le(itor, info->key));
+	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), info->le_key);
+	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), info->le_val);
 	} else {
-	    CU_ASSERT_PTR_NULL(dict_search_le(dct, cl_infos[i].key));
-	    CU_ASSERT_EQUAL(dict_itor_search_le(itor, cl_infos[i].key), false);
+	    CU_ASSERT_PTR_NULL(dict_search_le(dct, info->key));
+	    CU_ASSERT_FALSE(dict_itor_search_le(itor, info->key));
 	    CU_ASSERT_PTR_NULL(dict_itor_key(itor));
 	    CU_ASSERT_PTR_NULL(dict_itor_datum(itor));
 	}
-	if (cl_infos[i].lt_key) {
-	    CU_ASSERT_STRING_EQUAL(*dict_search_lt(dct, cl_infos[i].key),
-				   cl_infos[i].lt_val);
-	    CU_ASSERT_EQUAL(dict_itor_search_lt(itor, cl_infos[i].key), true);
-	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].lt_key);
-	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), cl_infos[i].lt_val);
+	if (info->lt_key) {
+	    CU_ASSERT_STRING_EQUAL(*dict_search_lt(dct, info->key), info->lt_val);
+	    CU_ASSERT_TRUE(dict_itor_search_lt(itor, info->key));
+	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), info->lt_key);
+	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), info->lt_val);
 	} else {
-	    CU_ASSERT_PTR_NULL(dict_search_lt(dct, cl_infos[i].key));
-	    CU_ASSERT_EQUAL(dict_itor_search_lt(itor, cl_infos[i].key), false);
+	    CU_ASSERT_PTR_NULL(dict_search_lt(dct, info->key));
+	    CU_ASSERT_FALSE(dict_itor_search_lt(itor, info->key));
 	    CU_ASSERT_PTR_NULL(dict_itor_key(itor));
 	    CU_ASSERT_PTR_NULL(dict_itor_datum(itor));
 	}
-	if (cl_infos[i].ge_key) {
-	    CU_ASSERT_STRING_EQUAL(*dict_search_ge(dct, cl_infos[i].key),
-				   cl_infos[i].ge_val);
-	    CU_ASSERT_EQUAL(dict_itor_search_ge(itor, cl_infos[i].key), true);
-	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].ge_key);
-	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), cl_infos[i].ge_val);
+	if (info->ge_key) {
+	    CU_ASSERT_STRING_EQUAL(*dict_search_ge(dct, info->key), info->ge_val);
+	    CU_ASSERT_TRUE(dict_itor_search_ge(itor, info->key));
+	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), info->ge_key);
+	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), info->ge_val);
 	} else {
-	    CU_ASSERT_PTR_NULL(dict_search_ge(dct, cl_infos[i].key));
-	    CU_ASSERT_EQUAL(dict_itor_search_ge(itor, cl_infos[i].key), false);
+	    CU_ASSERT_PTR_NULL(dict_search_ge(dct, info->key));
+	    CU_ASSERT_FALSE(dict_itor_search_ge(itor, info->key));
 	    CU_ASSERT_PTR_NULL(dict_itor_key(itor));
 	    CU_ASSERT_PTR_NULL(dict_itor_datum(itor));
 	}
-	if (cl_infos[i].gt_key) {
-	    CU_ASSERT_STRING_EQUAL(*dict_search_gt(dct, cl_infos[i].key),
-				   cl_infos[i].gt_val);
-	    CU_ASSERT_EQUAL(dict_itor_search_gt(itor, cl_infos[i].key), true);
-	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), cl_infos[i].gt_key);
-	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), cl_infos[i].gt_val);
+	if (info->gt_key) {
+	    CU_ASSERT_STRING_EQUAL(*dict_search_gt(dct, info->key), info->gt_val);
+	    CU_ASSERT_TRUE(dict_itor_search_gt(itor, info->key));
+	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), info->gt_key);
+	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), info->gt_val);
 	} else {
-	    CU_ASSERT_PTR_NULL(dict_search_gt(dct, cl_infos[i].key));
-	    CU_ASSERT_EQUAL(dict_itor_search_gt(itor, cl_infos[i].key), false);
+	    CU_ASSERT_PTR_NULL(dict_search_gt(dct, info->key));
+	    CU_ASSERT_FALSE(dict_itor_search_gt(itor, info->key));
 	    CU_ASSERT_PTR_NULL(dict_itor_key(itor));
 	    CU_ASSERT_PTR_NULL(dict_itor_datum(itor));
 	}
@@ -304,8 +325,7 @@ test_closest_lookup(dict *dct, const struct closest_lookup_info *cl_infos, unsig
     dict_itor_free(itor);
 }
 
-void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
-		const struct closest_lookup_info *cl_infos, unsigned n_cl_infos)
+void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bool keys_sorted)
 {
     dict_itor *itor = dict_itor_new(dct);
 
@@ -473,7 +493,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
 
 	CU_ASSERT_TRUE(dict_verify(dct));
     }
-    test_closest_lookup(dct, cl_infos, n_cl_infos);
+    test_closest_lookup(dct, nkeys, keys_sorted);
     dict_itor_free(itor);
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
     CU_ASSERT_EQUAL(dict_free(dct, NULL), nkeys);
@@ -481,90 +501,90 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys,
 
 void test_basic_hashtable_1bucket()
 {
-    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 1),
-	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 1),
-	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 1), unsorted_keys, n, false);
+	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 1), sorted_keys, n, true);
+    }
 }
 
 void test_basic_hashtable2_1bucket()
 {
-    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 1),
-	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 1),
-	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 1), unsorted_keys, n, false);
+	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 1), sorted_keys, n, true);
+    }
 }
 
 void test_basic_hashtable_nbuckets()
 {
-    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 7),
-	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 7),
-	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 7), unsorted_keys, n, false);
+	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 7), sorted_keys, n, true);
+    }
 }
 
 void test_basic_hashtable2_nbuckets()
 {
-    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 7),
-	       keys1, NKEYS1, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 7),
-	       keys2, NKEYS2, closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 7), unsorted_keys, n, false);
+	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 7), sorted_keys, n, true);
+    }
 }
 
 void test_basic_height_balanced_tree()
 {
-    test_basic(hb_dict_new(dict_str_cmp), keys1, NKEYS1,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(hb_dict_new(dict_str_cmp), keys2, NKEYS2,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(hb_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	test_basic(hb_dict_new(dict_str_cmp), sorted_keys, n, true);
+    }
 }
 
 void test_basic_path_reduction_tree()
 {
-    test_basic(pr_dict_new(dict_str_cmp), keys1, NKEYS1,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(pr_dict_new(dict_str_cmp), keys2, NKEYS2,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(pr_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	test_basic(pr_dict_new(dict_str_cmp), sorted_keys, n, true);
+    }
 }
 
 void test_basic_red_black_tree()
 {
-    test_basic(rb_dict_new(dict_str_cmp), keys1, NKEYS1,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(rb_dict_new(dict_str_cmp), keys2, NKEYS2,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(rb_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	test_basic(rb_dict_new(dict_str_cmp), sorted_keys, n, true);
+    }
 }
 
 void test_basic_skiplist()
 {
-    test_basic(skiplist_dict_new(dict_str_cmp, 13), keys1, NKEYS1,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(skiplist_dict_new(dict_str_cmp, 13), keys2, NKEYS2,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(skiplist_dict_new(dict_str_cmp, 13), unsorted_keys, n, false);
+	test_basic(skiplist_dict_new(dict_str_cmp, 13), sorted_keys, n, true);
+    }
 }
 
 void test_basic_splay_tree()
 {
-    test_basic(sp_dict_new(dict_str_cmp), keys1, NKEYS1,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(sp_dict_new(dict_str_cmp), keys2, NKEYS2,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(sp_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	test_basic(sp_dict_new(dict_str_cmp), sorted_keys, n, true);
+    }
 }
 
 void test_basic_treap()
 {
-    test_basic(tr_dict_new(dict_str_cmp, NULL), keys1, NKEYS1,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(tr_dict_new(dict_str_cmp, NULL), keys2, NKEYS2,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(tr_dict_new(dict_str_cmp, NULL), unsorted_keys, n, false);
+	test_basic(tr_dict_new(dict_str_cmp, NULL), sorted_keys, n, true);
+    }
 }
 
 void test_basic_weight_balanced_tree()
 {
-    test_basic(wb_dict_new(dict_str_cmp), keys1, NKEYS1,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
-    test_basic(wb_dict_new(dict_str_cmp), keys2, NKEYS2,
-	       closest_lookup_infos, NUM_CLOSEST_LOOKUP_INFOS);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(wb_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	test_basic(wb_dict_new(dict_str_cmp), sorted_keys, n, true);
+    }
 }
 
 bool is_prime(unsigned n)

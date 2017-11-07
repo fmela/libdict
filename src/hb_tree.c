@@ -68,6 +68,7 @@ static const dict_vtable hb_tree_vtable = {
     (dict_remove_func)	    hb_tree_remove,
     (dict_clear_func)	    hb_tree_clear,
     (dict_traverse_func)    hb_tree_traverse,
+    (dict_select_func)	    hb_tree_select,
     (dict_count_func)	    hb_tree_count,
     (dict_verify_func)	    hb_tree_verify,
 };
@@ -485,6 +486,36 @@ hb_tree_traverse(hb_tree* tree, dict_visit_func visit)
     ASSERT(tree != NULL);
 
     return tree_traverse(tree, visit);
+}
+
+bool
+hb_tree_select(hb_tree *tree, size_t n, const void **key, void **datum)
+{
+    ASSERT(tree != NULL);
+
+    if (n >= tree->count) {
+	if (key)
+	    *key = NULL;
+	if (datum)
+	    *datum = NULL;
+	return false;
+    }
+    hb_node* node;
+    if (n >= tree->count / 2) {
+	node = tree_node_max(tree->root);
+	n = tree->count - 1 - n;
+	while (n--)
+	    node = node_prev(node);
+    } else {
+	node = tree_node_min(tree->root);
+	while (n--)
+	    node = node_next(node);
+    }
+    if (key)
+	*key = node->key;
+    if (datum)
+	*datum = node->datum;
+    return true;
 }
 
 size_t

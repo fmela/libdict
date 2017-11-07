@@ -75,6 +75,7 @@ static const dict_vtable sp_tree_vtable = {
     (dict_remove_func)	    sp_tree_remove,
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
+    (dict_select_func)	    tree_select,
     (dict_count_func)	    tree_count,
     (dict_verify_func)	    sp_tree_verify,
 };
@@ -427,6 +428,12 @@ sp_tree_traverse(sp_tree* tree, dict_visit_func visit)
 	} while (node);
     }
     return count;
+}
+
+bool
+sp_tree_select(sp_tree* tree, size_t n, const void** key, void** datum)
+{
+    return tree_select(tree, n, key, datum);
 }
 
 size_t

@@ -327,6 +327,33 @@ tree_traverse(void* Tree, dict_visit_func visit)
     return count;
 }
 
+bool
+tree_select(void *Tree, size_t n, const void **key, void **datum)
+{
+    ASSERT(Tree != NULL);
+
+    tree* t = Tree;
+    if (n >= t->count) {
+	*key = NULL;
+	*datum = NULL;
+	return false;
+    }
+    tree_node* node;
+    if (n >= t->count / 2) {
+	node = tree_node_max(t->root);
+	n = t->count - 1 - n;
+	while (n--)
+	    node = tree_node_prev(node);
+    } else {
+	node = tree_node_min(t->root);
+	while (n--)
+	    node = tree_node_next(node);
+    }
+    *key = node->key;
+    *datum = node->datum;
+    return true;
+}
+
 static void
 tree_node_free(tree_node* node, dict_delete_func delete_func)
 {

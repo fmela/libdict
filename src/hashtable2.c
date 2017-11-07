@@ -76,6 +76,7 @@ static const dict_vtable hashtable2_vtable = {
     (dict_remove_func)	    hashtable2_remove,
     (dict_clear_func)	    hashtable2_clear,
     (dict_traverse_func)    hashtable2_traverse,
+    (dict_select_func)	    NULL,
     (dict_count_func)	    hashtable2_count,
     (dict_verify_func)	    hashtable2_verify,
 };

@@ -73,6 +73,7 @@ static const dict_vtable tr_tree_vtable = {
     (dict_remove_func)	    tr_tree_remove,
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
+    (dict_select_func)	    tree_select,
     (dict_count_func)	    tree_count,
     (dict_verify_func)	    tr_tree_verify,
 };
@@ -260,6 +261,12 @@ tr_tree_traverse(tr_tree* tree, dict_visit_func visit)
     ASSERT(visit != NULL);
 
     return tree_traverse(tree, visit);
+}
+
+bool
+tr_tree_select(tr_tree* tree, size_t n, const void** key, void** datum)
+{
+    return tree_select(tree, n, key, datum);
 }
 
 size_t
