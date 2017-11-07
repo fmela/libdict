@@ -31,7 +31,7 @@ struct closest_lookup_info {
     const char *gt_key, *gt_val;
 };
 
-void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys);
+void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bool keys_sorted);
 void test_basic_hashtable_1bucket(void);
 void test_basic_hashtable2_1bucket(void);
 void test_basic_hashtable_nbuckets(void);
@@ -44,7 +44,7 @@ void test_basic_splay_tree(void);
 void test_basic_treap(void);
 void test_basic_weight_balanced_tree(void);
 void test_search(dict *dct, dict_itor *itor, const char *key, const char *value);
-void test_closest_lookup(dict *dct, unsigned nkeys);
+void test_closest_lookup(dict *dct, unsigned nkeys, bool keys_sorted);
 void test_primes_geq(void);
 void test_version_string(void);
 void shuffle(char **p, unsigned size);
@@ -243,9 +243,9 @@ test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
 }
 
 void
-test_closest_lookup(dict *dct, unsigned nkeys)
+test_closest_lookup(dict *dct, unsigned nkeys, bool keys_sorted)
 {
-    if (dict_is_sorted(dct)) {
+    if (dict_is_sorted(dct) && keys_sorted) {
 	for (unsigned i = 0; i < nkeys; ++i) {
 	    const void* key = NULL;
 	    void* datum = NULL;
@@ -325,7 +325,7 @@ test_closest_lookup(dict *dct, unsigned nkeys)
     dict_itor_free(itor);
 }
 
-void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys)
+void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bool keys_sorted)
 {
     dict_itor *itor = dict_itor_new(dct);
 
@@ -493,7 +493,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys)
 
 	CU_ASSERT_TRUE(dict_verify(dct));
     }
-    test_closest_lookup(dct, nkeys);
+    test_closest_lookup(dct, nkeys, keys_sorted);
     dict_itor_free(itor);
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
     CU_ASSERT_EQUAL(dict_free(dct, NULL), nkeys);
@@ -501,79 +501,90 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys)
 
 void test_basic_hashtable_1bucket()
 {
-    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 1), unsorted_keys, NUM_UNSORTED_KEYS);
-    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n)
-	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 1), sorted_keys, n);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 1), unsorted_keys, n, false);
+	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 1), sorted_keys, n, true);
+    }
 }
 
 void test_basic_hashtable2_1bucket()
 {
-    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 1), unsorted_keys, NUM_UNSORTED_KEYS);
-    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n)
-	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 1), sorted_keys, n);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 1), unsorted_keys, n, false);
+	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 1), sorted_keys, n, true);
+    }
 }
 
 void test_basic_hashtable_nbuckets()
 {
-    test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 7), unsorted_keys, NUM_UNSORTED_KEYS);
-    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n)
-	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 7), sorted_keys, n);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 7), unsorted_keys, n, false);
+	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 7), sorted_keys, n, true);
+    }
 }
 
 void test_basic_hashtable2_nbuckets()
 {
-    test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 7), unsorted_keys, NUM_UNSORTED_KEYS);
-    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n)
-	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 7), sorted_keys, n);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 7), unsorted_keys, n, false);
+	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 7), sorted_keys, n, true);
+    }
 }
 
 void test_basic_height_balanced_tree()
 {
-    test_basic(hb_dict_new(dict_str_cmp), unsorted_keys, NUM_UNSORTED_KEYS);
-    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n)
-	test_basic(hb_dict_new(dict_str_cmp), sorted_keys, n);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(hb_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	test_basic(hb_dict_new(dict_str_cmp), sorted_keys, n, true);
+    }
 }
 
 void test_basic_path_reduction_tree()
 {
-    test_basic(pr_dict_new(dict_str_cmp), unsorted_keys, NUM_UNSORTED_KEYS);
-    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n)
-	test_basic(pr_dict_new(dict_str_cmp), sorted_keys, n);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(pr_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	test_basic(pr_dict_new(dict_str_cmp), sorted_keys, n, true);
+    }
 }
 
 void test_basic_red_black_tree()
 {
-    test_basic(rb_dict_new(dict_str_cmp), unsorted_keys, NUM_UNSORTED_KEYS);
-    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n)
-	test_basic(rb_dict_new(dict_str_cmp), sorted_keys, n);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(rb_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	test_basic(rb_dict_new(dict_str_cmp), sorted_keys, n, true);
+    }
 }
 
 void test_basic_skiplist()
 {
-    test_basic(skiplist_dict_new(dict_str_cmp, 13), unsorted_keys, NUM_UNSORTED_KEYS);
-    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n)
-	test_basic(skiplist_dict_new(dict_str_cmp, 13), sorted_keys, n);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(skiplist_dict_new(dict_str_cmp, 13), unsorted_keys, n, false);
+	test_basic(skiplist_dict_new(dict_str_cmp, 13), sorted_keys, n, true);
+    }
 }
 
 void test_basic_splay_tree()
 {
-    test_basic(sp_dict_new(dict_str_cmp), unsorted_keys, NUM_UNSORTED_KEYS);
-    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n)
-	test_basic(sp_dict_new(dict_str_cmp), sorted_keys, n);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(sp_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	test_basic(sp_dict_new(dict_str_cmp), sorted_keys, n, true);
+    }
 }
 
 void test_basic_treap()
 {
-    test_basic(tr_dict_new(dict_str_cmp, NULL), unsorted_keys, NUM_UNSORTED_KEYS);
-    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n)
-	test_basic(tr_dict_new(dict_str_cmp, NULL), sorted_keys, n);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(tr_dict_new(dict_str_cmp, NULL), unsorted_keys, n, false);
+	test_basic(tr_dict_new(dict_str_cmp, NULL), sorted_keys, n, true);
+    }
 }
 
 void test_basic_weight_balanced_tree()
 {
-    test_basic(wb_dict_new(dict_str_cmp), unsorted_keys, NUM_UNSORTED_KEYS);
-    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n)
-	test_basic(wb_dict_new(dict_str_cmp), sorted_keys, n);
+    for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	test_basic(wb_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	test_basic(wb_dict_new(dict_str_cmp), sorted_keys, n, true);
+    }
 }
 
 bool is_prime(unsigned n)
