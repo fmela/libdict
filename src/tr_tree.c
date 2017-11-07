@@ -263,6 +263,12 @@ tr_tree_traverse(tr_tree* tree, dict_visit_func visit)
     return tree_traverse(tree, visit);
 }
 
+bool
+tr_tree_select(tr_tree* tree, size_t n, const void** key, void** datum)
+{
+    return tree_select(tree, n, key, datum);
+}
+
 size_t
 tr_tree_count(const tr_tree* tree)
 {

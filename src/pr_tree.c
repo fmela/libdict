@@ -447,6 +447,12 @@ pr_tree_traverse(pr_tree* tree, dict_visit_func visit)
     return tree_traverse(tree, visit);
 }
 
+bool
+pr_tree_select(pr_tree* tree, size_t n, const void** key, void** datum)
+{
+    return tree_select(tree, n, key, datum);
+}
+
 size_t
 pr_tree_count(const pr_tree* tree)
 {

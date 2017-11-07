@@ -430,6 +430,12 @@ sp_tree_traverse(sp_tree* tree, dict_visit_func visit)
     return count;
 }
 
+bool
+sp_tree_select(sp_tree* tree, size_t n, const void** key, void** datum)
+{
+    return tree_select(tree, n, key, datum);
+}
+
 size_t
 sp_tree_count(const sp_tree* tree)
 {
