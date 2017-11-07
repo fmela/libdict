@@ -638,8 +638,13 @@ rb_tree_select(rb_tree *tree, size_t n, const void **key, void **datum)
 {
     ASSERT(tree != NULL);
 
-    if (n >= tree->count)
+    if (n >= tree->count) {
+	if (key)
+	    *key = NULL;
+	if (datum)
+	    *datum = NULL;
 	return false;
+    }
     rb_node *node;
     if (n >= tree->count / 2) {
 	node = node_max(tree->root);
@@ -651,8 +656,10 @@ rb_tree_select(rb_tree *tree, size_t n, const void **key, void **datum)
 	while (n--)
 	    node = node_next(node);
     }
-    *key = node->key;
-    *datum = node->datum;
+    if (key)
+	*key = node->key;
+    if (datum)
+	*datum = node->datum;
     return true;
 }
 

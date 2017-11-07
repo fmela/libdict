@@ -333,8 +333,11 @@ tree_select(void *Tree, size_t n, const void **key, void **datum)
     ASSERT(Tree != NULL);
 
     tree* t = Tree;
-    if (n >= t->count)
+    if (n >= t->count) {
+	*key = NULL;
+	*datum = NULL;
 	return false;
+    }
     tree_node* node;
     if (n >= t->count / 2) {
 	node = tree_node_max(t->root);

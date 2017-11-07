@@ -390,15 +390,22 @@ wb_tree_traverse(wb_tree* tree, dict_visit_func visit)
 bool
 wb_tree_select(wb_tree* tree, size_t n, const void** key, void** datum)
 {
-    if (n >= tree->count)
+    if (n >= tree->count) {
+	if (key)
+	    *key = NULL;
+	if (datum)
+	    *datum = NULL;
 	return false;
+    }
     wb_node* node = tree->root;
     for (;;) {
 	const unsigned nw = WEIGHT(node->llink);
 	if (n + 1 >= nw) {
 	    if (n + 1 == nw) {
-		*key = node->key;
-		*datum = node->datum;
+		if (key)
+		    *key = node->key;
+		if (datum)
+		    *datum = node->datum;
 		return true;
 	    }
 	    n -= nw;
