@@ -483,8 +483,12 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bo
     }
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
     CU_ASSERT_EQUAL(dict_clear(dct, NULL), nkeys);
+    CU_ASSERT_TRUE(dict_verify(dct));
+    CU_ASSERT_EQUAL(dict_count(dct), 0);
 
     for (unsigned i = 0; i < nkeys; ++i) {
+	test_search(dct, itor, keys[i].key, NULL);
+
 	dict_insert_result result = dict_insert(dct, keys[i].key);
 	CU_ASSERT_TRUE(result.inserted);
 	CU_ASSERT_PTR_NOT_NULL(result.datum_ptr);
