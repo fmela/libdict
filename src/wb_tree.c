@@ -255,8 +255,6 @@ wb_tree_insert(wb_tree* tree, void* key)
 {
     int cmp = 0;
 
-    ASSERT(tree != NULL);
-
     wb_node* node = tree->root;
     wb_node* parent = NULL;
     while (node) {
@@ -298,9 +296,6 @@ wb_tree_insert(wb_tree* tree, void* key)
 dict_remove_result
 wb_tree_remove(wb_tree* tree, const void* key)
 {
-    ASSERT(tree != NULL);
-    ASSERT(key != NULL);
-
     wb_node* node = tree->root;
     while (node) {
 	int cmp = tree->cmp_func(key, node->key);
@@ -361,8 +356,6 @@ wb_tree_remove(wb_tree* tree, const void* key)
 size_t
 wb_tree_clear(wb_tree* tree, dict_delete_func delete_func)
 {
-    ASSERT(tree != NULL);
-
     return tree_clear(tree, delete_func);
 }
 
@@ -466,7 +459,6 @@ wb_itor_new(wb_tree* tree)
 dict_itor*
 wb_dict_itor_new(wb_tree* tree)
 {
-    ASSERT(tree != NULL);
     dict_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	if (!(itor->_itor = wb_itor_new(tree))) {
@@ -508,8 +500,6 @@ node_verify(const wb_tree* tree, const wb_node* parent, const wb_node* node,
 bool
 wb_tree_verify(const wb_tree* tree)
 {
-    ASSERT(tree != NULL);
-
     if (tree->root) {
 	VERIFY(tree->count > 0);
 	VERIFY(tree->count + 1 == tree->root->weight);
@@ -523,32 +513,24 @@ wb_tree_verify(const wb_tree* tree)
 void
 wb_itor_free(wb_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     FREE(itor);
 }
 
 bool
 wb_itor_valid(const wb_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     return itor->node != NULL;
 }
 
 void
 wb_itor_invalidate(wb_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     itor->node = NULL;
 }
 
 bool
 wb_itor_next(wb_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     if (!itor->node) {
 	return wb_itor_first(itor);
     } else {
@@ -560,8 +542,6 @@ wb_itor_next(wb_itor* itor)
 bool
 wb_itor_prev(wb_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     if (!itor->node)
 	return wb_itor_last(itor);
     else {
@@ -573,8 +553,6 @@ wb_itor_prev(wb_itor* itor)
 bool
 wb_itor_nextn(wb_itor* itor, size_t count)
 {
-    ASSERT(itor != NULL);
-
     while (count--)
 	if (!wb_itor_next(itor))
 	    return false;
@@ -584,8 +562,6 @@ wb_itor_nextn(wb_itor* itor, size_t count)
 bool
 wb_itor_prevn(wb_itor* itor, size_t count)
 {
-    ASSERT(itor != NULL);
-
     while (count--)
 	if (!wb_itor_prev(itor))
 	    return false;
@@ -595,8 +571,6 @@ wb_itor_prevn(wb_itor* itor, size_t count)
 bool
 wb_itor_first(wb_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     if (itor->tree->root) {
 	itor->node = tree_node_min(itor->tree->root);
 	return true;
@@ -609,8 +583,6 @@ wb_itor_first(wb_itor* itor)
 bool
 wb_itor_last(wb_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     if (itor->tree->root) {
 	itor->node = tree_node_max(itor->tree->root);
 	return true;
@@ -623,15 +595,11 @@ wb_itor_last(wb_itor* itor)
 const void*
 wb_itor_key(const wb_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     return itor->node ? itor->node->key : NULL;
 }
 
 void**
 wb_itor_datum(wb_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     return itor->node ? &itor->node->datum : NULL;
 }

@@ -69,10 +69,10 @@ static const dict_vtable hashtable2_vtable = {
     (dict_dfree_func)	    hashtable2_free,
     (dict_insert_func)	    hashtable2_insert,
     (dict_search_func)	    hashtable2_search,
-    (dict_search_func)	    NULL,/* search_le: not implemented */
-    (dict_search_func)	    NULL,/* search_lt: not implemented */
-    (dict_search_func)	    NULL,/* search_ge: not implemented */
-    (dict_search_func)	    NULL,/* search_gt: not implemented */
+    (dict_search_func)	    NULL,/* search_le: not supported */
+    (dict_search_func)	    NULL,/* search_lt: not supported */
+    (dict_search_func)	    NULL,/* search_ge: not supported */
+    (dict_search_func)	    NULL,/* search_gt: not supported */
     (dict_remove_func)	    hashtable2_remove,
     (dict_clear_func)	    hashtable2_clear,
     (dict_traverse_func)    hashtable2_traverse,
@@ -94,10 +94,10 @@ static const itor_vtable hashtable2_itor_vtable = {
     (dict_key_func)	    hashtable2_itor_key,
     (dict_datum_func)	    hashtable2_itor_datum,
     (dict_isearch_func)	    hashtable2_itor_search,
-    (dict_isearch_func)	    NULL,/* itor_search_le: not implemented */
-    (dict_isearch_func)	    NULL,/* itor_search_lt: not implemented */
-    (dict_isearch_func)	    NULL,/* itor_search_ge: not implemented */
-    (dict_isearch_func)	    NULL,/* itor_search_gt: not implemented */
+    (dict_isearch_func)	    NULL,/* itor_search_le: not supported */
+    (dict_isearch_func)	    NULL,/* itor_search_lt: not supported */
+    (dict_isearch_func)	    NULL,/* itor_search_ge: not supported */
+    (dict_isearch_func)	    NULL,/* itor_search_gt: not supported */
     (dict_iremove_func)	    NULL,/* hashtable2_itor_remove not implemented yet */
     (dict_icompare_func)    NULL,/* hashtable2_itor_compare not implemented yet */
 };
@@ -107,7 +107,7 @@ hashtable2_new(dict_compare_func cmp_func, dict_hash_func hash_func, unsigned in
 {
     ASSERT(cmp_func != NULL);
     ASSERT(hash_func != NULL);
-    ASSERT(initial_size != 0);
+    ASSERT(initial_size > 0);
 
     hashtable2* table = MALLOC(sizeof(*table));
     if (table) {
@@ -129,7 +129,7 @@ dict*
 hashtable2_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func, unsigned initial_size)
 {
     ASSERT(hash_func != NULL);
-    ASSERT(initial_size != 0);
+    ASSERT(initial_size > 0);
 
     dict* dct = MALLOC(sizeof(*dct));
     if (dct) {
@@ -146,8 +146,6 @@ hashtable2_dict_new(dict_compare_func cmp_func, dict_hash_func hash_func, unsign
 size_t
 hashtable2_free(hashtable2* table, dict_delete_func delete_func)
 {
-    ASSERT(table != NULL);
-
     size_t count = hashtable2_clear(table, delete_func);
     FREE(table->table);
     FREE(table);
@@ -157,8 +155,6 @@ hashtable2_free(hashtable2* table, dict_delete_func delete_func)
 static inline dict_insert_result
 insert(hashtable2* table, void *key, unsigned hash)
 {
-    ASSERT(hash != 0);
-
     hash_node* const first = table->table + (hash % table->size);
     hash_node* const table_end = table->table + table->size;
     hash_node* node = first;
@@ -190,8 +186,6 @@ nonzero_hash(dict_hash_func hash_func, const void *key)
 dict_insert_result
 hashtable2_insert(hashtable2* table, void* key)
 {
-    ASSERT(table != NULL);
-
     if (LOADFACTOR_DENOMINATOR * table->count >= LOADFACTOR_NUMERATOR * table->size) {
 	/* Load factor too high: increase the table size. */
 	if (!hashtable2_resize(table, table->size + 1)) {
@@ -208,8 +202,6 @@ hashtable2_insert(hashtable2* table, void* key)
 void**
 hashtable2_search(hashtable2* table, const void* key)
 {
-    ASSERT(table != NULL);
-
     const unsigned hash = nonzero_hash(table->hash_func, key);
     hash_node* const first = table->table + (hash % table->size);
     hash_node* const table_end = table->table + table->size;
@@ -275,8 +267,6 @@ remove_cleanup(hashtable2* table, hash_node* const first, hash_node* node)
 dict_remove_result
 hashtable2_remove(hashtable2* table, const void* key)
 {
-    ASSERT(table != NULL);
-
     const unsigned hash = nonzero_hash(table->hash_func, key);
     hash_node* const first = table->table + (hash % table->size);
     hash_node* const table_end = table->table + table->size;
@@ -306,8 +296,6 @@ hashtable2_remove(hashtable2* table, const void* key)
 size_t
 hashtable2_clear(hashtable2* table, dict_delete_func delete_func)
 {
-    ASSERT(table != NULL);
-
     hash_node *node = table->table;
     hash_node *const end = table->table + table->size;
     for (; node != end; ++node) {
@@ -327,13 +315,9 @@ hashtable2_clear(hashtable2* table, dict_delete_func delete_func)
 size_t
 hashtable2_traverse(hashtable2* table, dict_visit_func visit)
 {
-    ASSERT(table != NULL);
-    ASSERT(visit != NULL);
-
     size_t count = 0;
     hash_node *node = table->table;
-    hash_node *const end = table->table + table->size;
-    for (; node != end; ++node) {
+    for (hash_node *const end = table->table + table->size; node != end; ++node) {
 	if (node->hash) {
 	    ++count;
 	    if (!visit(node->key, node->datum))
@@ -346,32 +330,25 @@ hashtable2_traverse(hashtable2* table, dict_visit_func visit)
 size_t
 hashtable2_count(const hashtable2* table)
 {
-    ASSERT(table != NULL);
-
     return table->count;
 }
 
 size_t
 hashtable2_size(const hashtable2* table)
 {
-    ASSERT(table != NULL);
-
     return table->size;
 }
 
 size_t
 hashtable2_slots_used(const hashtable2* table)
 {
-    ASSERT(table != NULL);
-
     return table->count;
 }
 
 bool
 hashtable2_resize(hashtable2* table, unsigned new_size)
 {
-    ASSERT(table != NULL);
-    ASSERT(new_size != 0);
+    ASSERT(new_size > 0);
 
     new_size = dict_prime_geq(new_size);
     if (table->size == new_size)
@@ -415,8 +392,6 @@ hashtable2_resize(hashtable2* table, unsigned new_size)
 bool
 hashtable2_verify(const hashtable2* table)
 {
-    ASSERT(table != NULL);
-
     size_t count = 0;
     const hash_node *node = table->table;
     const hash_node *end = table->table + table->size;
@@ -434,8 +409,6 @@ hashtable2_verify(const hashtable2* table)
 hashtable2_itor*
 hashtable2_itor_new(hashtable2* table)
 {
-    ASSERT(table != NULL);
-
     hashtable2_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->table = table;
@@ -447,8 +420,6 @@ hashtable2_itor_new(hashtable2* table)
 dict_itor*
 hashtable2_dict_itor_new(hashtable2* table)
 {
-    ASSERT(table != NULL);
-
     dict_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	if (!(itor->_itor = hashtable2_itor_new(table))) {
@@ -463,32 +434,24 @@ hashtable2_dict_itor_new(hashtable2* table)
 void
 hashtable2_itor_free(hashtable2_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     FREE(itor);
 }
 
 bool
 hashtable2_itor_valid(const hashtable2_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     return itor->slot >= 0;
 }
 
 void
 hashtable2_itor_invalidate(hashtable2_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     itor->slot = -1;
 }
 
 bool
 hashtable2_itor_next(hashtable2_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     if (itor->slot < 0)
 	return hashtable2_itor_first(itor);
 
@@ -504,8 +467,6 @@ hashtable2_itor_next(hashtable2_itor* itor)
 bool
 hashtable2_itor_prev(hashtable2_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     if (itor->slot < 0)
 	return hashtable2_itor_last(itor);
 
@@ -521,8 +482,6 @@ hashtable2_itor_prev(hashtable2_itor* itor)
 bool
 hashtable2_itor_nextn(hashtable2_itor* itor, size_t count)
 {
-    ASSERT(itor != NULL);
-
     while (count--)
 	if (!hashtable2_itor_next(itor))
 	    return false;
@@ -532,8 +491,6 @@ hashtable2_itor_nextn(hashtable2_itor* itor, size_t count)
 bool
 hashtable2_itor_prevn(hashtable2_itor* itor, size_t count)
 {
-    ASSERT(itor != NULL);
-
     while (count--)
 	if (!hashtable2_itor_prev(itor))
 	    return false;
@@ -543,8 +500,6 @@ hashtable2_itor_prevn(hashtable2_itor* itor, size_t count)
 bool
 hashtable2_itor_first(hashtable2_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     for (unsigned slot = 0; slot < itor->table->size; ++slot) {
 	if (itor->table->table[slot].hash) {
 	    itor->slot = (int) slot;
@@ -558,8 +513,6 @@ hashtable2_itor_first(hashtable2_itor* itor)
 bool
 hashtable2_itor_last(hashtable2_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     for (unsigned slot = itor->table->size; slot > 0;) {
 	if (itor->table->table[--slot].hash) {
 	    itor->slot = (int) slot;
@@ -594,16 +547,12 @@ hashtable2_itor_search(hashtable2_itor* itor, const void* key)
 const void*
 hashtable2_itor_key(const hashtable2_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     return (itor->slot >= 0) ? itor->table->table[itor->slot].key : NULL;
 }
 
 void**
 hashtable2_itor_datum(hashtable2_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     return (itor->slot >= 0) ? &itor->table->table[itor->slot].datum : NULL;
 }
 

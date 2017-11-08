@@ -142,8 +142,6 @@ skiplist_dict_new(dict_compare_func cmp_func, unsigned max_link)
 size_t
 skiplist_free(skiplist* list, dict_delete_func delete_func)
 {
-    ASSERT(list != NULL);
-
     size_t count = skiplist_clear(list, delete_func);
     FREE(list->head);
     FREE(list);
@@ -182,8 +180,6 @@ node_insert(skiplist* list, void* key, skip_node** update)
 dict_insert_result
 skiplist_insert(skiplist* list, void* key)
 {
-    ASSERT(list != NULL);
-
     skip_node* x = list->head;
     skip_node* update[MAX_LINK] = { 0 };
     for (unsigned k = list->top_link+1; k-->0; ) {
@@ -203,8 +199,6 @@ skiplist_insert(skiplist* list, void* key)
 void**
 skiplist_search(skiplist* list, const void* key)
 {
-    ASSERT(list != NULL);
-
     skip_node* x = list->head;
     for (unsigned k = list->top_link+1; k-->0;) {
 	while (x->link[k]) {
@@ -222,8 +216,6 @@ skiplist_search(skiplist* list, const void* key)
 dict_remove_result
 skiplist_remove(skiplist* list, const void* key)
 {
-    ASSERT(list != NULL);
-
     skip_node* x = list->head;
     skip_node* update[MAX_LINK] = { 0 };
     for (unsigned k = list->top_link+1; k-->0;) {
@@ -257,8 +249,6 @@ skiplist_remove(skiplist* list, const void* key)
 size_t
 skiplist_clear(skiplist* list, dict_delete_func delete_func)
 {
-    ASSERT(list != NULL);
-
     skip_node* node = list->head->link[0];
     while (node) {
 	skip_node* next = node->link[0];
@@ -280,9 +270,6 @@ skiplist_clear(skiplist* list, dict_delete_func delete_func)
 size_t
 skiplist_traverse(skiplist* list, dict_visit_func visit)
 {
-    ASSERT(list != NULL);
-    ASSERT(visit != NULL);
-
     size_t count = 0;
     for (skip_node* node = list->head->link[0]; node; node = node->link[0]) {
 	++count;
@@ -295,8 +282,6 @@ skiplist_traverse(skiplist* list, dict_visit_func visit)
 size_t
 skiplist_count(const skiplist* list)
 {
-    ASSERT(list != NULL);
-
     return list->count;
 }
 
@@ -361,8 +346,6 @@ skiplist_link_count_histogram(const skiplist* list, size_t counts[], size_t ncou
 skiplist_itor*
 skiplist_itor_new(skiplist* list)
 {
-    ASSERT(list != NULL);
-
     skiplist_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->list = list;
@@ -374,8 +357,6 @@ skiplist_itor_new(skiplist* list)
 dict_itor*
 skiplist_dict_itor_new(skiplist* list)
 {
-    ASSERT(list != NULL);
-
     dict_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	if (!(itor->_itor = skiplist_itor_new(list))) {
@@ -390,32 +371,24 @@ skiplist_dict_itor_new(skiplist* list)
 void
 skiplist_itor_free(skiplist_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     FREE(itor);
 }
 
 bool
 skiplist_itor_valid(const skiplist_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     return VALID(itor);
 }
 
 void
 skiplist_itor_invalidate(skiplist_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     itor->node = NULL;
 }
 
 bool
 skiplist_itor_next(skiplist_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     if (!itor->node)
 	return skiplist_itor_first(itor);
 
@@ -426,8 +399,6 @@ skiplist_itor_next(skiplist_itor* itor)
 bool
 skiplist_itor_prev(skiplist_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     if (!itor->node)
 	return skiplist_itor_last(itor);
 
@@ -438,8 +409,6 @@ skiplist_itor_prev(skiplist_itor* itor)
 bool
 skiplist_itor_nextn(skiplist_itor* itor, size_t count)
 {
-    ASSERT(itor != NULL);
-
     while (count--)
 	if (!skiplist_itor_next(itor))
 	    return false;
@@ -449,8 +418,6 @@ skiplist_itor_nextn(skiplist_itor* itor, size_t count)
 bool
 skiplist_itor_prevn(skiplist_itor* itor, size_t count)
 {
-    ASSERT(itor != NULL);
-
     while (count--)
 	if (!skiplist_itor_prev(itor))
 	    return false;
@@ -460,8 +427,6 @@ skiplist_itor_prevn(skiplist_itor* itor, size_t count)
 bool
 skiplist_itor_first(skiplist_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     itor->node = itor->list->head->link[0];
     return VALID(itor);
 }
@@ -469,8 +434,6 @@ skiplist_itor_first(skiplist_itor* itor)
 bool
 skiplist_itor_last(skiplist_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     skip_node* x = itor->list->head;
     for (unsigned k = itor->list->top_link; k-->0;) {
 	while (x->link[k])
@@ -488,8 +451,6 @@ skiplist_itor_last(skiplist_itor* itor)
 bool
 skiplist_itor_search(skiplist_itor* itor, const void* key)
 {
-    ASSERT(itor != NULL);
-
     skiplist* list = itor->list;
     skip_node* x = list->head;
     for (unsigned k = list->top_link+1; k-->0;) {
@@ -511,16 +472,12 @@ skiplist_itor_search(skiplist_itor* itor, const void* key)
 const void*
 skiplist_itor_key(const skiplist_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     return itor->node ? itor->node->key : NULL;
 }
 
 void**
 skiplist_itor_datum(skiplist_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     return itor->node ? &itor->node->datum : NULL;
 }
 

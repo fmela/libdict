@@ -134,26 +134,18 @@ tr_dict_new(dict_compare_func cmp_func, dict_prio_func prio_func)
 size_t
 tr_tree_free(tr_tree* tree, dict_delete_func delete_func)
 {
-    ASSERT(tree != NULL);
-
-    size_t count = tree_clear(tree, delete_func);
-    FREE(tree);
-    return count;
+    return tree_free(tree, delete_func);
 }
 
 size_t
 tr_tree_clear(tr_tree* tree, dict_delete_func delete_func)
 {
-    ASSERT(tree != NULL);
-
     return tree_clear(tree, delete_func);
 }
 
 dict_insert_result
 tr_tree_insert(tr_tree* tree, void* key)
 {
-    ASSERT(tree != NULL);
-
     int cmp = 0;
     tr_node* node = tree->root;
     tr_node* parent = NULL;
@@ -200,8 +192,6 @@ tr_tree_insert(tr_tree* tree, void* key)
 dict_remove_result
 tr_tree_remove(tr_tree* tree, const void* key)
 {
-    ASSERT(tree != NULL);
-
     tr_node* node = tree->root;
     while (node) {
 	int cmp = tree->cmp_func(key, node->key);
@@ -246,17 +236,12 @@ tr_tree_remove(tr_tree* tree, const void* key)
 void**
 tr_tree_search(tr_tree* tree, const void* key)
 {
-    ASSERT(tree != NULL);
-
     return tree_search(tree, key);
 }
 
 size_t
 tr_tree_traverse(tr_tree* tree, dict_visit_func visit)
 {
-    ASSERT(tree != NULL);
-    ASSERT(visit != NULL);
-
     return tree_traverse(tree, visit);
 }
 
@@ -269,8 +254,6 @@ tr_tree_select(tr_tree* tree, size_t n, const void** key, void** datum)
 size_t
 tr_tree_count(const tr_tree* tree)
 {
-    ASSERT(tree != NULL);
-
     return tree_count(tree);
 }
 
@@ -295,16 +278,12 @@ tr_tree_total_path_length(const tr_tree* tree)
 const void*
 tr_tree_min(const tr_tree* tree)
 {
-    ASSERT(tree != NULL);
-
     return tree_min(tree);
 }
 
 const void*
 tr_tree_max(const tr_tree* tree)
 {
-    ASSERT(tree != NULL);
-
     return tree_max(tree);
 }
 
@@ -325,8 +304,6 @@ node_new(void* key)
 static bool
 node_verify(const tr_tree* tree, const tr_node* parent, const tr_node* node)
 {
-    ASSERT(tree != NULL);
-
     if (!parent) {
 	VERIFY(tree->root == node);
     } else {
@@ -347,8 +324,6 @@ node_verify(const tr_tree* tree, const tr_node* parent, const tr_node* node)
 bool
 tr_tree_verify(const tr_tree* tree)
 {
-    ASSERT(tree != NULL);
-
     if (tree->root) {
 	VERIFY(tree->count > 0);
     } else {
@@ -360,8 +335,6 @@ tr_tree_verify(const tr_tree* tree)
 tr_itor*
 tr_itor_new(tr_tree* tree)
 {
-    ASSERT(tree != NULL);
-
     tr_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	itor->tree = tree;
@@ -373,8 +346,6 @@ tr_itor_new(tr_tree* tree)
 dict_itor*
 tr_dict_itor_new(tr_tree* tree)
 {
-    ASSERT(tree != NULL);
-
     dict_itor* itor = MALLOC(sizeof(*itor));
     if (itor) {
 	if (!(itor->_itor = tr_itor_new(tree))) {
@@ -389,32 +360,24 @@ tr_dict_itor_new(tr_tree* tree)
 void
 tr_itor_free(tr_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     FREE(itor);
 }
 
 bool
 tr_itor_valid(const tr_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     return itor->node != NULL;
 }
 
 void
 tr_itor_invalidate(tr_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     itor->node = NULL;
 }
 
 bool
 tr_itor_next(tr_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     if (!itor->node)
 	tr_itor_first(itor);
     else
@@ -425,8 +388,6 @@ tr_itor_next(tr_itor* itor)
 bool
 tr_itor_prev(tr_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     if (!itor->node)
 	tr_itor_last(itor);
     else
@@ -437,8 +398,6 @@ tr_itor_prev(tr_itor* itor)
 bool
 tr_itor_nextn(tr_itor* itor, size_t count)
 {
-    ASSERT(itor != NULL);
-
     while (count--)
 	if (!tr_itor_next(itor))
 	    return false;
@@ -448,8 +407,6 @@ tr_itor_nextn(tr_itor* itor, size_t count)
 bool
 tr_itor_prevn(tr_itor* itor, size_t count)
 {
-    ASSERT(itor != NULL);
-
     while (count--)
 	if (!tr_itor_prev(itor))
 	    return false;
@@ -459,8 +416,6 @@ tr_itor_prevn(tr_itor* itor, size_t count)
 bool
 tr_itor_first(tr_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     if (itor->tree->root) {
 	itor->node = tree_node_min(itor->tree->root);
 	return true;
@@ -473,8 +428,6 @@ tr_itor_first(tr_itor* itor)
 bool
 tr_itor_last(tr_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     if (itor->tree->root) {
 	itor->node = tree_node_max(itor->tree->root);
 	return true;
@@ -487,15 +440,11 @@ tr_itor_last(tr_itor* itor)
 const void*
 tr_itor_key(const tr_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     return itor->node ? itor->node->key : NULL;
 }
 
 void**
 tr_itor_datum(tr_itor* itor)
 {
-    ASSERT(itor != NULL);
-
     return itor->node ? &itor->node->datum : NULL;
 }
