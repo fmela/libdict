@@ -62,7 +62,7 @@ static const dict_vtable pr_tree_vtable = {
     (dict_remove_func)	    pr_tree_remove,
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
-    (dict_select_func)	    tree_select,
+    (dict_select_func)	    pr_tree_select,
     (dict_count_func)	    tree_count,
     (dict_verify_func)	    pr_tree_verify,
 };
@@ -392,7 +392,30 @@ pr_tree_traverse(pr_tree* tree, dict_visit_func visit)
 bool
 pr_tree_select(pr_tree* tree, size_t n, const void** key, void** datum)
 {
-    return tree_select(tree, n, key, datum);
+    if (n >= tree->count) {
+	if (key)
+	    *key = NULL;
+	if (datum)
+	    *datum = NULL;
+	return false;
+    }
+    pr_node* node = tree->root;
+    for (;;) {
+	const unsigned nw = WEIGHT(node->llink);
+	if (n + 1 >= nw) {
+	    if (n + 1 == nw) {
+		if (key)
+		    *key = node->key;
+		if (datum)
+		    *datum = node->datum;
+		return true;
+	    }
+	    n -= nw;
+	    node = node->rlink;
+	} else {
+	    node = node->llink;
+	}
+    }
 }
 
 size_t
