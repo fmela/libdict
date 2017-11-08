@@ -563,26 +563,20 @@ rb_tree_count(const rb_tree* tree)
 }
 
 size_t
-rb_tree_height(const rb_tree* tree)
+rb_tree_min_path_length(const rb_tree* tree)
 {
-    ASSERT(tree != NULL);
-
-    return tree->root != RB_NULL ? node_height(tree->root) : 0;
-}
-
-size_t
-rb_tree_mheight(const rb_tree* tree)
-{
-    ASSERT(tree != NULL);
-
     return tree->root != RB_NULL ? node_mheight(tree->root) : 0;
 }
 
 size_t
-rb_tree_pathlen(const rb_tree* tree)
+rb_tree_max_path_length(const rb_tree* tree)
 {
-    ASSERT(tree != NULL);
+    return tree->root != RB_NULL ? node_height(tree->root) : 0;
+}
 
+size_t
+rb_tree_total_path_length(const rb_tree* tree)
+{
     return tree->root != RB_NULL ? node_pathlen(tree->root, 1) : 0;
 }
 

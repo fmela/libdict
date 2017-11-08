@@ -102,9 +102,6 @@ static const itor_vtable sp_tree_itor_vtable = {
 };
 
 static sp_node*	node_new(void* key);
-static size_t	node_height(const sp_node* node);
-static size_t	node_mheight(const sp_node* node);
-static size_t	node_pathlen(const sp_node* node, size_t level);
 static void	splay(sp_tree* t, sp_node* n);
 
 sp_tree*
@@ -445,27 +442,21 @@ sp_tree_count(const sp_tree* tree)
 }
 
 size_t
-sp_tree_height(const sp_tree* tree)
+sp_tree_min_path_length(const sp_tree* tree)
 {
-    ASSERT(tree != NULL);
-
-    return tree->root ? node_height(tree->root) : 0;
+    return tree_min_path_length(tree);
 }
 
 size_t
-sp_tree_mheight(const sp_tree* tree)
+sp_tree_max_path_length(const sp_tree* tree)
 {
-    ASSERT(tree != NULL);
-
-    return tree->root ? node_mheight(tree->root) : 0;
+    return tree_max_path_length(tree);
 }
 
 size_t
-sp_tree_pathlen(const sp_tree* tree)
+sp_tree_total_path_length(const sp_tree* tree)
 {
-    ASSERT(tree != NULL);
-
-    return tree->root ? node_pathlen(tree->root, 1) : 0;
+    return tree_total_path_length(tree);
 }
 
 const void*
@@ -508,36 +499,6 @@ node_new(void* key)
 	node->rlink = NULL;
     }
     return node;
-}
-
-static size_t
-node_height(const sp_node* node)
-{
-    size_t l = node->llink ? node_height(node->llink) + 1 : 0;
-    size_t r = node->rlink ? node_height(node->rlink) + 1 : 0;
-    return MAX(l, r);
-}
-
-static size_t
-node_mheight(const sp_node* node)
-{
-    size_t l = node->llink ? node_mheight(node->llink) + 1 : 0;
-    size_t r = node->rlink ? node_mheight(node->rlink) + 1 : 0;
-    return MIN(l, r);
-}
-
-static size_t
-node_pathlen(const sp_node* node, size_t level)
-{
-    size_t n = 0;
-
-    ASSERT(node != NULL);
-
-    if (node->llink)
-	n += level + node_pathlen(node->llink, level + 1);
-    if (node->rlink)
-	n += level + node_pathlen(node->rlink, level + 1);
-    return n;
 }
 
 static bool

@@ -96,9 +96,6 @@ static const itor_vtable hb_tree_itor_vtable = {
 
 static hb_node* node_prev(hb_node* node);
 static hb_node* node_next(hb_node* node);
-static size_t	node_height(const hb_node* node);
-static size_t	node_mheight(const hb_node* node);
-static size_t	node_pathlen(const hb_node* node, size_t level);
 static hb_node*	node_new(void* key);
 static bool	node_verify(const hb_tree* tree, const hb_node* parent, const hb_node* node,
 			    unsigned* height, size_t *count);
@@ -527,27 +524,21 @@ hb_tree_count(const hb_tree* tree)
 }
 
 size_t
-hb_tree_height(const hb_tree* tree)
+hb_tree_min_path_length(const hb_tree* tree)
 {
-    ASSERT(tree != NULL);
-
-    return tree->root ? node_height(tree->root) : 0;
+    return tree_min_path_length(tree);
 }
 
 size_t
-hb_tree_mheight(const hb_tree* tree)
+hb_tree_max_path_length(const hb_tree* tree)
 {
-    ASSERT(tree != NULL);
-
-    return tree->root ? node_mheight(tree->root) : 0;
+    return tree_max_path_length(tree);
 }
 
 size_t
-hb_tree_pathlen(const hb_tree* tree)
+hb_tree_total_path_length(const hb_tree* tree)
 {
-    ASSERT(tree != NULL);
-
-    return tree->root ? node_pathlen(tree->root, 1) : 0;
+    return tree_total_path_length(tree);
 }
 
 static hb_node*
@@ -563,39 +554,6 @@ node_new(void* key)
 	node->rlink = NULL;
     }
     return node;
-}
-
-static size_t
-node_height(const hb_node* node)
-{
-    ASSERT(node != NULL);
-
-    size_t l = node->llink ? node_height(node->llink) + 1 : 0;
-    size_t r = node->rlink ? node_height(node->rlink) + 1 : 0;
-    return MAX(l, r);
-}
-
-static size_t
-node_mheight(const hb_node* node)
-{
-    ASSERT(node != NULL);
-
-    size_t l = node->llink ? node_mheight(node->llink) + 1 : 0;
-    size_t r = node->rlink ? node_mheight(node->rlink) + 1 : 0;
-    return MIN(l, r);
-}
-
-static size_t
-node_pathlen(const hb_node* node, size_t level)
-{
-    ASSERT(node != NULL);
-
-    size_t n = 0;
-    if (node->llink)
-	n += level + node_pathlen(node->llink, level + 1);
-    if (node->rlink)
-	n += level + node_pathlen(node->rlink, level + 1);
-    return n;
 }
 
 static hb_node*

@@ -117,9 +117,6 @@ static const itor_vtable wb_tree_itor_vtable = {
     (dict_icompare_func)    NULL,/* wb_itor_compare not implemented yet */
 };
 
-static size_t	node_height(const wb_node* node);
-static size_t	node_mheight(const wb_node* node);
-static size_t	node_pathlen(const wb_node* node, size_t level);
 static wb_node*	node_new(void* key);
 
 wb_tree*
@@ -423,21 +420,21 @@ wb_tree_count(const wb_tree* tree)
 }
 
 size_t
-wb_tree_height(const wb_tree* tree)
+wb_tree_min_path_length(const wb_tree* tree)
 {
-    return tree->root ? node_height(tree->root) : 0;
+    return tree_min_path_length(tree);
 }
 
 size_t
-wb_tree_mheight(const wb_tree* tree)
+wb_tree_max_path_length(const wb_tree* tree)
 {
-    return tree->root ? node_mheight(tree->root) : 0;
+    return tree_max_path_length(tree);
 }
 
 size_t
-wb_tree_pathlen(const wb_tree* tree)
+wb_tree_total_path_length(const wb_tree* tree)
 {
-    return tree->root ? node_pathlen(tree->root, 1) : 0;
+    return tree_total_path_length(tree);
 }
 
 static wb_node*
@@ -453,34 +450,6 @@ node_new(void* key)
 	node->weight = 2;
     }
     return node;
-}
-
-static size_t
-node_height(const wb_node* node)
-{
-    size_t l = node->llink ? node_height(node->llink) + 1 : 0;
-    size_t r = node->rlink ? node_height(node->rlink) + 1 : 0;
-    return MAX(l, r);
-}
-
-static size_t
-node_mheight(const wb_node* node)
-{
-    size_t l = node->llink ? node_mheight(node->llink) + 1 : 0;
-    size_t r = node->rlink ? node_mheight(node->rlink) + 1 : 0;
-    return MIN(l, r);
-}
-
-static size_t
-node_pathlen(const wb_node* node, size_t level)
-{
-    size_t n = 0;
-
-    if (node->llink)
-	n += level + node_pathlen(node->llink, level + 1);
-    if (node->rlink)
-	n += level + node_pathlen(node->rlink, level + 1);
-    return n;
 }
 
 wb_itor*

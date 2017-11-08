@@ -112,9 +112,11 @@ size_t	    tree_clear(void *tree, dict_delete_func delete_func);
 /* Remove all elements from |tree| and free its memory. */
 size_t	    tree_free(void *tree, dict_delete_func delete_func);
 /* Returns the depth of the leaf with minimal depth, or 0 for an empty tree. */
-size_t	    tree_min_leaf_depth(const void *tree);
+size_t	    tree_min_path_length(const void *tree);
 /* Returns the depth of the leaf with maximal depth, or 0 for an empty tree. */
-size_t	    tree_max_leaf_depth(const void *tree);
+size_t	    tree_max_path_length(const void *tree);
+/* Returns the total path length of the tree. */
+size_t	    tree_total_path_length(const void *tree);
 
 bool	    tree_iterator_valid(const void *iterator);
 void	    tree_iterator_invalidate(void *iterator);

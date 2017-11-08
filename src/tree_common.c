@@ -403,53 +403,48 @@ tree_free(void* Tree, dict_delete_func delete_func)
 }
 
 static size_t
-node_min_leaf_depth(const tree_node* node, size_t depth)
+node_min_path_length(const tree_node* node)
 {
-    ASSERT(node != NULL);
-    if (node->llink && node->rlink) {
-	size_t l_height = node_min_leaf_depth(node->llink, depth + 1);
-	size_t r_height = node_min_leaf_depth(node->rlink, depth + 1);
-	return MIN(l_height, r_height);
-    } else if (node->llink) {
-	return node_min_leaf_depth(node->llink, depth + 1);
-    } else if (node->rlink) {
-	return node_min_leaf_depth(node->rlink, depth + 1);
-    } else {
-	return depth;
-    }
+    size_t l = node->llink ? node_min_path_length(node->llink) : 0;
+    size_t r = node->rlink ? node_min_path_length(node->rlink) : 0;
+    return 1 + MIN(l, r);
 }
 
 size_t
-tree_min_leaf_depth(const void* Tree)
+tree_min_path_length(const void* Tree)
 {
     const tree* t = Tree;
-    ASSERT(t != NULL);
-    return t->root ? node_min_leaf_depth(t->root, 1) : 0;
+    return t->root ? node_min_path_length(t->root) : 0;
 }
 
 static size_t
-node_max_leaf_depth(const tree_node* node, size_t depth)
+node_max_path_length(const tree_node* node)
 {
-    ASSERT(node != NULL);
-    if (node->llink && node->rlink) {
-	size_t l_height = node_max_leaf_depth(node->llink, depth + 1);
-	size_t r_height = node_max_leaf_depth(node->rlink, depth + 1);
-	return MAX(l_height, r_height);
-    } else if (node->llink) {
-	return node_max_leaf_depth(node->llink, depth + 1);
-    } else if (node->rlink) {
-	return node_max_leaf_depth(node->rlink, depth + 1);
-    } else {
-	return depth;
-    }
+    size_t l = node->llink ? node_min_path_length(node->llink) + 1 : 0;
+    size_t r = node->rlink ? node_min_path_length(node->rlink) + 1 : 0;
+    return 1 + MAX(l, r);
 }
 
 size_t
-tree_max_leaf_depth(const void* Tree)
+tree_max_path_length(const void* Tree)
 {
     const tree* t = Tree;
-    ASSERT(t != NULL);
-    return t->root ? node_max_leaf_depth(t->root, 1) : 0;
+    return t->root ? node_max_path_length(t->root) : 0;
+}
+
+static size_t
+node_path_length(const tree_node* node, size_t level)
+{
+    return level
+	+ (node->llink ? node_path_length(node->llink, level + 1) : 0)
+	+ (node->rlink ? node_path_length(node->rlink, level + 1) : 0);
+}
+
+size_t
+tree_total_path_length(const void* Tree)
+{
+    const tree* t = Tree;
+    return t->root ? node_path_length(t->root, 1) : 0;
 }
 
 bool
