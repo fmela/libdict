@@ -77,13 +77,22 @@ static CU_SuiteInfo test_suites[] = {
 int
 main()
 {
-    CU_initialize_registry();
-    CU_register_suites(test_suites);
+    if (CU_initialize_registry() != CUE_SUCCESS ||
+	CU_register_suites(test_suites) != CUE_SUCCESS) {
+	fprintf(stderr, "Failed to initialize tests!\n");
+	exit(EXIT_FAILURE);
+    }
     CU_basic_set_mode(CU_BRM_NORMAL);
-    CU_basic_run_tests();
+    if (CU_basic_run_tests() != CUE_SUCCESS) {
+	fprintf(stderr, "Failed to run tests!\n");
+	exit(EXIT_FAILURE);
+    }
+    bool success =
+	!CU_get_number_of_suites_failed() &&
+	!CU_get_number_of_tests_failed() &&
+	!CU_get_number_of_failures();
     CU_cleanup_registry();
-
-    return 0;
+    return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 void
