@@ -39,7 +39,7 @@ typedef struct rb_node rb_node;
 struct rb_node {
     void*	    key;
     void*	    datum;
-    intptr_t        color;
+    intptr_t	    color;
     rb_node*	    llink;
     rb_node*	    rlink;
 };

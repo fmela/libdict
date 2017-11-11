@@ -104,7 +104,7 @@ size_t	    tree_traverse(void *tree, dict_visit_func visit);
 /* Put the key and datum of the |n|th element of |tree| into |key| and |datum|
  * and return true, or, if n is greater than or equal to the number of elements,
  * return false. */
-bool        tree_select(void *tree, size_t n, const void **key, void **datum);
+bool	    tree_select(void *tree, size_t n, const void **key, void **datum);
 /* Return a count of the elements in |tree|. */
 size_t	    tree_count(const void *tree);
 /* Remove all elements from |tree|. */

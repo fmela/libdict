@@ -90,7 +90,7 @@ typedef dict_remove_result
 		    (*dict_remove_func)(void* obj, const void* key);
 typedef size_t      (*dict_clear_func)(void* obj, dict_delete_func delete_func);
 typedef size_t      (*dict_traverse_func)(void* obj, dict_visit_func visit);
-typedef bool        (*dict_select_func)(void *obj, size_t n, const void** key, void** datum);
+typedef bool	    (*dict_select_func)(void *obj, size_t n, const void** key, void** datum);
 typedef size_t      (*dict_count_func)(const void* obj);
 typedef bool	    (*dict_verify_func)(const void* obj);
 
