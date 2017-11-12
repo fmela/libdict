@@ -95,6 +95,7 @@ typedef size_t      (*dict_count_func)(const void* obj);
 typedef bool	    (*dict_verify_func)(const void* obj);
 
 typedef struct {
+    const bool          sorted;
     dict_inew_func      inew;
     dict_dfree_func     dfree;
     dict_insert_func    insert;
@@ -155,7 +156,7 @@ typedef struct {
 #define dict_private(dct)	    ((dct)->_object)
 #define dict_insert(dct,key)	    ((dct)->_vtable->insert((dct)->_object, (key)))
 #define dict_search(dct,key)	    ((dct)->_vtable->search((dct)->_object, (key)))
-#define dict_is_sorted(dct)	    ((dct)->_vtable->search_le != NULL)	/* Assumes all-or-none near-search functions. */
+#define dict_is_sorted(dct)	    ((dct)->_vtable->sorted)
 #define dict_search_le(dct,key)	    ((dct)->_vtable->search_le ? (dct)->_vtable->search_le((dct)->_object, (key)) : NULL)
 #define dict_search_lt(dct,key)	    ((dct)->_vtable->search_lt ? (dct)->_vtable->search_lt((dct)->_object, (key)) : NULL)
 #define dict_search_ge(dct,key)	    ((dct)->_vtable->search_ge ? (dct)->_vtable->search_ge((dct)->_object, (key)) : NULL)
@@ -184,10 +185,10 @@ struct dict_itor {
 #define dict_itor_first(i)	    ((i)->_vtable->first((i)->_itor))
 #define dict_itor_last(i)	    ((i)->_vtable->last((i)->_itor))
 #define dict_itor_search(i,k)	    ((i)->_vtable->search((i)->_itor, (k)))
-#define dict_itor_search_le(i,k)    ((i)->_vtable->search_le((i)->_itor, (k)))
-#define dict_itor_search_lt(i,k)    ((i)->_vtable->search_lt((i)->_itor, (k)))
-#define dict_itor_search_ge(i,k)    ((i)->_vtable->search_ge((i)->_itor, (k)))
-#define dict_itor_search_gt(i,k)    ((i)->_vtable->search_gt((i)->_itor, (k)))
+#define dict_itor_search_le(i,k)    ((i)->_vtable->search_le && (i)->_vtable->search_le((i)->_itor, (k)))
+#define dict_itor_search_lt(i,k)    ((i)->_vtable->search_lt && (i)->_vtable->search_lt((i)->_itor, (k)))
+#define dict_itor_search_ge(i,k)    ((i)->_vtable->search_ge && (i)->_vtable->search_ge((i)->_itor, (k)))
+#define dict_itor_search_gt(i,k)    ((i)->_vtable->search_gt && (i)->_vtable->search_gt((i)->_itor, (k)))
 #define dict_itor_key(i)	    ((i)->_vtable->key((i)->_itor))
 #define dict_itor_datum(i)	    ((i)->_vtable->datum((i)->_itor))
 #define dict_itor_remove(i)	    ((i)->_vtable->remove((i)->_itor))

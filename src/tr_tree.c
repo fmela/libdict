@@ -62,6 +62,7 @@ struct tr_itor {
 };
 
 static const dict_vtable tr_tree_vtable = {
+    true,
     (dict_inew_func)	    tr_dict_itor_new,
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    tr_tree_insert,

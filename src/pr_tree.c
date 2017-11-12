@@ -51,6 +51,7 @@ struct pr_itor {
 };
 
 static const dict_vtable pr_tree_vtable = {
+    true,
     (dict_inew_func)	    pr_dict_itor_new,
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    pr_tree_insert,

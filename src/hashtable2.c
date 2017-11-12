@@ -65,6 +65,7 @@ struct hashtable2_itor {
 };
 
 static const dict_vtable hashtable2_vtable = {
+    false,
     (dict_inew_func)	    hashtable2_dict_itor_new,
     (dict_dfree_func)	    hashtable2_free,
     (dict_insert_func)	    hashtable2_insert,

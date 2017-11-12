@@ -64,6 +64,7 @@ struct sp_itor {
 };
 
 static const dict_vtable sp_tree_vtable = {
+    true,
     (dict_inew_func)	    sp_dict_itor_new,
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    sp_tree_insert,

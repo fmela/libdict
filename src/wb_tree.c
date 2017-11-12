@@ -80,6 +80,7 @@ struct wb_itor {
 };
 
 static const dict_vtable wb_tree_vtable = {
+    true,
     (dict_inew_func)	    wb_dict_itor_new,
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    wb_tree_insert,

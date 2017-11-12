@@ -63,6 +63,7 @@ struct rb_itor {
 };
 
 static const dict_vtable rb_tree_vtable = {
+    true,
     (dict_inew_func)	    rb_dict_itor_new,
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    rb_tree_insert,

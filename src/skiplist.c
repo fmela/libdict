@@ -60,6 +60,7 @@ struct skiplist_itor {
 };
 
 static const dict_vtable skiplist_vtable = {
+    true,
     (dict_inew_func)	    skiplist_dict_itor_new,
     (dict_dfree_func)	    skiplist_free,
     (dict_insert_func)	    skiplist_insert,

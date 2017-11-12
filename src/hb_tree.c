@@ -57,6 +57,7 @@ struct hb_itor {
 };
 
 static const dict_vtable hb_tree_vtable = {
+    true,
     (dict_inew_func)	    hb_dict_itor_new,
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    hb_tree_insert,
