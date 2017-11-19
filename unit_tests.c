@@ -258,9 +258,11 @@ test_closest_lookup(dict *dct, unsigned nkeys, bool keys_sorted)
 	for (unsigned i = 0; i < nkeys; ++i) {
 	    const void* key = NULL;
 	    void* datum = NULL;
-	    CU_ASSERT_TRUE(dict_select(dct, i, &key, &datum));
-	    CU_ASSERT_EQUAL(key, sorted_keys[i].key);
-	    CU_ASSERT_EQUAL(datum, sorted_keys[i].value);
+	    if (dct->_vtable->select) {
+		CU_ASSERT_TRUE(dict_select(dct, i, &key, &datum));
+		CU_ASSERT_EQUAL(key, sorted_keys[i].key);
+		CU_ASSERT_EQUAL(datum, sorted_keys[i].value);
+	    }
 	}
 	const void* key = NULL;
 	void* datum = NULL;
@@ -287,10 +289,16 @@ test_closest_lookup(dict *dct, unsigned nkeys, bool keys_sorted)
 	if (nkeys < NUM_SORTED_KEYS)
 	    continue;
 	if (info->le_key) {
-	    CU_ASSERT_STRING_EQUAL(*dict_search_le(dct, info->key), info->le_val);
-	    CU_ASSERT_TRUE(dict_itor_search_le(itor, info->key));
-	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), info->le_key);
-	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), info->le_val);
+	    if (dct->_vtable->search_le) {
+		CU_ASSERT_PTR_NOT_NULL(dict_search_le(dct, info->key));
+		CU_ASSERT_TRUE(dict_search_le(dct, info->key) != NULL &&
+			       strcmp(*dict_search_le(dct, info->key), info->le_val) == 0);
+	    }
+	    if (itor->_vtable->search_le) {
+		CU_ASSERT_TRUE(dict_itor_search_le(itor, info->key));
+		CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), info->le_key);
+		CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), info->le_val);
+	    }
 	} else {
 	    CU_ASSERT_PTR_NULL(dict_search_le(dct, info->key));
 	    CU_ASSERT_FALSE(dict_itor_search_le(itor, info->key));
@@ -298,10 +306,20 @@ test_closest_lookup(dict *dct, unsigned nkeys, bool keys_sorted)
 	    CU_ASSERT_PTR_NULL(dict_itor_datum(itor));
 	}
 	if (info->lt_key) {
-	    CU_ASSERT_STRING_EQUAL(*dict_search_lt(dct, info->key), info->lt_val);
-	    CU_ASSERT_TRUE(dict_itor_search_lt(itor, info->key));
-	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), info->lt_key);
-	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), info->lt_val);
+	    if (dct->_vtable->search_lt) {
+		CU_ASSERT_PTR_NOT_NULL(dict_search_lt(dct, info->key));
+		void** datum = dict_search_lt(dct, info->key);
+		if (!datum || strcmp(*datum, info->lt_val) != 0)
+		printf("search_lt %s: expected: %s, got: %s\n",
+		       info->key, info->lt_val, datum ? (const char*)*datum : "<null>");
+		CU_ASSERT_TRUE(dict_search_lt(dct, info->key) != NULL &&
+			       strcmp(*dict_search_lt(dct, info->key), info->lt_val) == 0);
+	    }
+	    if (itor->_vtable->search_lt) {
+		CU_ASSERT_TRUE(dict_itor_search_lt(itor, info->key));
+		CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), info->lt_key);
+		CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), info->lt_val);
+	    }
 	} else {
 	    CU_ASSERT_PTR_NULL(dict_search_lt(dct, info->key));
 	    CU_ASSERT_FALSE(dict_itor_search_lt(itor, info->key));
@@ -309,10 +327,16 @@ test_closest_lookup(dict *dct, unsigned nkeys, bool keys_sorted)
 	    CU_ASSERT_PTR_NULL(dict_itor_datum(itor));
 	}
 	if (info->ge_key) {
-	    CU_ASSERT_STRING_EQUAL(*dict_search_ge(dct, info->key), info->ge_val);
-	    CU_ASSERT_TRUE(dict_itor_search_ge(itor, info->key));
-	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), info->ge_key);
-	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), info->ge_val);
+	    if (dct->_vtable->search_ge) {
+		CU_ASSERT_PTR_NOT_NULL(dict_search_ge(dct, info->key));
+		CU_ASSERT_TRUE(dict_search_ge(dct, info->key) != NULL &&
+			       strcmp(*dict_search_ge(dct, info->key), info->ge_val) == 0);
+	    }
+	    if (itor->_vtable->search_ge) {
+		CU_ASSERT_TRUE(dict_itor_search_ge(itor, info->key));
+		CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), info->ge_key);
+		CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), info->ge_val);
+	    }
 	} else {
 	    CU_ASSERT_PTR_NULL(dict_search_ge(dct, info->key));
 	    CU_ASSERT_FALSE(dict_itor_search_ge(itor, info->key));
@@ -320,10 +344,15 @@ test_closest_lookup(dict *dct, unsigned nkeys, bool keys_sorted)
 	    CU_ASSERT_PTR_NULL(dict_itor_datum(itor));
 	}
 	if (info->gt_key) {
-	    CU_ASSERT_STRING_EQUAL(*dict_search_gt(dct, info->key), info->gt_val);
-	    CU_ASSERT_TRUE(dict_itor_search_gt(itor, info->key));
-	    CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), info->gt_key);
-	    CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), info->gt_val);
+	    if (dct->_vtable->search_gt) {
+		CU_ASSERT_PTR_NOT_NULL(dict_search_gt(dct, info->key));
+		CU_ASSERT_STRING_EQUAL(*dict_search_gt(dct, info->key), info->gt_val);
+	    }
+	    if (itor->_vtable->search_gt) {
+		CU_ASSERT_TRUE(dict_itor_search_gt(itor, info->key));
+		CU_ASSERT_STRING_EQUAL(dict_itor_key(itor), info->gt_key);
+		CU_ASSERT_STRING_EQUAL(*dict_itor_datum(itor), info->gt_val);
+	    }
 	} else {
 	    CU_ASSERT_PTR_NULL(dict_search_gt(dct, info->key));
 	    CU_ASSERT_FALSE(dict_itor_search_gt(itor, info->key));
@@ -337,6 +366,7 @@ test_closest_lookup(dict *dct, unsigned nkeys, bool keys_sorted)
 void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bool keys_sorted)
 {
     dict_itor *itor = dict_itor_new(dct);
+    CU_ASSERT_FALSE(dict_itor_valid(itor));
 
     CU_ASSERT_TRUE(dict_verify(dct));
 
@@ -392,10 +422,13 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bo
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_datum(itor));
 	CU_ASSERT_PTR_NOT_NULL(*dict_itor_datum(itor));
 
-	char *key = dict_itor_key(itor);
+	if (dict_is_sorted(dct) && keys_sorted) {
+	    CU_ASSERT_EQUAL(dict_itor_key(itor), keys[n].key);
+	    CU_ASSERT_EQUAL(*dict_itor_datum(itor), keys[n].value);
+	}
 	unsigned keys_matched = 0;
 	for (unsigned i = 0; i < nkeys; ++i) {
-	    if (keys[i].key == key) {
+	    if (dict_itor_key(itor) == keys[i].key) {
 		CU_ASSERT_EQUAL(*dict_itor_datum(itor), keys[i].value);
 		keys_matched++;
 	    } else {
@@ -404,8 +437,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bo
 	}
 	CU_ASSERT_EQUAL(keys_matched, 1);
 
-	if (dct->_vtable->insert != (dict_insert_func)hashtable_insert &&
-	    dct->_vtable->insert != (dict_insert_func)hashtable2_insert) {
+	if (dict_is_sorted(dct)) {
 	    if (last_key) {
 		CU_ASSERT_TRUE(strcmp(last_key, dict_itor_key(itor)) < 0);
 	    }
@@ -422,10 +454,13 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bo
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_datum(itor));
 	CU_ASSERT_PTR_NOT_NULL(*dict_itor_datum(itor));
 
-	char *key = dict_itor_key(itor);
+	if (dict_is_sorted(dct) && keys_sorted) {
+	    CU_ASSERT_EQUAL(dict_itor_key(itor), keys[nkeys - 1 - n].key);
+	    CU_ASSERT_EQUAL(*dict_itor_datum(itor), keys[nkeys - 1 - n].value);
+	}
 	unsigned keys_matched = 0;
 	for (unsigned i = 0; i < nkeys; ++i) {
-	    if (keys[i].key == key) {
+	    if (dict_itor_key(itor) == keys[i].key) {
 		CU_ASSERT_EQUAL(*dict_itor_datum(itor), keys[i].value);
 		keys_matched++;
 	    } else {
@@ -434,8 +469,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bo
 	}
 	CU_ASSERT_EQUAL(keys_matched, 1);
 
-	if (dct->_vtable->insert != (dict_insert_func)hashtable_insert &&
-	    dct->_vtable->insert != (dict_insert_func)hashtable2_insert) {
+	if (dict_is_sorted(dct)) {
 	    if (last_key) {
 		CU_ASSERT_TRUE(strcmp(last_key, dict_itor_key(itor)) > 0);
 	    }
