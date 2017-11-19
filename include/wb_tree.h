@@ -54,8 +54,6 @@ size_t		wb_tree_count(const wb_tree* tree);
 size_t		wb_tree_min_path_length(const wb_tree* tree);
 size_t		wb_tree_max_path_length(const wb_tree* tree);
 size_t		wb_tree_total_path_length(const wb_tree* tree);
-const void*	wb_tree_min(const wb_tree* tree);
-const void*	wb_tree_max(const wb_tree* tree);
 bool		wb_tree_verify(const wb_tree* tree);
 
 typedef struct wb_itor wb_itor;

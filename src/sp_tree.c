@@ -414,30 +414,6 @@ sp_tree_total_path_length(const sp_tree* tree)
     return tree_total_path_length(tree);
 }
 
-const void*
-sp_tree_min(const sp_tree* tree)
-{
-    if (!tree->root)
-	return NULL;
-
-    const sp_node* node = tree->root;
-    for (; node->llink; node = node->llink)
-	/* void */;
-    return node->key;
-}
-
-const void*
-sp_tree_max(const sp_tree* tree)
-{
-    if (!tree->root)
-	return NULL;
-
-    const sp_node* node = tree->root;
-    for (; node->rlink; node = node->rlink)
-	/* void */;
-    return node->key;
-}
-
 static sp_node*
 node_new(void* key)
 {

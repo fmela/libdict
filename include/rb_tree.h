@@ -54,8 +54,6 @@ size_t		rb_tree_count(const rb_tree* tree);
 size_t		rb_tree_min_path_length(const rb_tree* tree);
 size_t		rb_tree_max_path_length(const rb_tree* tree);
 size_t		rb_tree_total_path_length(const rb_tree* tree);
-const void*	rb_tree_min(const rb_tree* tree);
-const void*	rb_tree_max(const rb_tree* tree);
 bool		rb_tree_verify(const rb_tree* tree);
 
 typedef struct rb_itor rb_itor;

@@ -93,10 +93,6 @@ void*	    tree_search_ge_node(void *tree, const void *key);
  * specified key, or NULL if not found. */
 void**	    tree_search_gt(void *tree, const void *key);
 void*	    tree_search_gt_node(void *tree, const void *key);
-/* Return the minimal key in the tree, or NULL if the tree is empty. */
-const void* tree_min(const void *tree);
-/* Return the maximal key in the tree, or NULL if the tree is empty. */
-const void* tree_max(const void *tree);
 /* Traverses the tree in order, calling |visit| with each key and value pair,
  * stopping if |visit| returns false. Returns the number of times |visit| was
  * called. */

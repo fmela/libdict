@@ -360,18 +360,6 @@ wb_tree_clear(wb_tree* tree, dict_delete_func delete_func)
     return tree_clear(tree, delete_func);
 }
 
-const void*
-wb_tree_min(const wb_tree* tree)
-{
-    return tree_min(tree);
-}
-
-const void*
-wb_tree_max(const wb_tree* tree)
-{
-    return tree_max(tree);
-}
-
 size_t
 wb_tree_traverse(wb_tree* tree, dict_visit_func visit)
 {

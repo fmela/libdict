@@ -260,30 +260,6 @@ tree_search_gt(void* Tree, const void* key)
     return node ? &node->datum : NULL;
 }
 
-const void*
-tree_min(const void* Tree)
-{
-    const tree* t = Tree;
-    if (!t->root)
-	return NULL;
-    const tree_node* node = t->root;
-    while (node->llink)
-	node = node->llink;
-    return node->key;
-}
-
-const void*
-tree_max(const void* Tree)
-{
-    const tree* t = Tree;
-    if (!t->root)
-	return NULL;
-    const tree_node* node = t->root;
-    while (node->rlink)
-	node = node->rlink;
-    return node->key;
-}
-
 size_t
 tree_traverse(void* Tree, dict_visit_func visit)
 {

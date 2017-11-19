@@ -276,18 +276,6 @@ tr_tree_total_path_length(const tr_tree* tree)
     return tree_total_path_length(tree);
 }
 
-const void*
-tr_tree_min(const tr_tree* tree)
-{
-    return tree_min(tree);
-}
-
-const void*
-tr_tree_max(const tr_tree* tree)
-{
-    return tree_max(tree);
-}
-
 static tr_node*
 node_new(void* key)
 {

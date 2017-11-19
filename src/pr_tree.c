@@ -372,18 +372,6 @@ pr_tree_clear(pr_tree* tree, dict_delete_func delete_func)
     return tree_clear(tree, delete_func);
 }
 
-const void*
-pr_tree_min(const pr_tree* tree)
-{
-    return tree_min(tree);
-}
-
-const void*
-pr_tree_max(const pr_tree* tree)
-{
-    return tree_max(tree);
-}
-
 size_t
 pr_tree_traverse(pr_tree* tree, dict_visit_func visit)
 {

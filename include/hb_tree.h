@@ -54,8 +54,6 @@ size_t		hb_tree_count(const hb_tree* tree);
 size_t		hb_tree_min_path_length(const hb_tree* tree);
 size_t		hb_tree_max_path_length(const hb_tree* tree);
 size_t		hb_tree_total_path_length(const hb_tree* tree);
-const void*	hb_tree_min(const hb_tree* tree);
-const void*	hb_tree_max(const hb_tree* tree);
 bool		hb_tree_verify(const hb_tree* tree);
 
 typedef struct hb_itor hb_itor;

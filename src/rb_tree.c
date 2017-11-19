@@ -411,18 +411,6 @@ rb_tree_total_path_length(const rb_tree* tree)
     return tree_total_path_length(tree);
 }
 
-const void*
-rb_tree_min(const rb_tree* tree)
-{
-    return tree_node_min(tree->root);
-}
-
-const void*
-rb_tree_max(const rb_tree* tree)
-{
-    return tree_node_max(tree->root);
-}
-
 size_t
 rb_tree_traverse(rb_tree* tree, dict_visit_func visit)
 {
