@@ -82,17 +82,18 @@ main()
 	fprintf(stderr, "Failed to initialize tests!\n");
 	exit(EXIT_FAILURE);
     }
-    CU_basic_set_mode(CU_BRM_NORMAL);
+    CU_basic_set_mode(CU_BRM_SILENT);
     if (CU_basic_run_tests() != CUE_SUCCESS) {
 	fprintf(stderr, "Failed to run tests!\n");
 	exit(EXIT_FAILURE);
     }
-    bool success =
-	!CU_get_number_of_suites_failed() &&
-	!CU_get_number_of_tests_failed() &&
-	!CU_get_number_of_failures();
+    unsigned failures = 0;
+    for (const CU_FailureRecord *f = CU_get_failure_list(); f; f = f->pNext) {
+	fprintf(stderr, "%u: %s (%s:%u): %s\n",
+		++failures, f->pTest->pName, f->strFileName, f->uiLineNumber, f->strCondition);
+    }
     CU_cleanup_registry();
-    return success ? EXIT_SUCCESS : EXIT_FAILURE;
+    return failures ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 void
