@@ -243,37 +243,32 @@ splay(sp_tree* t, sp_node* n)
 dict_insert_result
 sp_tree_insert(sp_tree* tree, void* key)
 {
-    int cmp = 0;
-    sp_node* node = tree->root;
-    sp_node* parent = NULL;
-    while (node) {
-	cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0) {
-	    parent = node; node = node->llink;
-	} else if (cmp > 0) {
-	    parent = node; node = node->rlink;
-	} else
-	    return (dict_insert_result) { &node->datum, false };
-    }
-
-    if (!(node = node_new(key)))
-	return (dict_insert_result) { NULL, false };
-
-    if (!(node->parent = parent)) {
-	ASSERT(tree->count == 0);
-	ASSERT(tree->root == NULL);
-	tree->root = node;
-	tree->count = 1;
-    } else {
+    sp_node** pp = &tree->root;
+    sp_node* p = NULL;
+    while (*pp) {
+	p = *pp;
+	const int cmp = tree->cmp_func(key, p->key);
 	if (cmp < 0)
-	    parent->llink = node;
+	    pp = &p->llink;
+	else if (cmp)
+	    pp = &p->rlink;
 	else
-	    parent->rlink = node;
-	splay(tree, node);
-	tree->count++;
+	    return (dict_insert_result) { &p->datum, false };
     }
-    ASSERT(tree->root == node);
-    return (dict_insert_result) { &node->datum, true };
+
+    sp_node* const add = node_new(key);
+    if (!add)
+	return (dict_insert_result) { NULL, false };
+    *pp = add;
+    if (!(add->parent = p)) {
+	ASSERT(tree->count == 0);
+	ASSERT(tree->root == add);
+    } else {
+	splay(tree, add);
+    }
+    tree->count++;
+    ASSERT(tree->root == add);
+    return (dict_insert_result) { &add->datum, true };
 }
 
 void**

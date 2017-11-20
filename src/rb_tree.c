@@ -148,38 +148,33 @@ void** rb_tree_search_gt(rb_tree* tree, const void* key) { return tree_search_gt
 dict_insert_result
 rb_tree_insert(rb_tree* tree, void* key)
 {
-    int cmp = 0;	/* Quell GCC warning about uninitialized usage. */
-    rb_node* node = tree->root;
-    rb_node* parent = NULL;
-    while (node) {
-	cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0) {
-	    parent = node; node = node->llink;
-	} else if (cmp > 0) {
-	    parent = node; node = node->rlink;
-	} else
-	    return (dict_insert_result) { &node->datum, false };
+    rb_node** pp = &tree->root;
+    rb_node* p = NULL;
+    while (*pp) {
+	p = *pp;
+	const int cmp = tree->cmp_func(key, p->key);
+	if (cmp < 0)
+	    pp = &p->llink;
+	else if (cmp > 0)
+	    pp = &p->rlink;
+	else
+	    return (dict_insert_result) { &p->datum, false };
     }
 
-    if (!(node = node_new(key)))
+    rb_node* const add = node_new(key);
+    if (!add)
 	return (dict_insert_result) { NULL, false };
-
-    SET_PARENT(node, parent);
-    if (parent == NULL) {
-	ASSERT(tree->root == NULL);
-	tree->root = node;
+    *pp = add;
+    SET_PARENT(add, p);
+    if (p == NULL) {
 	ASSERT(tree->count == 0);
-	SET_BLACK(node);
+	ASSERT(tree->root == add);
+	SET_BLACK(add);
     } else {
-	if (cmp < 0)
-	    parent->llink = node;
-	else
-	    parent->rlink = node;
-
-	tree->rotation_count += insert_fixup(tree, node);
+	tree->rotation_count += insert_fixup(tree, add);
     }
     tree->count++;
-    return (dict_insert_result) { &node->datum, true };
+    return (dict_insert_result) { &add->datum, true };
 }
 
 static unsigned

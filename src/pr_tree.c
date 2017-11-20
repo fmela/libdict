@@ -251,38 +251,34 @@ fixup(pr_tree* tree, pr_node* node)
 dict_insert_result
 pr_tree_insert(pr_tree* tree, void* key)
 {
-    int cmp = 0;
-    pr_node* node = tree->root;
-    pr_node* parent = NULL;
-    while (node) {
-	cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0) {
-	    parent = node; node = node->llink;
-	} else if (cmp > 0) {
-	    parent = node; node = node->rlink;
-	} else
-	    return (dict_insert_result) { &node->datum, false };
+    pr_node** pp = &tree->root;
+    pr_node* p = NULL;
+    while (*pp) {
+	p = *pp;
+	const int cmp = tree->cmp_func(key, p->key);
+	if (cmp < 0)
+	    pp = &p->llink;
+	else if (cmp)
+	    pp = &p->rlink;
+	else
+	    return (dict_insert_result) { &p->datum, false };
     }
 
-    pr_node* add = node_new(key);
+    pr_node* const add = node_new(key);
     if (!add)
 	return (dict_insert_result) { NULL, false };
-    if (!(add->parent = parent)) {
+    *pp = add;
+    if (!(add->parent = p)) {
 	ASSERT(tree->count == 0);
-	ASSERT(tree->root == NULL);
-	tree->root = add;
+	ASSERT(tree->root == add);
     } else {
-	if (cmp < 0)
-	    parent->llink = add;
-	else
-	    parent->rlink = add;
-
 	unsigned rotations = 0;
-	while ((node = parent) != NULL) {
-	    parent = parent->parent;
+	pr_node* node = p;
+	do {
+	    p = p->parent;
 	    ++node->weight;
 	    rotations += fixup(tree, node);
-	}
+	} while ((node = p) != NULL);
 	tree->rotation_count += rotations;
     }
     tree->count++;

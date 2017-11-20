@@ -250,44 +250,40 @@ rotate_lr(hb_tree* restrict const tree, hb_node* restrict const q)
 dict_insert_result
 hb_tree_insert(hb_tree* tree, void* key)
 {
-    int cmp = 0;
-    hb_node* node = tree->root;
-    hb_node* parent = NULL;
+    hb_node* p = NULL;
     hb_node* q = NULL;
-    while (node) {
-	cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0) {
-	    parent = node; node = node->llink;
-	} else if (cmp > 0) {
-	    parent = node; node = node->rlink;
-	} else
-	    return (dict_insert_result) { &node->datum, false };
-	if (parent->bal & BAL_MASK)
-	    q = parent;
+    hb_node** pp = &tree->root;
+    while (*pp) {
+	p = *pp;
+	int cmp = tree->cmp_func(key, p->key);
+	if (cmp < 0)
+	    pp = &p->llink;
+	else if (cmp)
+	    pp = &p->rlink;
+	else
+	    return (dict_insert_result) { &p->datum, false };
+	if (p->bal & BAL_MASK)
+	    q = p;
     }
 
-    hb_node* const add = node = node_new(key);
-    if (!node)
+    hb_node* const add = node_new(key);
+    if (!add)
 	return (dict_insert_result) { NULL, false };
-
-    if (!(node->pptr = parent)) {
+    *pp = add;
+    add->bal = (intptr_t)p; /* set add->parent to p and add->balance to zero */
+    if (!p) {
 	ASSERT(tree->count == 0);
-	ASSERT(tree->root == NULL);
-	tree->root = node;
+	ASSERT(tree->root == add);
     } else {
-	if (cmp < 0)
-	    parent->llink = node;
-	else
-	    parent->rlink = node;
-
-	while (parent != q) {
-	    ASSERT((parent->bal & BAL_MASK) == 0);
-	    if (parent->llink == node)
-		parent->bal |= 2;
+	hb_node* node = add;
+	while (p != q) {
+	    ASSERT((p->bal & BAL_MASK) == 0);
+	    if (p->llink == node)
+		p->bal |= 2;
 	    else
-		parent->bal |= 1;
-	    node = parent;
-	    parent = PARENT(parent);
+		p->bal |= 1;
+	    node = p;
+	    p = PARENT(p);
 	}
 	if (q) {
 	    ASSERT(q->bal & BAL_MASK);

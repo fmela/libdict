@@ -138,47 +138,42 @@ size_t tr_tree_clear(tr_tree* tree, dict_delete_func delete_func) { return tree_
 dict_insert_result
 tr_tree_insert(tr_tree* tree, void* key)
 {
-    int cmp = 0;
-    tr_node* node = tree->root;
-    tr_node* parent = NULL;
-    while (node) {
-	cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0) {
-	    parent = node; node = node->llink;
-	} else if (cmp > 0) {
-	    parent = node; node = node->rlink;
-	} else
-	    return (dict_insert_result) { &node->datum, false };
+    tr_node** pp = &tree->root;
+    tr_node* p = NULL;
+    while (*pp) {
+	p = *pp;
+	const int cmp = tree->cmp_func(key, p->key);
+	if (cmp < 0)
+	    pp = &p->llink;
+	else if (cmp)
+	    pp = &p->rlink;
+	else
+	    return (dict_insert_result) { &p->datum, false };
     }
 
-    if (!(node = node_new(key)))
+    tr_node* const add = node_new(key);
+    if (!add)
 	return (dict_insert_result) { NULL, false };
-    node->prio = tree->prio_func ? tree->prio_func(key) : dict_rand();
-
-    if (!(node->parent = parent)) {
-	ASSERT(tree->root == NULL);
+    add->prio = tree->prio_func ? tree->prio_func(key) : dict_rand();
+    *pp = add;
+    if (!(add->parent = p)) {
 	ASSERT(tree->count == 0);
-	tree->root = node;
+	ASSERT(tree->root == add);
     } else {
-	if (cmp < 0)
-	    parent->llink = node;
-	else
-	    parent->rlink = node;
-
 	unsigned rotations = 0;
-	while (parent->prio < node->prio) {
+	while (p->prio < add->prio) {
 	    ++rotations;
-	    if (parent->llink == node)
-		tree_node_rot_right(tree, parent);
+	    if (p->llink == add)
+		tree_node_rot_right(tree, p);
 	    else
-		tree_node_rot_left(tree, parent);
-	    if (!(parent = node->parent))
+		tree_node_rot_left(tree, p);
+	    if (!(p = add->parent))
 		break;
 	}
 	tree->rotation_count += rotations;
     }
     tree->count++;
-    return (dict_insert_result) { &node->datum, true };
+    return (dict_insert_result) { &add->datum, true };
 }
 
 dict_remove_result
