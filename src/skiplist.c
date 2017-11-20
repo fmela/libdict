@@ -98,14 +98,14 @@ static const itor_vtable skiplist_itor_vtable = {
     (dict_icompare_func)    NULL,/* skiplist_itor_compare not implemented yet */
 };
 
-static skip_node*   node_new(void* key, unsigned link_count);
-static void**	    node_insert(skiplist* list, void* key, skip_node** update);
-static skip_node*   node_search(skiplist* list, const void* key);
-static skip_node*   node_search_le(skiplist* list, const void* key);
-static skip_node*   node_search_lt(skiplist* list, const void* key);
-static skip_node*   node_search_ge(skiplist* list, const void* key);
-static skip_node*   node_search_gt(skiplist* list, const void* key);
-static unsigned	    rand_link_count(skiplist* list);
+static inline skip_node*   node_new(void* key, unsigned link_count);
+static inline void**	   node_insert(skiplist* list, void* key, skip_node** update);
+static inline skip_node*   node_search(skiplist* list, const void* key);
+static inline skip_node*   node_search_le(skiplist* list, const void* key);
+static inline skip_node*   node_search_lt(skiplist* list, const void* key);
+static inline skip_node*   node_search_ge(skiplist* list, const void* key);
+static inline skip_node*   node_search_gt(skiplist* list, const void* key);
+static inline unsigned	   rand_link_count(skiplist* list);
 
 skiplist*
 skiplist_new(dict_compare_func cmp_func, unsigned max_link)
@@ -154,7 +154,7 @@ skiplist_free(skiplist* list, dict_delete_func delete_func)
     return count;
 }
 
-static void**
+static inline void**
 node_insert(skiplist* list, void* key, skip_node** update)
 {
     const unsigned nlinks = rand_link_count(list);
@@ -202,7 +202,7 @@ skiplist_insert(skiplist* list, void* key)
     return (dict_insert_result) { datum, datum != NULL };
 }
 
-static skip_node*
+static inline skip_node*
 node_search(skiplist* list, const void* key)
 {
     skip_node* x = list->head;
@@ -219,7 +219,7 @@ node_search(skiplist* list, const void* key)
     return NULL;
 }
 
-static skip_node*
+static inline skip_node*
 node_search_le(skiplist* list, const void* key)
 {
     skip_node* x = list->head;
@@ -236,7 +236,7 @@ node_search_le(skiplist* list, const void* key)
     return x == list->head ? NULL : x;
 }
 
-static skip_node*
+static inline skip_node*
 node_search_lt(skiplist* list, const void* key)
 {
     skip_node* x = list->head;
@@ -253,7 +253,7 @@ node_search_lt(skiplist* list, const void* key)
     return x == list->head ? NULL : x;
 }
 
-static skip_node*
+static inline skip_node*
 node_search_ge(skiplist* list, const void* key)
 {
     skip_node* x = list->head;
@@ -273,7 +273,7 @@ node_search_ge(skiplist* list, const void* key)
     return ret;
 }
 
-static skip_node*
+static inline skip_node*
 node_search_gt(skiplist* list, const void* key)
 {
     skip_node* x = list->head;
@@ -597,7 +597,7 @@ skiplist_itor_datum(skiplist_itor* itor)
     return itor->node ? &itor->node->datum : NULL;
 }
 
-skip_node*
+static inline skip_node*
 node_new(void* key, unsigned link_count)
 {
     ASSERT(link_count >= 1);
@@ -614,7 +614,7 @@ node_new(void* key, unsigned link_count)
     return node;
 }
 
-static unsigned
+static inline unsigned
 rand_link_count(skiplist* list)
 {
     unsigned count = (unsigned) __builtin_ctz(dict_rand()) / 2 + 1;
