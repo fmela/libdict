@@ -69,10 +69,10 @@ static const dict_vtable sp_tree_vtable = {
     (dict_dfree_func)	    tree_free,
     (dict_insert_func)	    sp_tree_insert,
     (dict_search_func)	    sp_tree_search,
-    (dict_search_func)	    tree_search_le,
-    (dict_search_func)	    tree_search_lt,
-    (dict_search_func)	    tree_search_ge,
-    (dict_search_func)	    tree_search_gt,
+    (dict_search_func)	    sp_tree_search_le,
+    (dict_search_func)	    sp_tree_search_lt,
+    (dict_search_func)	    sp_tree_search_ge,
+    (dict_search_func)	    sp_tree_search_gt,
     (dict_remove_func)	    sp_tree_remove,
     (dict_clear_func)	    tree_clear,
     (dict_traverse_func)    tree_traverse,
@@ -288,24 +288,59 @@ sp_tree_insert(sp_tree* tree, void* key)
 void**
 sp_tree_search(sp_tree* tree, const void* key)
 {
-    sp_node* node = tree->root;
-    sp_node* parent = NULL;
-    while (node) {
-	int cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0) {
-	    parent = node; node = node->llink;
-	} else if (cmp > 0) {
-	    parent = node; node = node->rlink;
-	} else {
-	    splay(tree, node);
-	    ASSERT(tree->root == node);
-	    return &node->datum;
-	}
+    sp_node* node = tree_search_node(tree, key);
+    if (node) {
+	splay(tree, node);
+	ASSERT(tree->root == node);
+	return &node->datum;
     }
-    if (parent) {
-	/* XXX Splay last node seen until it becomes the new root. */
-	splay(tree, parent);
-	ASSERT(tree->root == parent);
+    return NULL;
+}
+
+void**
+sp_tree_search_le(sp_tree* tree, const void* key)
+{
+    sp_node* node = tree_search_le_node(tree, key);
+    if (node) {
+	splay(tree, node);
+	ASSERT(tree->root == node);
+	return &node->datum;
+    }
+    return NULL;
+}
+
+void**
+sp_tree_search_lt(sp_tree* tree, const void* key)
+{
+    sp_node* node = tree_search_lt_node(tree, key);
+    if (node) {
+	splay(tree, node);
+	ASSERT(tree->root == node);
+	return &node->datum;
+    }
+    return NULL;
+}
+
+void**
+sp_tree_search_ge(sp_tree* tree, const void* key)
+{
+    sp_node* node = tree_search_ge_node(tree, key);
+    if (node) {
+	splay(tree, node);
+	ASSERT(tree->root == node);
+	return &node->datum;
+    }
+    return NULL;
+}
+
+void**
+sp_tree_search_gt(sp_tree* tree, const void* key)
+{
+    sp_node* node = tree_search_gt_node(tree, key);
+    if (node) {
+	splay(tree, node);
+	ASSERT(tree->root == node);
+	return &node->datum;
     }
     return NULL;
 }

@@ -134,6 +134,10 @@ pr_tree_search(pr_tree* tree, const void* key)
 {
     return tree_search(tree, key);
 }
+void** pr_tree_search_le(pr_tree* tree, const void* key) { return tree_search_le(tree, key); }
+void** pr_tree_search_lt(pr_tree* tree, const void* key) { return tree_search_lt(tree, key); }
+void** pr_tree_search_ge(pr_tree* tree, const void* key) { return tree_search_ge(tree, key); }
+void** pr_tree_search_gt(pr_tree* tree, const void* key) { return tree_search_gt(tree, key); }
 
 static unsigned
 fixup(pr_tree* tree, pr_node* node)

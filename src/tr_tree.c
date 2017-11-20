@@ -275,6 +275,10 @@ tr_tree_total_path_length(const tr_tree* tree)
 {
     return tree_total_path_length(tree);
 }
+void** tr_tree_search_le(tr_tree* tree, const void* key) { return tree_search_le(tree, key); }
+void** tr_tree_search_lt(tr_tree* tree, const void* key) { return tree_search_lt(tree, key); }
+void** tr_tree_search_ge(tr_tree* tree, const void* key) { return tree_search_ge(tree, key); }
+void** tr_tree_search_gt(tr_tree* tree, const void* key) { return tree_search_gt(tree, key); }
 
 static tr_node*
 node_new(void* key)

@@ -162,6 +162,10 @@ wb_tree_search(wb_tree* tree, const void* key)
 {
     return tree_search(tree, key);
 }
+void** wb_tree_search_le(wb_tree* tree, const void* key) { return tree_search_le(tree, key); }
+void** wb_tree_search_lt(wb_tree* tree, const void* key) { return tree_search_lt(tree, key); }
+void** wb_tree_search_ge(wb_tree* tree, const void* key) { return tree_search_ge(tree, key); }
+void** wb_tree_search_gt(wb_tree* tree, const void* key) { return tree_search_gt(tree, key); }
 
 static inline unsigned
 fixup(wb_tree* tree, wb_node* n)
