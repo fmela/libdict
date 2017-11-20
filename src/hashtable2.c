@@ -454,12 +454,11 @@ bool
 hashtable2_itor_next(hashtable2_itor* itor)
 {
     if (itor->slot < 0)
-	return hashtable2_itor_first(itor);
+	return false;
 
     while (++itor->slot < (int) itor->table->size) {
-	if (itor->table->table[itor->slot].hash) {
+	if (itor->table->table[itor->slot].hash)
 	    return true;
-	}
     }
     itor->slot = -1;
     return false;
@@ -469,12 +468,11 @@ bool
 hashtable2_itor_prev(hashtable2_itor* itor)
 {
     if (itor->slot < 0)
-	return hashtable2_itor_last(itor);
+	return false;
 
     while (itor->slot-- > 0) {
-	if (itor->table->table[itor->slot].hash) {
+	if (itor->table->table[itor->slot].hash)
 	    return true;
-	}
     }
     ASSERT(itor->slot == -1);
     return false;

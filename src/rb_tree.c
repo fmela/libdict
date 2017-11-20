@@ -138,41 +138,12 @@ rb_dict_new(dict_compare_func cmp_func)
     return dct;
 }
 
-size_t
-rb_tree_free(rb_tree* tree, dict_delete_func delete_func)
-{
-    return tree_free(tree, delete_func);
-}
-
-void**
-rb_tree_search(rb_tree* tree, const void* key)
-{
-    return tree_search(tree, key);
-}
-
-void**
-rb_tree_search_le(rb_tree* tree, const void* key)
-{
-    return tree_search_le(tree, key);
-}
-
-void**
-rb_tree_search_lt(rb_tree* tree, const void* key)
-{
-    return tree_search_lt(tree, key);
-}
-
-void**
-rb_tree_search_ge(rb_tree* tree, const void* key)
-{
-    return tree_search_ge(tree, key);
-}
-
-void**
-rb_tree_search_gt(rb_tree* tree, const void* key)
-{
-    return tree_search_gt(tree, key);
-}
+size_t rb_tree_free(rb_tree* tree, dict_delete_func delete_func) { return tree_free(tree, delete_func); }
+void** rb_tree_search(rb_tree* tree, const void* key) { return tree_search(tree, key); }
+void** rb_tree_search_le(rb_tree* tree, const void* key) { return tree_search_le(tree, key); }
+void** rb_tree_search_lt(rb_tree* tree, const void* key) { return tree_search_lt(tree, key); }
+void** rb_tree_search_ge(rb_tree* tree, const void* key) { return tree_search_ge(tree, key); }
+void** rb_tree_search_gt(rb_tree* tree, const void* key) { return tree_search_gt(tree, key); }
 
 dict_insert_result
 rb_tree_insert(rb_tree* tree, void* key)
@@ -268,16 +239,7 @@ insert_fixup(rb_tree* tree, rb_node* node)
 dict_remove_result
 rb_tree_remove(rb_tree* tree, const void* key)
 {
-    rb_node* node = tree->root;
-    while (node) {
-	int cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    node = node->llink;
-	else if (cmp)
-	    node = node->rlink;
-	else
-	    break;
-    }
+    rb_node* node = tree_search_node(tree, key);
     if (!node)
 	return (dict_remove_result) { NULL, NULL, false };
 
@@ -381,35 +343,11 @@ delete_fixup(rb_tree* tree, rb_node* node, rb_node* parent, bool left)
     return rotations;
 }
 
-size_t
-rb_tree_clear(rb_tree* tree, dict_delete_func delete_func)
-{
-    return tree_clear(tree, delete_func);
-}
-
-size_t
-rb_tree_count(const rb_tree* tree)
-{
-    return tree_count(tree);
-}
-
-size_t
-rb_tree_min_path_length(const rb_tree* tree)
-{
-    return tree_min_path_length(tree);
-}
-
-size_t
-rb_tree_max_path_length(const rb_tree* tree)
-{
-    return tree_max_path_length(tree);
-}
-
-size_t
-rb_tree_total_path_length(const rb_tree* tree)
-{
-    return tree_total_path_length(tree);
-}
+size_t rb_tree_clear(rb_tree* tree, dict_delete_func delete_func) { return tree_clear(tree, delete_func); }
+size_t rb_tree_count(const rb_tree* tree) { return tree_count(tree); }
+size_t rb_tree_min_path_length(const rb_tree* tree) { return tree_min_path_length(tree); }
+size_t rb_tree_max_path_length(const rb_tree* tree) { return tree_max_path_length(tree); }
+size_t rb_tree_total_path_length(const rb_tree* tree) { return tree_total_path_length(tree); }
 
 size_t
 rb_tree_traverse(rb_tree* tree, dict_visit_func visit)
@@ -544,6 +482,14 @@ node_verify(const rb_tree* tree, const rb_node* parent, const rb_node* node,
     }
     if (node) {
 	VERIFY(PARENT(node) == parent);
+	if (parent) {
+	    if (parent->llink == node) {
+		VERIFY(tree->cmp_func(parent->key, node->key) > 0);
+	    } else {
+		ASSERT(parent->rlink == node);
+		VERIFY(tree->cmp_func(parent->key, node->key) < 0);
+	    }
+	}
 	if (COLOR(node) == RB_RED) {
 	    /* Verify that every child of a red node is black. */
 	    if (node->llink)
@@ -606,42 +552,24 @@ rb_dict_itor_new(rb_tree* tree)
     return itor;
 }
 
-void
-rb_itor_free(rb_itor* itor)
-{
-    FREE(itor);
-}
-
-bool
-rb_itor_valid(const rb_itor* itor)
-{
-    return itor->node;
-}
-
-void
-rb_itor_invalidate(rb_itor* itor)
-{
-    itor->node = NULL;
-}
+void rb_itor_free(rb_itor* itor) { tree_iterator_free(itor); }
+bool rb_itor_valid(const rb_itor* itor) { return tree_iterator_valid(itor); }
+void rb_itor_invalidate(rb_itor* itor) { tree_iterator_invalidate(itor); }
 
 bool
 rb_itor_next(rb_itor* itor)
 {
-    if (itor->node == NULL)
-	rb_itor_first(itor);
-    else
+    if (itor->node)
 	itor->node = node_next(itor->node);
-    return itor->node;
+    return itor->node != NULL;
 }
 
 bool
 rb_itor_prev(rb_itor* itor)
 {
-    if (itor->node == NULL)
-	rb_itor_last(itor);
-    else
+    if (itor->node)
 	itor->node = node_prev(itor->node);
-    return itor->node;
+    return itor->node != NULL;
 }
 
 bool
@@ -650,7 +578,7 @@ rb_itor_nextn(rb_itor* itor, size_t count)
     while (count--)
 	if (!rb_itor_next(itor))
 	    return false;
-    return itor->node;
+    return itor->node != NULL;
 }
 
 bool
@@ -659,72 +587,15 @@ rb_itor_prevn(rb_itor* itor, size_t count)
     while (count--)
 	if (!rb_itor_prev(itor))
 	    return false;
-    return itor->node;
+    return itor->node != NULL;
 }
 
-bool
-rb_itor_first(rb_itor* itor)
-{
-    return (itor->node = tree_node_min(itor->tree->root)) != NULL;
-}
-
-bool
-rb_itor_last(rb_itor* itor)
-{
-    return (itor->node = tree_node_max(itor->tree->root)) != NULL;
-}
-
-bool
-rb_itor_search(rb_itor* itor, const void* key)
-{
-    rb_node* node = itor->tree->root;
-    while (node) {
-	int cmp = itor->tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    node = node->llink;
-	else if (cmp)
-	    node = node->rlink;
-	else {
-	    itor->node = node;
-	    return true;
-	}
-    }
-    itor->node = NULL;
-    return false;
-}
-
-bool
-rb_itor_search_le(rb_itor* itor, const void* key)
-{
-    return (itor->node = tree_search_le_node(itor->tree, key)) != NULL;
-}
-
-bool
-rb_itor_search_lt(rb_itor* itor, const void* key)
-{
-    return (itor->node = tree_search_lt_node(itor->tree, key)) != NULL;
-}
-
-bool
-rb_itor_search_ge(rb_itor* itor, const void* key)
-{
-    return (itor->node = tree_search_ge_node(itor->tree, key)) != NULL;
-}
-
-bool
-rb_itor_search_gt(rb_itor* itor, const void* key)
-{
-    return (itor->node = tree_search_gt_node(itor->tree, key)) != NULL;
-}
-
-const void*
-rb_itor_key(const rb_itor* itor)
-{
-    return itor->node ? itor->node->key : NULL;
-}
-
-void**
-rb_itor_datum(rb_itor* itor)
-{
-    return itor->node ? &itor->node->datum : NULL;
-}
+bool rb_itor_first(rb_itor* itor) { return tree_iterator_first(itor); }
+bool rb_itor_last(rb_itor* itor) { return tree_iterator_last(itor); }
+bool rb_itor_search(rb_itor* itor, const void* key) { return tree_iterator_search(itor, key); }
+bool rb_itor_search_le(rb_itor* itor, const void* key) { return tree_iterator_search_le(itor, key); }
+bool rb_itor_search_lt(rb_itor* itor, const void* key) { return tree_iterator_search_lt(itor, key); }
+bool rb_itor_search_ge(rb_itor* itor, const void* key) { return tree_iterator_search_ge(itor, key); }
+bool rb_itor_search_gt(rb_itor* itor, const void* key) { return tree_iterator_search_gt(itor, key); }
+const void* rb_itor_key(const rb_itor* itor) { return tree_iterator_key(itor); }
+void** rb_itor_datum(rb_itor* itor) { return tree_iterator_datum(itor); }

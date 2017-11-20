@@ -85,8 +85,8 @@ static const itor_vtable tr_tree_itor_vtable = {
     (dict_invalidate_func)  tree_iterator_invalidate,
     (dict_next_func)	    tree_iterator_next,
     (dict_prev_func)	    tree_iterator_prev,
-    (dict_nextn_func)	    tree_iterator_next_n,
-    (dict_prevn_func)	    tree_iterator_prev_n,
+    (dict_nextn_func)	    tree_iterator_nextn,
+    (dict_prevn_func)	    tree_iterator_prevn,
     (dict_first_func)	    tree_iterator_first,
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
@@ -132,17 +132,8 @@ tr_dict_new(dict_compare_func cmp_func, dict_prio_func prio_func)
     return dct;
 }
 
-size_t
-tr_tree_free(tr_tree* tree, dict_delete_func delete_func)
-{
-    return tree_free(tree, delete_func);
-}
-
-size_t
-tr_tree_clear(tr_tree* tree, dict_delete_func delete_func)
-{
-    return tree_clear(tree, delete_func);
-}
+size_t tr_tree_free(tr_tree* tree, dict_delete_func delete_func) { return tree_free(tree, delete_func); }
+size_t tr_tree_clear(tr_tree* tree, dict_delete_func delete_func) { return tree_clear(tree, delete_func); }
 
 dict_insert_result
 tr_tree_insert(tr_tree* tree, void* key)
@@ -193,16 +184,7 @@ tr_tree_insert(tr_tree* tree, void* key)
 dict_remove_result
 tr_tree_remove(tr_tree* tree, const void* key)
 {
-    tr_node* node = tree->root;
-    while (node) {
-	int cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    node = node->llink;
-	else if (cmp)
-	    node = node->rlink;
-	else
-	    break;
-    }
+    tr_node* node = tree_search_node(tree, key);
     if (!node)
 	return (dict_remove_result) { NULL, NULL, false };
 
@@ -216,17 +198,11 @@ tr_tree_remove(tr_tree* tree, const void* key)
     }
     tree->rotation_count += rotations;
 
-    tr_node* out = node->llink ? node->llink : node->rlink;
+    tr_node* const out = node->llink ? node->llink : node->rlink;
+    tr_node* const parent = node->parent;
     if (out)
-	out->parent = node->parent;
-    if (node->parent) {
-	if (node->parent->llink == node)
-	    node->parent->llink = out;
-	else
-	    node->parent->rlink = out;
-    } else {
-	tree->root = out;
-    }
+	out->parent = parent;
+    *(parent ? (parent->llink == node ? &parent->llink : &parent->rlink) : &tree->root) = out;
 
     dict_remove_result result = { node->key, node->datum, true };
     FREE(node);
@@ -234,51 +210,17 @@ tr_tree_remove(tr_tree* tree, const void* key)
     return result;
 }
 
-void**
-tr_tree_search(tr_tree* tree, const void* key)
-{
-    return tree_search(tree, key);
-}
-
-size_t
-tr_tree_traverse(tr_tree* tree, dict_visit_func visit)
-{
-    return tree_traverse(tree, visit);
-}
-
-bool
-tr_tree_select(tr_tree* tree, size_t n, const void** key, void** datum)
-{
-    return tree_select(tree, n, key, datum);
-}
-
-size_t
-tr_tree_count(const tr_tree* tree)
-{
-    return tree_count(tree);
-}
-
-size_t
-tr_tree_min_path_length(const tr_tree* tree)
-{
-    return tree_min_path_length(tree);
-}
-
-size_t
-tr_tree_max_path_length(const tr_tree* tree)
-{
-    return tree_max_path_length(tree);
-}
-
-size_t
-tr_tree_total_path_length(const tr_tree* tree)
-{
-    return tree_total_path_length(tree);
-}
+void** tr_tree_search(tr_tree* tree, const void* key) { return tree_search(tree, key); }
 void** tr_tree_search_le(tr_tree* tree, const void* key) { return tree_search_le(tree, key); }
 void** tr_tree_search_lt(tr_tree* tree, const void* key) { return tree_search_lt(tree, key); }
 void** tr_tree_search_ge(tr_tree* tree, const void* key) { return tree_search_ge(tree, key); }
 void** tr_tree_search_gt(tr_tree* tree, const void* key) { return tree_search_gt(tree, key); }
+size_t tr_tree_traverse(tr_tree* tree, dict_visit_func visit) { return tree_traverse(tree, visit); }
+bool tr_tree_select(tr_tree* tree, size_t n, const void** key, void** datum) { return tree_select(tree, n, key, datum); }
+size_t tr_tree_count(const tr_tree* tree) { return tree_count(tree); }
+size_t tr_tree_min_path_length(const tr_tree* tree) { return tree_min_path_length(tree); }
+size_t tr_tree_max_path_length(const tr_tree* tree) { return tree_max_path_length(tree); }
+size_t tr_tree_total_path_length(const tr_tree* tree) { return tree_total_path_length(tree); }
 
 static tr_node*
 node_new(void* key)
@@ -306,6 +248,12 @@ node_verify(const tr_tree* tree, const tr_node* parent, const tr_node* node)
 	VERIFY(node->parent == parent);
 	if (parent) {
 	    VERIFY(node->prio <= parent->prio);
+	    if (parent->llink == node) {
+		VERIFY(tree->cmp_func(parent->key, node->key) > 0);
+	    } else {
+		ASSERT(parent->rlink == node);
+		VERIFY(tree->cmp_func(parent->key, node->key) < 0);
+	    }
 	}
 	if (!node_verify(tree, node, node->llink) ||
 	    !node_verify(tree, node, node->rlink))
@@ -350,94 +298,19 @@ tr_dict_itor_new(tr_tree* tree)
     return itor;
 }
 
-void
-tr_itor_free(tr_itor* itor)
-{
-    FREE(itor);
-}
-
-bool
-tr_itor_valid(const tr_itor* itor)
-{
-    return itor->node != NULL;
-}
-
-void
-tr_itor_invalidate(tr_itor* itor)
-{
-    itor->node = NULL;
-}
-
-bool
-tr_itor_next(tr_itor* itor)
-{
-    if (!itor->node)
-	tr_itor_first(itor);
-    else
-	itor->node = tree_node_next(itor->node);
-    return itor->node != NULL;
-}
-
-bool
-tr_itor_prev(tr_itor* itor)
-{
-    if (!itor->node)
-	tr_itor_last(itor);
-    else
-	itor->node = tree_node_prev(itor->node);
-    return itor->node != NULL;
-}
-
-bool
-tr_itor_nextn(tr_itor* itor, size_t count)
-{
-    while (count--)
-	if (!tr_itor_next(itor))
-	    return false;
-    return itor->node != NULL;
-}
-
-bool
-tr_itor_prevn(tr_itor* itor, size_t count)
-{
-    while (count--)
-	if (!tr_itor_prev(itor))
-	    return false;
-    return itor->node != NULL;
-}
-
-bool
-tr_itor_first(tr_itor* itor)
-{
-    if (itor->tree->root) {
-	itor->node = tree_node_min(itor->tree->root);
-	return true;
-    } else {
-	itor->node = NULL;
-	return false;
-    }
-}
-
-bool
-tr_itor_last(tr_itor* itor)
-{
-    if (itor->tree->root) {
-	itor->node = tree_node_max(itor->tree->root);
-	return true;
-    } else {
-	itor->node = NULL;
-	return false;
-    }
-}
-
-const void*
-tr_itor_key(const tr_itor* itor)
-{
-    return itor->node ? itor->node->key : NULL;
-}
-
-void**
-tr_itor_datum(tr_itor* itor)
-{
-    return itor->node ? &itor->node->datum : NULL;
-}
+void tr_itor_free(tr_itor* itor) { tree_iterator_free(itor); }
+bool tr_itor_valid(const tr_itor* itor) { return tree_iterator_valid(itor); }
+void tr_itor_invalidate(tr_itor* itor) { tree_iterator_invalidate(itor); }
+bool tr_itor_next(tr_itor* itor) { return tree_iterator_next(itor); }
+bool tr_itor_prev(tr_itor* itor) { return tree_iterator_prev(itor); }
+bool tr_itor_nextn(tr_itor* itor, size_t count) { return tree_iterator_nextn(itor, count); }
+bool tr_itor_prevn(tr_itor* itor, size_t count) { return tree_iterator_prevn(itor, count); }
+bool tr_itor_first(tr_itor* itor) { return tree_iterator_first(itor); }
+bool tr_itor_last(tr_itor* itor) { return tree_iterator_last(itor); }
+bool tr_itor_search(tr_itor* itor, const void* key) { return tree_iterator_search(itor, key); }
+bool tr_itor_search_le(tr_itor* itor, const void* key) { return tree_iterator_search_le(itor, key); }
+bool tr_itor_search_lt(tr_itor* itor, const void* key) { return tree_iterator_search_lt(itor, key); }
+bool tr_itor_search_ge(tr_itor* itor, const void* key) { return tree_iterator_search_ge(itor, key); }
+bool tr_itor_search_gt(tr_itor* itor, const void* key) { return tree_iterator_search_gt(itor, key); }
+const void* tr_itor_key(const tr_itor* itor) { return tree_iterator_key(itor); }
+void** tr_itor_datum(tr_itor* itor) { return tree_iterator_datum(itor); }

@@ -87,8 +87,8 @@ static const itor_vtable sp_tree_itor_vtable = {
     (dict_invalidate_func)  tree_iterator_invalidate,
     (dict_next_func)	    tree_iterator_next,
     (dict_prev_func)	    tree_iterator_prev,
-    (dict_nextn_func)	    tree_iterator_next_n,
-    (dict_prevn_func)	    tree_iterator_prev_n,
+    (dict_nextn_func)	    tree_iterator_nextn,
+    (dict_prevn_func)	    tree_iterator_prevn,
     (dict_first_func)	    tree_iterator_first,
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
@@ -134,17 +134,8 @@ sp_dict_new(dict_compare_func cmp_func)
     return dct;
 }
 
-size_t
-sp_tree_free(sp_tree* tree, dict_delete_func delete_func)
-{
-    return tree_free(tree, delete_func);
-}
-
-size_t
-sp_tree_clear(sp_tree* tree, dict_delete_func delete_func)
-{
-    return tree_clear(tree, delete_func);
-}
+size_t sp_tree_free(sp_tree* tree, dict_delete_func delete_func) { return tree_free(tree, delete_func); }
+size_t sp_tree_clear(sp_tree* tree, dict_delete_func delete_func) { return tree_clear(tree, delete_func); }
 
 static void
 splay(sp_tree* t, sp_node* n)
@@ -181,26 +172,26 @@ splay(sp_tree* t, sp_node* n)
 	if (p->llink == n) {
 	    if (pp->llink == p) {
 		/* Rotate parent right, then node right. */
-		sp_node* pr = p->rlink;
+		sp_node* const pr = p->rlink;
 		p->rlink = pp;
 		pp->parent = p;
 		if ((pp->llink = pr) != NULL)
 		    pr->parent = pp;
 
-		sp_node* nr = n->rlink;
+		sp_node* const nr = n->rlink;
 		n->rlink = p;
 		p->parent = n;
 		if ((p->llink = nr) != NULL)
 		    nr->parent = p;
 	    } else {
 		/* Rotate node right, then parent left. */
-		sp_node* nr = n->rlink;
+		sp_node* const nr = n->rlink;
 		n->rlink = p;
 		p->parent = n;
 		if ((p->llink = nr) != NULL)
 		    nr->parent = p;
 
-		sp_node* nl = n->llink;
+		sp_node* const nl = n->llink;
 		n->llink = pp;
 		pp->parent = n;
 		if ((pp->rlink = nl) != NULL)
@@ -209,26 +200,26 @@ splay(sp_tree* t, sp_node* n)
 	} else {
 	    if (pp->rlink == p) {
 		/* Rotate parent left, then node left. */
-		sp_node* pl = p->llink;
+		sp_node* const pl = p->llink;
 		p->llink = pp;
 		pp->parent = p;
 		if ((pp->rlink = pl) != NULL)
 		    pl->parent = pp;
 
-		sp_node* nl = n->llink;
+		sp_node* const nl = n->llink;
 		n->llink = p;
 		p->parent = n;
 		if ((p->rlink = nl) != NULL)
 		    nl->parent = p;
 	    } else {
 		/* Rotate node left, then parent right. */
-		sp_node* nl = n->llink;
+		sp_node* const nl = n->llink;
 		n->llink = p;
 		p->parent = n;
 		if ((p->rlink = nl) != NULL)
 		    nl->parent = p;
 
-		sp_node* nr = n->rlink;
+		sp_node* const nr = n->rlink;
 		n->rlink = pp;
 		pp->parent = n;
 		if ((pp->llink = nr) != NULL)
@@ -348,16 +339,7 @@ sp_tree_search_gt(sp_tree* tree, const void* key)
 dict_remove_result
 sp_tree_remove(sp_tree* tree, const void* key)
 {
-    sp_node* node = tree->root;
-    while (node) {
-	int cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0)
-	    node = node->llink;
-	else if (cmp)
-	    node = node->rlink;
-	else
-	    break;
-    }
+    sp_node* node = tree_search_node(tree, key);
     if (!node)
 	return (dict_remove_result) { NULL, NULL, false };
 
@@ -365,11 +347,8 @@ sp_tree_remove(sp_tree* tree, const void* key)
     if (!node->llink || !node->rlink) {
 	out = node;
     } else {
+	out = tree_node_min(node->rlink);
 	void* tmp;
-	/* This is sure to screw up iterators that were positioned at the node
-	 * "out". */
-	for (out = node->rlink; out->llink; out = out->llink)
-	    /* void */;
 	SWAP(node->key, out->key, tmp);
 	SWAP(node->datum, out->datum, tmp);
     }
@@ -378,14 +357,7 @@ sp_tree_remove(sp_tree* tree, const void* key)
     sp_node* parent = out->parent;
     if (temp)
 	temp->parent = parent;
-    if (parent) {
-	if (parent->llink == out)
-	    parent->llink = temp;
-	else
-	    parent->rlink = temp;
-    } else {
-	tree->root = temp;
-    }
+    *(parent ? (parent->llink == out ? &parent->llink : &parent->rlink) : &tree->root) = temp;
 
     /* Splay an adjacent node to the root, if possible. */
     temp =
@@ -403,51 +375,12 @@ sp_tree_remove(sp_tree* tree, const void* key)
     return result;
 }
 
-size_t
-sp_tree_traverse(sp_tree* tree, dict_visit_func visit)
-{
-    size_t count = 0;
-    if (tree->root) {
-	sp_node* node = tree_node_min(tree->root);
-	do {
-	    ++count;
-	    if (!visit(node->key, node->datum))
-		break;
-	    node = tree_node_next(node);
-	} while (node);
-    }
-    return count;
-}
-
-bool
-sp_tree_select(sp_tree* tree, size_t n, const void** key, void** datum)
-{
-    return tree_select(tree, n, key, datum);
-}
-
-size_t
-sp_tree_count(const sp_tree* tree)
-{
-    return tree_count(tree);
-}
-
-size_t
-sp_tree_min_path_length(const sp_tree* tree)
-{
-    return tree_min_path_length(tree);
-}
-
-size_t
-sp_tree_max_path_length(const sp_tree* tree)
-{
-    return tree_max_path_length(tree);
-}
-
-size_t
-sp_tree_total_path_length(const sp_tree* tree)
-{
-    return tree_total_path_length(tree);
-}
+size_t sp_tree_traverse(sp_tree* tree, dict_visit_func visit) { return tree_traverse(tree, visit); }
+bool sp_tree_select(sp_tree* tree, size_t n, const void** key, void** datum) { return tree_select(tree, n, key, datum); }
+size_t sp_tree_count(const sp_tree* tree) { return tree_count(tree); }
+size_t sp_tree_min_path_length(const sp_tree* tree) { return tree_min_path_length(tree); }
+size_t sp_tree_max_path_length(const sp_tree* tree) { return tree_max_path_length(tree); }
+size_t sp_tree_total_path_length(const sp_tree* tree) { return tree_total_path_length(tree); }
 
 static sp_node*
 node_new(void* key)
@@ -473,6 +406,14 @@ node_verify(const sp_tree* tree, const sp_node* parent, const sp_node* node)
     }
     if (node) {
 	VERIFY(node->parent == parent);
+	if (parent) {
+	    if (parent->llink == node) {
+		VERIFY(tree->cmp_func(parent->key, node->key) > 0);
+	    } else {
+		ASSERT(parent->rlink == node);
+		VERIFY(tree->cmp_func(parent->key, node->key) < 0);
+	    }
+	}
 	if (!node_verify(tree, node, node->llink) ||
 	    !node_verify(tree, node, node->rlink))
 	    return false;
@@ -516,75 +457,20 @@ sp_dict_itor_new(sp_tree* tree)
     return itor;
 }
 
-void
-sp_itor_free(sp_itor* itor)
-{
-    tree_iterator_free(itor);
-}
-
-bool
-sp_itor_valid(const sp_itor* itor)
-{
-    return tree_iterator_valid(itor);
-}
-
-void
-sp_itor_invalidate(sp_itor* itor)
-{
-    tree_iterator_invalidate(itor);
-}
-
-bool
-sp_itor_next(sp_itor* itor)
-{
-    return tree_iterator_next(itor);
-}
-
-bool
-sp_itor_prev(sp_itor* itor)
-{
-    return tree_iterator_prev(itor);
-}
-
-bool
-sp_itor_nextn(sp_itor* itor, size_t count)
-{
-    return tree_iterator_next_n(itor, count);
-}
-
-bool
-sp_itor_prevn(sp_itor* itor, size_t count)
-{
-    return tree_iterator_prev_n(itor, count);
-}
-
-bool
-sp_itor_first(sp_itor* itor)
-{
-    return tree_iterator_first(itor);
-}
-
-bool
-sp_itor_last(sp_itor* itor)
-{
-    return tree_iterator_last(itor);
-}
-
-bool
-sp_itor_search(sp_itor* itor, const void* key)
-{
-    /* TODO: use algorithm from sp_tree_search() */
-    return tree_iterator_search(itor, key);
-}
-
-const void*
-sp_itor_key(const sp_itor* itor)
-{
-    return tree_iterator_key(itor);
-}
-
-void**
-sp_itor_datum(sp_itor* itor)
-{
-    return tree_iterator_datum(itor);
-}
+void sp_itor_free(sp_itor* itor) { tree_iterator_free(itor); }
+bool sp_itor_valid(const sp_itor* itor) { return tree_iterator_valid(itor); }
+void sp_itor_invalidate(sp_itor* itor) { tree_iterator_invalidate(itor); }
+bool sp_itor_next(sp_itor* itor) { return tree_iterator_next(itor); }
+bool sp_itor_prev(sp_itor* itor) { return tree_iterator_prev(itor); }
+bool sp_itor_nextn(sp_itor* itor, size_t count) { return tree_iterator_nextn(itor, count); }
+bool sp_itor_prevn(sp_itor* itor, size_t count) { return tree_iterator_prevn(itor, count); }
+bool sp_itor_first(sp_itor* itor) { return tree_iterator_first(itor); }
+bool sp_itor_last(sp_itor* itor) { return tree_iterator_last(itor); }
+/* TODO: use algorithm from sp_tree_search() */
+bool sp_itor_search(sp_itor* itor, const void* key) { return tree_iterator_search(itor, key); }
+bool sp_itor_search_le(sp_itor* itor, const void* key) { return tree_iterator_search_le(itor, key); }
+bool sp_itor_search_lt(sp_itor* itor, const void* key) { return tree_iterator_search_lt(itor, key); }
+bool sp_itor_search_ge(sp_itor* itor, const void* key) { return tree_iterator_search_ge(itor, key); }
+bool sp_itor_search_gt(sp_itor* itor, const void* key) { return tree_iterator_search_gt(itor, key); }
+const void* sp_itor_key(const sp_itor* itor) { return tree_iterator_key(itor); }
+void** sp_itor_datum(sp_itor* itor) { return tree_iterator_datum(itor); }

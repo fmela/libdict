@@ -390,20 +390,16 @@ skiplist_itor_invalidate(skiplist_itor* itor)
 bool
 skiplist_itor_next(skiplist_itor* itor)
 {
-    if (!itor->node)
-	return skiplist_itor_first(itor);
-
-    itor->node = itor->node->link[0];
+    if (VALID(itor))
+	itor->node = itor->node->link[0];
     return VALID(itor);
 }
 
 bool
 skiplist_itor_prev(skiplist_itor* itor)
 {
-    if (!itor->node)
-	return skiplist_itor_last(itor);
-
-    itor->node = itor->node->prev;
+    if (VALID(itor))
+	itor->node = itor->node->prev;
     return VALID(itor);
 }
 

@@ -103,8 +103,8 @@ static const itor_vtable wb_tree_itor_vtable = {
     (dict_invalidate_func)  tree_iterator_invalidate,
     (dict_next_func)	    tree_iterator_next,
     (dict_prev_func)	    tree_iterator_prev,
-    (dict_nextn_func)	    tree_iterator_next_n,
-    (dict_prevn_func)	    tree_iterator_prev_n,
+    (dict_nextn_func)	    tree_iterator_nextn,
+    (dict_prevn_func)	    tree_iterator_prevn,
     (dict_first_func)	    tree_iterator_first,
     (dict_last_func)	    tree_iterator_last,
     (dict_key_func)	    tree_iterator_key,
@@ -157,11 +157,7 @@ wb_tree_free(wb_tree* tree, dict_delete_func delete_func)
     return count;
 }
 
-void**
-wb_tree_search(wb_tree* tree, const void* key)
-{
-    return tree_search(tree, key);
-}
+void** wb_tree_search(wb_tree* tree, const void* key) { return tree_search(tree, key); }
 void** wb_tree_search_le(wb_tree* tree, const void* key) { return tree_search_le(tree, key); }
 void** wb_tree_search_lt(wb_tree* tree, const void* key) { return tree_search_lt(tree, key); }
 void** wb_tree_search_ge(wb_tree* tree, const void* key) { return tree_search_ge(tree, key); }
@@ -185,23 +181,17 @@ fixup(wb_tree* tree, wb_node* n)
 	} else {					/* RL */
 	    /* Rotate |nr| right, then |n| left. */
 	    ASSERT(nrl != NULL);
-	    wb_node* p = n->parent;
-	    if ((nrl->parent = p) != NULL) {
-		if (p->llink == n)
-		    p->llink = nrl;
-		else
-		    p->rlink = nrl;
-	    } else {
-		tree->root = nrl;
-	    }
+	    wb_node* const p = n->parent;
+	    nrl->parent = p;
+	    *(p ? (p->llink == n ? &p->llink : &p->rlink) : &tree->root) = nrl;
 
-	    wb_node* a = nrl->llink;
+	    wb_node* const a = nrl->llink;
 	    nrl->llink = n;
 	    n->parent = nrl;
 	    if ((n->rlink = a) != NULL)
 		a->parent = n;
 
-	    wb_node* b = nrl->rlink;
+	    wb_node* const b = nrl->rlink;
 	    nrl->rlink = nr;
 	    nr->parent = nrl;
 	    if ((nr->llink = b) != NULL)
@@ -225,23 +215,17 @@ fixup(wb_tree* tree, wb_node* n)
 	    /* Rotate |nl| left, then |n| right. */
 	    wb_node* nlr = nl->rlink;
 	    ASSERT(nlr != NULL);
-	    wb_node* p = n->parent;
-	    if ((nlr->parent = p) != NULL) {
-		if (p->llink == n)
-		    p->llink = nlr;
-		else
-		    p->rlink = nlr;
-	    } else {
-		tree->root = nlr;
-	    }
+	    wb_node* const p = n->parent;
+	    nlr->parent = p;
+	    *(p ? (p->llink == n ? &p->llink : &p->rlink) : &tree->root) = nlr;
 
-	    wb_node* a = nlr->llink;
+	    wb_node* const a = nlr->llink;
 	    nlr->llink = nl;
 	    nl->parent = nlr;
 	    if ((nl->rlink = a) != NULL)
 		a->parent = nl;
 
-	    wb_node* b = nlr->rlink;
+	    wb_node* const b = nlr->rlink;
 	    nlr->rlink = n;
 	    n->parent = nlr;
 	    if ((n->llink = b) != NULL)
@@ -301,74 +285,45 @@ wb_tree_insert(wb_tree* tree, void* key)
 dict_remove_result
 wb_tree_remove(wb_tree* tree, const void* key)
 {
-    wb_node* node = tree->root;
-    while (node) {
-	int cmp = tree->cmp_func(key, node->key);
-	if (cmp < 0) {
-	    node = node->llink;
-	} else if (cmp) {
-	    node = node->rlink;
+    wb_node* node = tree_search_node(tree, key);
+    if (!node)
+	return (dict_remove_result) { NULL, NULL, false };
+    if (node->llink && node->rlink) {
+	wb_node* out;
+	if (node->llink->weight > node->rlink->weight) {
+	    out = tree_node_max(node->llink);
 	} else {
-	    if (node->llink && node->rlink) {
-		wb_node* out;
-		if (node->llink->weight > node->rlink->weight) {
-		    out = node->llink;
-		    while (out->rlink)
-			out = out->rlink;
-		} else {
-		    out = node->rlink;
-		    while (out->llink)
-			out = out->llink;
-		}
-		void* tmp;
-		SWAP(node->key, out->key, tmp);
-		SWAP(node->datum, out->datum, tmp);
-		node = out;
-	    }
-	    ASSERT(!node->llink || !node->rlink);
-	    /* Splice in the successor, if any. */
-	    wb_node* child = node->llink ? node->llink : node->rlink;
-	    wb_node* parent = node->parent;
-	    if (child)
-		child->parent = parent;
-	    if (parent) {
-		if (parent->llink == node)
-		    parent->llink = child;
-		else
-		    parent->rlink = child;
-	    } else {
-		ASSERT(tree->root == node);
-		tree->root = child;
-	    }
-	    dict_remove_result result = { node->key, node->datum, true };
-	    FREE(node);
-	    tree->count--;
-	    /* Now move up the tree, decrementing weights. */
-	    unsigned rotations = 0;
-	    while (parent) {
-		--parent->weight;
-		wb_node* up = parent->parent;
-		rotations += fixup(tree, parent);
-		parent = up;
-	    }
-	    tree->rotation_count += rotations;
-	    return result;
+	    out = tree_node_min(node->rlink);
 	}
+	void* tmp;
+	SWAP(node->key, out->key, tmp);
+	SWAP(node->datum, out->datum, tmp);
+	node = out;
     }
-    return (dict_remove_result) { NULL, NULL, false };
+    ASSERT(!node->llink || !node->rlink);
+    /* Splice in the successor, if any. */
+    wb_node* child = node->llink ? node->llink : node->rlink;
+    wb_node* parent = node->parent;
+    if (child)
+	child->parent = parent;
+    *(parent ? (parent->llink == node ? &parent->llink : &parent->rlink) : &tree->root) = child;
+    dict_remove_result result = { node->key, node->datum, true };
+    FREE(node);
+    tree->count--;
+    /* Now move up the tree, decrementing weights. */
+    unsigned rotations = 0;
+    while (parent) {
+	--parent->weight;
+	wb_node* up = parent->parent;
+	rotations += fixup(tree, parent);
+	parent = up;
+    }
+    tree->rotation_count += rotations;
+    return result;
 }
 
-size_t
-wb_tree_clear(wb_tree* tree, dict_delete_func delete_func)
-{
-    return tree_clear(tree, delete_func);
-}
-
-size_t
-wb_tree_traverse(wb_tree* tree, dict_visit_func visit)
-{
-    return tree_traverse(tree, visit);
-}
+size_t wb_tree_clear(wb_tree* tree, dict_delete_func delete_func) { return tree_clear(tree, delete_func); }
+size_t wb_tree_traverse(wb_tree* tree, dict_visit_func visit) { return tree_traverse(tree, visit); }
 
 bool
 wb_tree_select(wb_tree* tree, size_t n, const void** key, void** datum)
@@ -399,29 +354,10 @@ wb_tree_select(wb_tree* tree, size_t n, const void** key, void** datum)
     }
 }
 
-size_t
-wb_tree_count(const wb_tree* tree)
-{
-    return tree_count(tree);
-}
-
-size_t
-wb_tree_min_path_length(const wb_tree* tree)
-{
-    return tree_min_path_length(tree);
-}
-
-size_t
-wb_tree_max_path_length(const wb_tree* tree)
-{
-    return tree_max_path_length(tree);
-}
-
-size_t
-wb_tree_total_path_length(const wb_tree* tree)
-{
-    return tree_total_path_length(tree);
-}
+size_t wb_tree_count(const wb_tree* tree) { return tree_count(tree); }
+size_t wb_tree_min_path_length(const wb_tree* tree) { return tree_min_path_length(tree); }
+size_t wb_tree_max_path_length(const wb_tree* tree) { return tree_max_path_length(tree); }
+size_t wb_tree_total_path_length(const wb_tree* tree) { return tree_total_path_length(tree); }
 
 static wb_node*
 node_new(void* key)
@@ -438,31 +374,6 @@ node_new(void* key)
     return node;
 }
 
-wb_itor*
-wb_itor_new(wb_tree* tree)
-{
-    wb_itor* itor = MALLOC(sizeof(*itor));
-    if (itor) {
-	itor->tree = tree;
-	itor->node = NULL;
-    }
-    return itor;
-}
-
-dict_itor*
-wb_dict_itor_new(wb_tree* tree)
-{
-    dict_itor* itor = MALLOC(sizeof(*itor));
-    if (itor) {
-	if (!(itor->_itor = wb_itor_new(tree))) {
-	    FREE(itor);
-	    return NULL;
-	}
-	itor->_vtable = &wb_tree_itor_vtable;
-    }
-    return itor;
-}
-
 static bool
 node_verify(const wb_tree* tree, const wb_node* parent, const wb_node* node,
 	    unsigned *weight)
@@ -474,6 +385,14 @@ node_verify(const wb_tree* tree, const wb_node* parent, const wb_node* node,
     }
     if (node) {
 	VERIFY(node->parent == parent);
+	if (parent) {
+	    if (parent->llink == node) {
+		VERIFY(tree->cmp_func(parent->key, node->key) > 0);
+	    } else {
+		ASSERT(parent->rlink == node);
+		VERIFY(tree->cmp_func(parent->key, node->key) < 0);
+	    }
+	}
 	unsigned lweight, rweight;
 	if (!node_verify(tree, node, node->llink, &lweight) ||
 	    !node_verify(tree, node, node->rlink, &rweight))
@@ -503,96 +422,45 @@ wb_tree_verify(const wb_tree* tree)
     return node_verify(tree, NULL, tree->root, &root_weight);
 }
 
-void
-wb_itor_free(wb_itor* itor)
+wb_itor*
+wb_itor_new(wb_tree* tree)
 {
-    FREE(itor);
-}
-
-bool
-wb_itor_valid(const wb_itor* itor)
-{
-    return itor->node != NULL;
-}
-
-void
-wb_itor_invalidate(wb_itor* itor)
-{
-    itor->node = NULL;
-}
-
-bool
-wb_itor_next(wb_itor* itor)
-{
-    if (!itor->node) {
-	return wb_itor_first(itor);
-    } else {
-	itor->node = tree_node_next(itor->node);
-	return itor->node != NULL;
-    }
-}
-
-bool
-wb_itor_prev(wb_itor* itor)
-{
-    if (!itor->node)
-	return wb_itor_last(itor);
-    else {
-	itor->node = tree_node_prev(itor->node);
-	return itor->node != NULL;
-    }
-}
-
-bool
-wb_itor_nextn(wb_itor* itor, size_t count)
-{
-    while (count--)
-	if (!wb_itor_next(itor))
-	    return false;
-    return itor->node != NULL;
-}
-
-bool
-wb_itor_prevn(wb_itor* itor, size_t count)
-{
-    while (count--)
-	if (!wb_itor_prev(itor))
-	    return false;
-    return itor->node != NULL;
-}
-
-bool
-wb_itor_first(wb_itor* itor)
-{
-    if (itor->tree->root) {
-	itor->node = tree_node_min(itor->tree->root);
-	return true;
-    } else {
+    wb_itor* itor = MALLOC(sizeof(*itor));
+    if (itor) {
+	itor->tree = tree;
 	itor->node = NULL;
-	return false;
     }
+    return itor;
 }
 
-bool
-wb_itor_last(wb_itor* itor)
+dict_itor*
+wb_dict_itor_new(wb_tree* tree)
 {
-    if (itor->tree->root) {
-	itor->node = tree_node_max(itor->tree->root);
-	return true;
-    } else {
-	itor->node = NULL;
-	return false;
+    dict_itor* itor = MALLOC(sizeof(*itor));
+    if (itor) {
+	if (!(itor->_itor = wb_itor_new(tree))) {
+	    FREE(itor);
+	    return NULL;
+	}
+	itor->_vtable = &wb_tree_itor_vtable;
     }
+    return itor;
 }
 
-const void*
-wb_itor_key(const wb_itor* itor)
-{
-    return itor->node ? itor->node->key : NULL;
-}
-
-void**
-wb_itor_datum(wb_itor* itor)
-{
-    return itor->node ? &itor->node->datum : NULL;
-}
+void wb_itor_free(wb_itor* itor) { tree_iterator_free(itor); }
+bool wb_itor_valid(const wb_itor* itor) { return tree_iterator_valid(itor); }
+void wb_itor_invalidate(wb_itor* itor) { tree_iterator_invalidate(itor); }
+bool wb_itor_next(wb_itor* itor) { return tree_iterator_next(itor); }
+bool wb_itor_prev(wb_itor* itor) { return tree_iterator_prev(itor); }
+bool wb_itor_nextn(wb_itor* itor, size_t count) { return tree_iterator_nextn(itor, count); }
+bool wb_itor_prevn(wb_itor* itor, size_t count) { return tree_iterator_prevn(itor, count); }
+bool wb_itor_first(wb_itor* itor) { return tree_iterator_first(itor); }
+bool wb_itor_last(wb_itor* itor) { return tree_iterator_last(itor); }
+/* TODO: use algorithm from wb_tree_search() */
+bool wb_itor_search(wb_itor* itor, const void* key) { return tree_iterator_search(itor, key); }
+bool wb_itor_search_le(wb_itor* itor, const void* key) { return tree_iterator_search_le(itor, key); }
+bool wb_itor_search_lt(wb_itor* itor, const void* key) { return tree_iterator_search_lt(itor, key); }
+bool wb_itor_search_ge(wb_itor* itor, const void* key) { return tree_iterator_search_ge(itor, key); }
+bool wb_itor_search_gt(wb_itor* itor, const void* key) { return tree_iterator_search_gt(itor, key); }
+const void* wb_itor_key(const wb_itor* itor) { return tree_iterator_key(itor); }
+void** wb_itor_datum(wb_itor* itor) { return tree_iterator_datum(itor); }

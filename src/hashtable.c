@@ -407,7 +407,7 @@ bool
 hashtable_itor_next(hashtable_itor* itor)
 {
     if (!itor->node)
-	return hashtable_itor_first(itor);
+	return false;
 
     if ((itor->node = itor->node->next) != NULL)
 	return true;
@@ -429,7 +429,7 @@ bool
 hashtable_itor_prev(hashtable_itor* itor)
 {
     if (!itor->node)
-	return hashtable_itor_last(itor);
+	return false;
 
     if ((itor->node = itor->node->prev) != NULL)
 	return true;

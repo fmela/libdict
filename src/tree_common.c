@@ -54,14 +54,8 @@ tree_node_rot_left(void* Tree, void* Node)
 
     tree_node* p = n->parent;
     n->parent = nr;
-    if ((nr->parent = p) != NULL) {
-	if (p->llink == n)
-	    p->llink = nr;
-	else
-	    p->rlink = nr;
-    } else {
-	((tree*)Tree)->root = nr;
-    }
+    nr->parent = p;
+    *(p == NULL ? &((tree*)Tree)->root : p->llink == n ? &p->llink : &p->rlink) = nr;
 }
 
 void
@@ -76,14 +70,8 @@ tree_node_rot_right(void* Tree, void* Node)
 
     tree_node* const p = n->parent;
     n->parent = nl;
-    if ((nl->parent = p) != NULL) {
-	if (p->llink == n)
-	    p->llink = nl;
-	else
-	    p->rlink = nl;
-    } else {
-	((tree*)Tree)->root = nl;
-    }
+    nl->parent = p;
+    *(p == NULL ? &((tree*)Tree)->root : p->llink == n ? &p->llink : &p->rlink) = nl;
 }
 
 void*
@@ -425,7 +413,7 @@ tree_iterator_prev(void* Iterator)
 }
 
 bool
-tree_iterator_next_n(void* Iterator, size_t count)
+tree_iterator_nextn(void* Iterator, size_t count)
 {
     tree_iterator* iterator = Iterator;
     while (iterator->node && count--)
@@ -434,7 +422,7 @@ tree_iterator_next_n(void* Iterator, size_t count)
 }
 
 bool
-tree_iterator_prev_n(void* Iterator, size_t count)
+tree_iterator_prevn(void* Iterator, size_t count)
 {
     tree_iterator* iterator = Iterator;
     while (iterator->node && count--)
