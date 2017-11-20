@@ -137,8 +137,11 @@ main(int argc, char **argv)
     printf("\n");
     total_comp += comp_count; comp_count = 0;
     total_hash += hash_count; hash_count = 0;
-    if (type != 'H' && type != '2' && type != 'S') {
+    if (dict_is_sorted(dct) && type != 'S') {
 	tree_base *tree = dict_private(dct);
+	printf(" min path length: %zu\n", tree_min_path_length(tree));
+	printf(" max path length: %zu\n", tree_max_path_length(tree));
+	printf(" tot path length: %zu\n", tree_total_path_length(tree));
 	printf("insert rotations: %zu\n", tree->rotation_count);
 	total_rotations += tree->rotation_count;
 	tree->rotation_count = 0;

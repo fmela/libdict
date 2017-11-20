@@ -351,8 +351,8 @@ tree_min_path_length(const void* Tree)
 static size_t
 node_max_path_length(const tree_node* node)
 {
-    size_t l = node->llink ? node_min_path_length(node->llink) + 1 : 0;
-    size_t r = node->rlink ? node_min_path_length(node->rlink) + 1 : 0;
+    size_t l = node->llink ? node_max_path_length(node->llink) : 0;
+    size_t r = node->rlink ? node_max_path_length(node->rlink) : 0;
     return 1 + MAX(l, r);
 }
 
