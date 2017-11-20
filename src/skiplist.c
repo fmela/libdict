@@ -171,7 +171,7 @@ node_insert(skiplist* list, void* key, skip_node** update)
 	list->top_link = nlinks;
     }
 
-    x->prev = update[0];
+    x->prev = (update[0] == list->head) ? NULL : update[0];
     if (update[0]->link[0])
 	update[0]->link[0]->prev = x;
     for (unsigned k = 0; k < nlinks; k++) {
@@ -223,7 +223,6 @@ static skip_node*
 node_search_le(skiplist* list, const void* key)
 {
     skip_node* x = list->head;
-    skip_node* ret = NULL;
     for (unsigned k = list->top_link+1; k-->0;) {
 	while (x->link[k]) {
 	    int cmp = list->cmp_func(key, x->link[k]->key);
@@ -232,17 +231,15 @@ node_search_le(skiplist* list, const void* key)
 	    x = x->link[k];
 	    if (cmp == 0)
 		return x;
-	    ret = x;
 	}
     }
-    return ret;
+    return x == list->head ? NULL : x;
 }
 
 static skip_node*
 node_search_lt(skiplist* list, const void* key)
 {
     skip_node* x = list->head;
-    skip_node* ret = NULL;
     for (unsigned k = list->top_link+1; k-->0;) {
 	while (x->link[k]) {
 	    int cmp = list->cmp_func(key, x->link[k]->key);
@@ -250,11 +247,10 @@ node_search_lt(skiplist* list, const void* key)
 		break;
 	    x = x->link[k];
 	    if (cmp == 0)
-		return x->prev == list->head ? NULL : x->prev;
-	    ret = x;
+		return x->prev;
 	}
     }
-    return ret;
+    return x == list->head ? NULL : x;
 }
 
 static skip_node*
@@ -421,9 +417,8 @@ skiplist_verify(const skiplist* list)
     }
     unsigned observed_top_link = 0;
 
-    skip_node* prev = list->head;
+    skip_node* prev = NULL;
     skip_node* node = list->head->link[0];
-    VERIFY(prev->prev == NULL);
     while (node) {
 	if (observed_top_link < node->link_count)
 	    observed_top_link = node->link_count;
@@ -460,8 +455,6 @@ skiplist_link_count_histogram(const skiplist* list, size_t counts[], size_t ncou
     return max_num_links;
 }
 
-#define VALID(itor) ((itor)->node && (itor)->node != (itor)->list->head)
-
 skiplist_itor*
 skiplist_itor_new(skiplist* list)
 {
@@ -496,7 +489,7 @@ skiplist_itor_free(skiplist_itor* itor)
 bool
 skiplist_itor_valid(const skiplist_itor* itor)
 {
-    return VALID(itor);
+    return itor->node != NULL;
 }
 
 void
@@ -508,17 +501,17 @@ skiplist_itor_invalidate(skiplist_itor* itor)
 bool
 skiplist_itor_next(skiplist_itor* itor)
 {
-    if (VALID(itor))
+    if (itor->node)
 	itor->node = itor->node->link[0];
-    return VALID(itor);
+    return itor->node != NULL;
 }
 
 bool
 skiplist_itor_prev(skiplist_itor* itor)
 {
-    if (VALID(itor))
+    if (itor->node)
 	itor->node = itor->node->prev;
-    return VALID(itor);
+    return itor->node != NULL;
 }
 
 bool
@@ -527,7 +520,7 @@ skiplist_itor_nextn(skiplist_itor* itor, size_t count)
     while (count--)
 	if (!skiplist_itor_next(itor))
 	    return false;
-    return VALID(itor);
+    return itor->node != NULL;
 }
 
 bool
@@ -536,14 +529,13 @@ skiplist_itor_prevn(skiplist_itor* itor, size_t count)
     while (count--)
 	if (!skiplist_itor_prev(itor))
 	    return false;
-    return VALID(itor);
+    return itor->node != NULL;
 }
 
 bool
 skiplist_itor_first(skiplist_itor* itor)
 {
-    itor->node = itor->list->head->link[0];
-    return VALID(itor);
+    return (itor->node = itor->list->head->link[0]) != NULL;
 }
 
 bool
@@ -566,36 +558,31 @@ skiplist_itor_last(skiplist_itor* itor)
 bool
 skiplist_itor_search(skiplist_itor* itor, const void* key)
 {
-    itor->node = node_search(itor->list, key);
-    return VALID(itor);
+    return (itor->node = node_search(itor->list, key)) != NULL;
 }
 
 bool
 skiplist_itor_search_le(skiplist_itor* itor, const void* key)
 {
-    itor->node = node_search_le(itor->list, key);
-    return VALID(itor);
+    return (itor->node = node_search_le(itor->list, key)) != NULL;
 }
 
 bool
 skiplist_itor_search_lt(skiplist_itor* itor, const void* key)
 {
-    itor->node = node_search_lt(itor->list, key);
-    return VALID(itor);
+    return (itor->node = node_search_lt(itor->list, key)) != NULL;
 }
 
 bool
 skiplist_itor_search_ge(skiplist_itor* itor, const void* key)
 {
-    itor->node = node_search_ge(itor->list, key);
-    return VALID(itor);
+    return (itor->node = node_search_ge(itor->list, key)) != NULL;
 }
 
 bool
 skiplist_itor_search_gt(skiplist_itor* itor, const void* key)
 {
-    itor->node = node_search_gt(itor->list, key);
-    return VALID(itor);
+    return (itor->node = node_search_gt(itor->list, key)) != NULL;
 }
 
 const void*
