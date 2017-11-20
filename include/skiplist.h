@@ -41,10 +41,10 @@ size_t		skiplist_free(skiplist* list, dict_delete_func delete_func);
 dict_insert_result
 		skiplist_insert(skiplist* list, void* key);
 void**		skiplist_search(skiplist* list, const void* key);
-void**		skiplist_search_le(skiplist* tree, const void* key);
-void**		skiplist_search_lt(skiplist* tree, const void* key);
-void**		skiplist_search_ge(skiplist* tree, const void* key);
-void**		skiplist_search_gt(skiplist* tree, const void* key);
+void**		skiplist_search_le(skiplist* list, const void* key);
+void**		skiplist_search_lt(skiplist* list, const void* key);
+void**		skiplist_search_ge(skiplist* list, const void* key);
+void**		skiplist_search_gt(skiplist* list, const void* key);
 dict_remove_result
 		skiplist_remove(skiplist* list, const void* key);
 size_t		skiplist_clear(skiplist* list, dict_delete_func delete_func);

@@ -65,10 +65,10 @@ static const dict_vtable skiplist_vtable = {
     (dict_dfree_func)	    skiplist_free,
     (dict_insert_func)	    skiplist_insert,
     (dict_search_func)	    skiplist_search,
-    (dict_search_func)	    NULL,/* TODO: implement search_le */
-    (dict_search_func)	    NULL,/* TODO: implement search_lt */
-    (dict_search_func)	    NULL,/* TODO: implement search_ge */
-    (dict_search_func)	    NULL,/* TODO: implement search_gt */
+    (dict_search_func)	    skiplist_search_le,
+    (dict_search_func)	    skiplist_search_lt,
+    (dict_search_func)	    skiplist_search_ge,
+    (dict_search_func)	    skiplist_search_gt,
     (dict_remove_func)	    skiplist_remove,
     (dict_clear_func)	    skiplist_clear,
     (dict_traverse_func)    skiplist_traverse,
@@ -212,6 +212,84 @@ skiplist_search(skiplist* list, const void* key)
 	}
     }
     return NULL;
+}
+
+void**
+skiplist_search_le(skiplist* list, const void* key)
+{
+    skip_node* x = list->head;
+    skip_node* ret = NULL;
+    for (unsigned k = list->top_link+1; k-->0;) {
+	while (x->link[k]) {
+	    int cmp = list->cmp_func(key, x->link[k]->key);
+	    if (cmp < 0)
+		break;
+	    x = x->link[k];
+	    if (cmp == 0)
+		return &x->datum;
+	    ret = x;
+	}
+    }
+    return ret ? &ret->datum : NULL;
+}
+
+void**
+skiplist_search_lt(skiplist* list, const void* key)
+{
+    skip_node* x = list->head;
+    skip_node* ret = NULL;
+    for (unsigned k = list->top_link+1; k-->0;) {
+	while (x->link[k]) {
+	    int cmp = list->cmp_func(key, x->link[k]->key);
+	    if (cmp < 0)
+		break;
+	    x = x->link[k];
+	    if (cmp == 0)
+		return x->prev == list->head ? NULL : &x->prev->datum;
+	    ret = x;
+	}
+    }
+    return ret ? &ret->datum : NULL;
+}
+
+void**
+skiplist_search_ge(skiplist* list, const void* key)
+{
+    skip_node* x = list->head;
+    skip_node* ret = NULL;
+    for (unsigned k = list->top_link+1; k-->0;) {
+	while (x->link[k]) {
+	    int cmp = list->cmp_func(key, x->link[k]->key);
+	    if (cmp < 0) {
+		ret = x->link[k];
+		break;
+	    }
+	    x = x->link[k];
+	    if (cmp == 0)
+		return &x->datum;
+	}
+    }
+    return ret ? &ret->datum : NULL;
+}
+
+void**
+skiplist_search_gt(skiplist* list, const void* key)
+{
+    skip_node* x = list->head;
+    skip_node* ret = NULL;
+    for (unsigned k = list->top_link+1; k-->0;) {
+	while (x->link[k]) {
+	    int cmp = list->cmp_func(key, x->link[k]->key);
+	    if (cmp < 0) {
+		ret = x->link[k];
+		break;
+	    }
+	    x = x->link[k];
+	    if (cmp == 0)
+		return x->link[0] ? &x->link[0]->datum : NULL;
+	}
+    }
+    return ret ? &ret->datum : NULL;
 }
 
 dict_remove_result
