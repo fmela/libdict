@@ -15,6 +15,7 @@
 #include <CUnit/Basic.h>
 
 #include "dict.h"
+#include "util.h"
 #include "src/hashtable_common.h"   /* For dict_prime_geq() */
 
 #define TEST_FUNC(func) { (char *)#func, func }
@@ -47,8 +48,6 @@ void test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
 void test_closest_lookup(dict *dct, unsigned nkeys, bool keys_sorted);
 void test_primes_geq(void);
 void test_version_string(void);
-void shuffle(char **p, unsigned size);
-bool is_prime(unsigned n);
 
 static CU_TestInfo basic_tests[] = {
     TEST_FUNC(test_basic_hashtable_1bucket),
@@ -94,15 +93,6 @@ main()
     }
     CU_cleanup_registry();
     return failures ? EXIT_FAILURE : EXIT_SUCCESS;
-}
-
-void
-shuffle(char **p, unsigned size)
-{
-    for (unsigned i = 0; i < size - 1; i++) {
-	unsigned n = (unsigned) rand() % (size - i);
-	char *t = p[i+n]; p[i+n] = p[i]; p[i] = t;
-    }
 }
 
 static const struct key_info unsorted_keys[] = {
@@ -657,29 +647,6 @@ void test_basic_weight_balanced_tree()
     for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
 	test_basic(wb_dict_new(dict_str_cmp), unsorted_keys, n, false);
 	test_basic(wb_dict_new(dict_str_cmp), sorted_keys, n, true);
-    }
-}
-
-bool is_prime(unsigned n)
-{
-    if (n <= 0)
-	return false;
-    if (n <= 3)
-	return true;
-    if (!(n & 1))
-	return false;
-    for (unsigned f = 3, f2 = f * f;;) {
-	if (f2 >= n) {
-	    if (f2 == n)
-		return false;
-	    return true;
-	}
-	if (n % f == 0)
-	    return false;
-	if (f2 + (4 * f + 4) < f2)
-	    return true; /* Overflow */
-	f2 += 4 * f + 4;
-	f += 2;
     }
 }
 

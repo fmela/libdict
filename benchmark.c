@@ -37,7 +37,6 @@ unsigned str_hash(const void *p);
 int my_strcmp(const void *k1, const void *k2);
 unsigned ptr_hash(const void *p);
 int my_ptrcmp(const void *k1, const void *k2);
-void shuffle(char **p, unsigned size);
 void key_str_free(void *key, void *datum);
 
 void timer_start(struct rusage* start);
@@ -395,15 +394,6 @@ xmalloc(size_t size)
 	quit("out of memory");
     malloced += size;
     return p;
-}
-
-void
-shuffle(char **p, unsigned size)
-{
-    for (unsigned i = 0; i < size - 1; i++) {
-	unsigned n = ((unsigned) rand()) % (size - i);
-	char *t = p[i+n]; p[i+n] = p[i]; p[i] = t;
-    }
 }
 
 unsigned
