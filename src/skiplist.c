@@ -99,7 +99,7 @@ static const itor_vtable skiplist_itor_vtable = {
 };
 
 static inline skip_node*   node_new(void* key, unsigned link_count);
-static inline void**	   node_insert(skiplist* list, void* key, skip_node** update);
+static inline void	   node_insert(skiplist* list, skip_node* x, skip_node** update);
 static inline skip_node*   node_search(skiplist* list, const void* key);
 static inline skip_node*   node_search_le(skiplist* list, const void* key);
 static inline skip_node*   node_search_lt(skiplist* list, const void* key);
@@ -154,14 +154,11 @@ skiplist_free(skiplist* list, dict_delete_func delete_func)
     return count;
 }
 
-static inline void**
-node_insert(skiplist* list, void* key, skip_node** update)
+static inline void
+node_insert(skiplist* list, skip_node* x, skip_node** update)
 {
-    const unsigned nlinks = rand_link_count(list);
+    const unsigned nlinks = x->link_count;
     ASSERT(nlinks < list->max_link);
-    skip_node* x = node_new(key, nlinks);
-    if (!x)
-	return NULL;
 
     if (list->top_link < nlinks) {
 	for (unsigned k = list->top_link+1; k <= nlinks; k++) {
@@ -180,7 +177,6 @@ node_insert(skiplist* list, void* key, skip_node** update)
 	update[k]->link[k] = x;
     }
     ++list->count;
-    return &x->datum;
 }
 
 dict_insert_result
@@ -190,16 +186,27 @@ skiplist_insert(skiplist* list, void* key)
     skip_node* update[MAX_LINK] = { 0 };
     for (unsigned k = list->top_link+1; k-->0; ) {
 	ASSERT(x->link_count > k);
-	while (x->link[k] && list->cmp_func(key, x->link[k]->key) > 0)
-	    x = x->link[k];
+	for (;;) {
+	    skip_node* const y = x->link[k];
+	    if (!y)
+		break;
+	    const int cmp = list->cmp_func(key, y->key);
+	    if (cmp < 0) {
+		while (k > 0 && x->link[k - 1] == y)
+		    update[k--] = x;
+		break;
+	    } else if (cmp == 0)
+		return (dict_insert_result) { &y->datum, false };
+	    x = y;
+	}
 	update[k] = x;
     }
-    x = x->link[0];
-    if (x && list->cmp_func(key, x->key) == 0)
-	return (dict_insert_result) { &x->datum, false };
 
-    void** datum = node_insert(list, key, update);
-    return (dict_insert_result) { datum, datum != NULL };
+    x = node_new(key, rand_link_count(list));
+    if (!x)
+	return (dict_insert_result) { NULL, false };
+    node_insert(list, x, update);
+    return (dict_insert_result) { &x->datum, true };
 }
 
 static inline skip_node*
@@ -207,13 +214,18 @@ node_search(skiplist* list, const void* key)
 {
     skip_node* x = list->head;
     for (unsigned k = list->top_link+1; k-->0;) {
-	while (x->link[k]) {
-	    int cmp = list->cmp_func(key, x->link[k]->key);
-	    if (cmp < 0)
+	for (;;) {
+	    skip_node* const y = x->link[k];
+	    if (!y)
 		break;
-	    x = x->link[k];
-	    if (cmp == 0)
-		return x;
+	    const int cmp = list->cmp_func(key, y->key);
+	    if (cmp < 0) {
+		while (k > 0 && x->link[k - 1] == y)
+		    k--;
+		break;
+	    } else if (cmp == 0)
+		return y;
+	    x = y;
 	}
     }
     return NULL;
@@ -224,13 +236,18 @@ node_search_le(skiplist* list, const void* key)
 {
     skip_node* x = list->head;
     for (unsigned k = list->top_link+1; k-->0;) {
-	while (x->link[k]) {
-	    int cmp = list->cmp_func(key, x->link[k]->key);
-	    if (cmp < 0)
+	for (;;) {
+	    skip_node* const y = x->link[k];
+	    if (!y)
 		break;
-	    x = x->link[k];
-	    if (cmp == 0)
-		return x;
+	    const int cmp = list->cmp_func(key, y->key);
+	    if (cmp < 0) {
+		while (k > 0 && x->link[k - 1] == y)
+		    k--;
+		break;
+	    } else if (cmp == 0)
+		return y;
+	    x = y;
 	}
     }
     return x == list->head ? NULL : x;
@@ -241,13 +258,18 @@ node_search_lt(skiplist* list, const void* key)
 {
     skip_node* x = list->head;
     for (unsigned k = list->top_link+1; k-->0;) {
-	while (x->link[k]) {
-	    int cmp = list->cmp_func(key, x->link[k]->key);
-	    if (cmp < 0)
+	for (;;) {
+	    skip_node* const y = x->link[k];
+	    if (!y)
 		break;
-	    x = x->link[k];
-	    if (cmp == 0)
-		return x->prev;
+	    const int cmp = list->cmp_func(key, y->key);
+	    if (cmp < 0) {
+		while (k > 0 && x->link[k - 1] == y)
+		    k--;
+		break;
+	    } else if (cmp == 0)
+		return y->prev;
+	    x = y;
 	}
     }
     return x == list->head ? NULL : x;
@@ -259,15 +281,19 @@ node_search_ge(skiplist* list, const void* key)
     skip_node* x = list->head;
     skip_node* ret = NULL;
     for (unsigned k = list->top_link+1; k-->0;) {
-	while (x->link[k]) {
-	    int cmp = list->cmp_func(key, x->link[k]->key);
-	    if (cmp < 0) {
-		ret = x->link[k];
+	for (;;) {
+	    skip_node* const y = x->link[k];
+	    if (!y)
 		break;
-	    }
-	    x = x->link[k];
-	    if (cmp == 0)
-		return x;
+	    const int cmp = list->cmp_func(key, y->key);
+	    if (cmp < 0) {
+		ret = y;
+		while (k > 0 && x->link[k - 1] == y)
+		    k--;
+		break;
+	    } else if (cmp == 0)
+		return y;
+	    x = y;
 	}
     }
     return ret;
@@ -279,15 +305,19 @@ node_search_gt(skiplist* list, const void* key)
     skip_node* x = list->head;
     skip_node* ret = NULL;
     for (unsigned k = list->top_link+1; k-->0;) {
-	while (x->link[k]) {
-	    int cmp = list->cmp_func(key, x->link[k]->key);
-	    if (cmp < 0) {
-		ret = x->link[k];
+	for (;;) {
+	    skip_node* const y = x->link[k];
+	    if (!y)
 		break;
-	    }
-	    x = x->link[k];
-	    if (cmp == 0)
-		return x->link[0];
+	    const int cmp = list->cmp_func(key, y->key);
+	    if (cmp < 0) {
+		ret = y;
+		while (k > 0 && x->link[k - 1] == y)
+		    k--;
+		break;
+	    } else if (cmp == 0)
+		return y->link[0];
+	    x = y;
 	}
     }
     return ret;
@@ -333,15 +363,29 @@ skiplist_remove(skiplist* list, const void* key)
 {
     skip_node* x = list->head;
     skip_node* update[MAX_LINK] = { 0 };
+    bool found = false;
     for (unsigned k = list->top_link+1; k-->0;) {
 	ASSERT(x->link_count > k);
-	while (x->link[k] && list->cmp_func(key, x->link[k]->key) > 0)
-	    x = x->link[k];
+	for (;;) {
+	    skip_node* const y = x->link[k];
+	    if (!y)
+		break;
+	    const int cmp = list->cmp_func(key, y->key);
+	    if (cmp > 0)
+		x = y;
+	    else {
+		while (k > 0 && x->link[k - 1] == y)
+		    update[k--] = x;
+		if (cmp == 0)
+		    found = true;
+		break;
+	    }
+	}
 	update[k] = x;
     }
-    x = x->link[0];
-    if (!x || list->cmp_func(key, x->key) != 0)
+    if (!found)
 	return (dict_remove_result) { NULL, NULL, false };
+    x = x->link[0];
     for (unsigned k = 0; k <= list->top_link; k++) {
 	ASSERT(update[k] != NULL);
 	ASSERT(update[k]->link_count > k);
