@@ -325,6 +325,12 @@ hb_tree_insert(hb_tree* tree, void* key)
     return (dict_insert_result) { &add->datum, true };
 }
 
+void** hb_tree_search(hb_tree* tree, const void* key) { return tree_search(tree, key); }
+void** hb_tree_search_le(hb_tree* tree, const void* key) { return tree_search_le(tree, key); }
+void** hb_tree_search_lt(hb_tree* tree, const void* key) { return tree_search_lt(tree, key); }
+void** hb_tree_search_ge(hb_tree* tree, const void* key) { return tree_search_ge(tree, key); }
+void** hb_tree_search_gt(hb_tree* tree, const void* key) { return tree_search_gt(tree, key); }
+
 dict_remove_result
 hb_tree_remove(hb_tree* tree, const void* key)
 {
