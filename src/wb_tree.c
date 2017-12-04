@@ -114,8 +114,8 @@ static const itor_vtable wb_tree_itor_vtable = {
     (dict_isearch_func)	    tree_iterator_search_lt,
     (dict_isearch_func)	    tree_iterator_search_ge,
     (dict_isearch_func)	    tree_iterator_search_gt,
-    (dict_iremove_func)	    NULL,/* wb_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL,/* wb_itor_compare not implemented yet */
+    (dict_iremove_func)	    wb_itor_remove,
+    (dict_icompare_func)    tree_iterator_compare,
 };
 
 static wb_node*	node_new(void* key);
@@ -282,12 +282,9 @@ wb_tree_insert(wb_tree* tree, void* key)
     return (dict_insert_result) { &add->datum, true };
 }
 
-dict_remove_result
-wb_tree_remove(wb_tree* tree, const void* key)
+static void
+remove_node(wb_tree* tree, wb_node* node)
 {
-    wb_node* node = tree_search_node(tree, key);
-    if (!node)
-	return (dict_remove_result) { NULL, NULL, false };
     if (node->llink && node->rlink) {
 	wb_node* out;
 	if (node->llink->weight > node->rlink->weight) {
@@ -307,7 +304,6 @@ wb_tree_remove(wb_tree* tree, const void* key)
     if (child)
 	child->parent = parent;
     *(parent ? (parent->llink == node ? &parent->llink : &parent->rlink) : &tree->root) = child;
-    dict_remove_result result = { node->key, node->datum, true };
     FREE(node);
     tree->count--;
     /* Now move up the tree, decrementing weights. */
@@ -319,6 +315,16 @@ wb_tree_remove(wb_tree* tree, const void* key)
 	parent = up;
     }
     tree->rotation_count += rotations;
+}
+
+dict_remove_result
+wb_tree_remove(wb_tree* tree, const void* key)
+{
+    wb_node* node = tree_search_node(tree, key);
+    if (!node)
+	return (dict_remove_result) { NULL, NULL, false };
+    dict_remove_result result = { node->key, node->datum, true };
+    remove_node(tree, node);
     return result;
 }
 
@@ -464,3 +470,14 @@ bool wb_itor_search_ge(wb_itor* itor, const void* key) { return tree_iterator_se
 bool wb_itor_search_gt(wb_itor* itor, const void* key) { return tree_iterator_search_gt(itor, key); }
 const void* wb_itor_key(const wb_itor* itor) { return tree_iterator_key(itor); }
 void** wb_itor_datum(wb_itor* itor) { return tree_iterator_datum(itor); }
+int wb_itor_compare(const wb_itor* i1, const wb_itor* i2) { return tree_iterator_compare(i1, i2); }
+
+bool
+wb_itor_remove(wb_itor* itor)
+{
+    if (!itor->node)
+	return false;
+    remove_node(itor->tree, itor->node);
+    itor->node = NULL;
+    return true;
+}

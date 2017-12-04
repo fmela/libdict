@@ -191,7 +191,8 @@ struct dict_itor {
 #define dict_itor_search_gt(i,k)    ((i)->_vtable->search_gt && (i)->_vtable->search_gt((i)->_itor, (k)))
 #define dict_itor_key(i)	    ((i)->_vtable->key((i)->_itor))
 #define dict_itor_datum(i)	    ((i)->_vtable->datum((i)->_itor))
-#define dict_itor_remove(i)	    ((i)->_vtable->remove((i)->_itor))
+#define dict_itor_compare(i1,i2)    ((i1)->_vtable->compare((i1)->_itor, (i2)->_itor))
+#define dict_itor_remove(i)	    ((i)->_vtable->remove && (i)->_vtable->remove((i)->_itor))
 void dict_itor_free(dict_itor* itor);
 
 int dict_int_cmp(const void* k1, const void* k2);

@@ -479,6 +479,19 @@ tree_iterator_search_gt(void* Iterator, const void* key)
     return (iterator->node = tree_search_gt_node(iterator->tree, key)) != NULL;
 }
 
+int
+tree_iterator_compare(const void* Iterator1, const void* Iterator2)
+{
+    const tree_iterator* itor1 = Iterator1;
+    const tree_iterator* itor2 = Iterator2;
+    ASSERT(itor1->tree == itor2->tree);
+    if (!itor1->node)
+	return !itor2->node ? 0 : -1;
+    if (!itor2->node)
+	return 1;
+    return itor1->tree->cmp_func(itor1->node->key, itor2->node->key);
+}
+
 const void*
 tree_iterator_key(const void* Iterator)
 {

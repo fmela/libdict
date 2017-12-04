@@ -97,8 +97,8 @@ static const itor_vtable rb_tree_itor_vtable = {
     (dict_isearch_func)	    rb_itor_search_lt,
     (dict_isearch_func)	    rb_itor_search_ge,
     (dict_isearch_func)	    rb_itor_search_gt,
-    (dict_iremove_func)	    NULL,/* rb_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL,/* rb_itor_compare not implemented yet */
+    (dict_iremove_func)	    rb_itor_remove,
+    (dict_icompare_func)    tree_iterator_compare
 };
 
 static void	rot_left(rb_tree* tree, rb_node* node);
@@ -236,13 +236,9 @@ insert_fixup(rb_tree* tree, rb_node* node)
     return rotations;
 }
 
-dict_remove_result
-rb_tree_remove(rb_tree* tree, const void* key)
+static void
+remove_node(rb_tree* tree, rb_node* node)
 {
-    rb_node* node = tree_search_node(tree, key);
-    if (!node)
-	return (dict_remove_result) { NULL, NULL, false };
-
     rb_node* out;
     if (!node->llink || !node->rlink) {
 	out = node;
@@ -262,9 +258,18 @@ rb_tree_remove(rb_tree* tree, const void* key)
 
     if (COLOR(out) == RB_BLACK && tree->root)
 	tree->rotation_count += delete_fixup(tree, x, xp, left);
-    dict_remove_result result = { out->key, out->datum, true };
     FREE(out);
     tree->count--;
+}
+
+dict_remove_result
+rb_tree_remove(rb_tree* tree, const void* key)
+{
+    rb_node* node = tree_search_node(tree, key);
+    if (!node)
+	return (dict_remove_result) { NULL, NULL, false };
+    dict_remove_result result = { node->key, node->datum, true };
+    remove_node(tree, node);
     return result;
 }
 
@@ -599,3 +604,14 @@ bool rb_itor_search_ge(rb_itor* itor, const void* key) { return tree_iterator_se
 bool rb_itor_search_gt(rb_itor* itor, const void* key) { return tree_iterator_search_gt(itor, key); }
 const void* rb_itor_key(const rb_itor* itor) { return tree_iterator_key(itor); }
 void** rb_itor_datum(rb_itor* itor) { return tree_iterator_datum(itor); }
+int rb_itor_compare(const rb_itor* i1, const rb_itor* i2) { return tree_iterator_compare(i1, i2); }
+
+bool
+rb_itor_remove(rb_itor* it)
+{
+    if (!it->node)
+	return false;
+    remove_node(it->tree, it->node);
+    it->node = NULL;
+    return true;
+}

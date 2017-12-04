@@ -96,8 +96,8 @@ static const itor_vtable tr_tree_itor_vtable = {
     (dict_isearch_func)	    tree_iterator_search_lt,
     (dict_isearch_func)	    tree_iterator_search_ge,
     (dict_isearch_func)	    tree_iterator_search_gt,
-    (dict_iremove_func)	    NULL,/* tr_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL,/* tr_itor_compare not implemented yet */
+    (dict_iremove_func)	    tr_itor_remove,
+    (dict_icompare_func)    tree_iterator_compare,
 };
 
 static tr_node*	node_new(void* key);
@@ -181,13 +181,9 @@ tr_tree_insert(tr_tree* tree, void* key)
     return (dict_insert_result) { &node->datum, true };
 }
 
-dict_remove_result
-tr_tree_remove(tr_tree* tree, const void* key)
+static void
+remove_node(tr_tree* tree, tr_node* node)
 {
-    tr_node* node = tree_search_node(tree, key);
-    if (!node)
-	return (dict_remove_result) { NULL, NULL, false };
-
     unsigned rotations = 0;
     while (node->llink && node->rlink) {
 	++rotations;
@@ -204,9 +200,18 @@ tr_tree_remove(tr_tree* tree, const void* key)
 	out->parent = parent;
     *(parent ? (parent->llink == node ? &parent->llink : &parent->rlink) : &tree->root) = out;
 
-    dict_remove_result result = { node->key, node->datum, true };
     FREE(node);
     tree->count--;
+}
+
+dict_remove_result
+tr_tree_remove(tr_tree* tree, const void* key)
+{
+    tr_node* node = tree_search_node(tree, key);
+    if (!node)
+	return (dict_remove_result) { NULL, NULL, false };
+    dict_remove_result result = { node->key, node->datum, true };
+    remove_node(tree, node);
     return result;
 }
 
@@ -314,3 +319,14 @@ bool tr_itor_search_ge(tr_itor* itor, const void* key) { return tree_iterator_se
 bool tr_itor_search_gt(tr_itor* itor, const void* key) { return tree_iterator_search_gt(itor, key); }
 const void* tr_itor_key(const tr_itor* itor) { return tree_iterator_key(itor); }
 void** tr_itor_datum(tr_itor* itor) { return tree_iterator_datum(itor); }
+int tr_itor_compare(const tr_itor* i1, const tr_itor* i2) { return tree_iterator_compare(i1, i2); }
+
+bool
+tr_itor_remove(tr_itor* it)
+{
+    if (!it->node)
+	return false;
+    remove_node(it->tree, it->node);
+    it->node = NULL;
+    return true;
+}

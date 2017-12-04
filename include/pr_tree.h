@@ -77,6 +77,7 @@ bool		pr_itor_search_ge(pr_itor* itor, const void* key);
 bool		pr_itor_search_gt(pr_itor* itor, const void* key);
 const void*	pr_itor_key(const pr_itor* itor);
 void**		pr_itor_datum(pr_itor* itor);
+int             pr_itor_compare(const pr_itor* i1, const pr_itor* i2);
 bool		pr_itor_remove(pr_itor* itor);
 
 END_DECL

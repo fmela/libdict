@@ -99,7 +99,7 @@ static const itor_vtable hashtable2_itor_vtable = {
     (dict_isearch_func)	    NULL,/* itor_search_lt: not supported */
     (dict_isearch_func)	    NULL,/* itor_search_ge: not supported */
     (dict_isearch_func)	    NULL,/* itor_search_gt: not supported */
-    (dict_iremove_func)	    NULL,/* hashtable2_itor_remove not implemented yet */
+    (dict_iremove_func)	    hashtable2_itor_remove,
     (dict_icompare_func)    NULL,/* hashtable2_itor_compare not implemented yet */
 };
 
@@ -265,6 +265,20 @@ remove_cleanup(hashtable2* table, hash_node* const first, hash_node* node)
     } while (node != first);
 }
 
+static void
+remove_node(hashtable2* table, hash_node* first, hash_node* node)
+{
+    ASSERT(node->hash != 0);
+
+    node->key = node->datum = NULL;
+    node->hash = 0;
+    table->count--;
+
+    if (++node == table->table + table->size)
+	node = table->table;
+    remove_cleanup(table, first, node);
+}
+
 dict_remove_result
 hashtable2_remove(hashtable2* table, const void* key)
 {
@@ -278,13 +292,7 @@ hashtable2_remove(hashtable2* table, const void* key)
 
 	if (node->hash == hash && table->cmp_func(key, node->key) == 0) {
 	    dict_remove_result result = { node->key, node->datum, true };
-	    node->key = node->datum = NULL;
-	    node->hash = 0;
-	    table->count--;
-
-	    if (++node == table_end)
-		node = table->table;
-	    remove_cleanup(table, first, node);
+	    remove_node(table, first, node);
 	    return result;
 	}
 
@@ -441,7 +449,10 @@ hashtable2_itor_free(hashtable2_itor* itor)
 bool
 hashtable2_itor_valid(const hashtable2_itor* itor)
 {
-    return itor->slot >= 0;
+    if (itor->slot < 0)
+	return false;
+    ASSERT(itor->table->table[itor->slot].hash != 0);
+    return true;
 }
 
 void
@@ -553,5 +564,17 @@ void**
 hashtable2_itor_datum(hashtable2_itor* itor)
 {
     return (itor->slot >= 0) ? &itor->table->table[itor->slot].datum : NULL;
+}
+
+bool
+hashtable2_itor_remove(hashtable2_itor* itor)
+{
+    if (itor->slot < 0)
+	return false;
+    remove_node(itor->table,
+		itor->table->table + itor->table->table[itor->slot].hash % itor->table->size,
+		itor->table->table + itor->slot);
+    itor->slot = -1;
+    return true;
 }
 

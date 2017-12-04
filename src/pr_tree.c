@@ -85,8 +85,8 @@ static const itor_vtable pr_tree_itor_vtable = {
     (dict_isearch_func)	    tree_iterator_search_lt,
     (dict_isearch_func)	    tree_iterator_search_ge,
     (dict_isearch_func)	    tree_iterator_search_gt,
-    (dict_iremove_func)	    NULL,/* pr_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL,/* pr_itor_compare not implemented yet */
+    (dict_iremove_func)	    pr_itor_remove,
+    (dict_icompare_func)    tree_iterator_compare,
 };
 
 static unsigned	fixup(pr_tree* tree, pr_node* node);
@@ -289,12 +289,9 @@ pr_tree_insert(pr_tree* tree, void* key)
     return (dict_insert_result) { &add->datum, true };
 }
 
-dict_remove_result
-pr_tree_remove(pr_tree* tree, const void* key)
+static void
+remove_node(pr_tree* tree, pr_node* node)
 {
-    pr_node* node = tree_search_node(tree, key);
-    if (!node)
-	return (dict_remove_result) { NULL, NULL, false };
     if (node->llink && node->rlink) {
 	pr_node* out;
 	if (node->llink->weight > node->rlink->weight) {
@@ -314,7 +311,6 @@ pr_tree_remove(pr_tree* tree, const void* key)
     if (child)
 	child->parent = parent;
     *(parent ? (parent->llink == node ? &parent->llink : &parent->rlink) : &tree->root) = child;
-    dict_remove_result result = { node->key, node->datum, true };
     FREE(node);
     tree->count--;
     /* Now move up the tree, decrementing weights. */
@@ -326,6 +322,16 @@ pr_tree_remove(pr_tree* tree, const void* key)
 	parent = up;
     }
     tree->rotation_count += rotations;
+}
+
+dict_remove_result
+pr_tree_remove(pr_tree* tree, const void* key)
+{
+    pr_node* node = tree_search_node(tree, key);
+    if (!node)
+	return (dict_remove_result) { NULL, NULL, false };
+    dict_remove_result result = { node->key, node->datum, true };
+    remove_node(tree, node);
     return result;
 }
 
@@ -524,3 +530,14 @@ bool pr_itor_search_ge(pr_itor* itor, const void* key) { return tree_iterator_se
 bool pr_itor_search_gt(pr_itor* itor, const void* key) { return tree_iterator_search_gt(itor, key); }
 const void* pr_itor_key(const pr_itor* itor) { return tree_iterator_key(itor); }
 void** pr_itor_datum(pr_itor* itor) { return tree_iterator_datum(itor); }
+int pr_itor_compare(const pr_itor* i1, const pr_itor* i2) { return tree_iterator_compare(i1, i2); }
+
+bool
+pr_itor_remove(pr_itor* it)
+{
+    if (!it->node)
+	return false;
+    remove_node(it->tree, it->node);
+    it->node = NULL;
+    return true;
+}

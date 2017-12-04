@@ -91,8 +91,8 @@ static const itor_vtable hb_tree_itor_vtable = {
     (dict_isearch_func)	    tree_iterator_search_lt,
     (dict_isearch_func)	    tree_iterator_search_ge,
     (dict_isearch_func)	    tree_iterator_search_gt,
-    (dict_iremove_func)	    NULL,/* hb_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL,/* hb_itor_compare not implemented yet */
+    (dict_iremove_func)	    hb_itor_remove,
+    (dict_icompare_func)    tree_iterator_compare,
 };
 
 static hb_node* node_prev(hb_node* node);
@@ -331,13 +331,9 @@ void** hb_tree_search_lt(hb_tree* tree, const void* key) { return tree_search_lt
 void** hb_tree_search_ge(hb_tree* tree, const void* key) { return tree_search_ge(tree, key); }
 void** hb_tree_search_gt(hb_tree* tree, const void* key) { return tree_search_gt(tree, key); }
 
-dict_remove_result
-hb_tree_remove(hb_tree* tree, const void* key)
+static void
+remove_node(hb_tree* tree, hb_node* node)
 {
-    hb_node* node = tree_search_node(tree, key);
-    if (!node)
-	return (dict_remove_result) { NULL, NULL, false };
-
     if (node->llink && node->rlink) {
 	hb_node* restrict out =
 	    BAL_POS(node) ? tree_node_min(node->rlink) : tree_node_max(node->llink);
@@ -347,7 +343,6 @@ hb_tree_remove(hb_tree* tree, const void* key)
 	node = out;
     }
 
-    const dict_remove_result result = { node->key, node->datum, true };
     hb_node* p = PARENT(node);
     hb_node* child = node->llink ? node->llink : node->rlink;
     FREE(node);
@@ -356,7 +351,7 @@ hb_tree_remove(hb_tree* tree, const void* key)
 	child->bal = (intptr_t)p | (child->bal & BAL_MASK);
     if (!p) {
 	tree->root = child;
-	return result;
+	return;
     }
 
     bool left = (p->llink == node);
@@ -422,6 +417,16 @@ hb_tree_remove(hb_tree* tree, const void* key)
 	}
     }
     tree->rotation_count += rotations;
+}
+
+dict_remove_result
+hb_tree_remove(hb_tree* tree, const void* key)
+{
+    hb_node* node = tree_search_node(tree, key);
+    if (!node)
+	return (dict_remove_result) { NULL, NULL, false };
+    const dict_remove_result result = { node->key, node->datum, true };
+    remove_node(tree, node);
     return result;
 }
 
@@ -616,5 +621,17 @@ bool hb_itor_search_le(hb_itor* itor, const void* key) { return tree_iterator_se
 bool hb_itor_search_lt(hb_itor* itor, const void* key) { return tree_iterator_search_lt(itor, key); }
 bool hb_itor_search_ge(hb_itor* itor, const void* key) { return tree_iterator_search_ge(itor, key); }
 bool hb_itor_search_gt(hb_itor* itor, const void* key) { return tree_iterator_search_gt(itor, key); }
+int hb_itor_compare(const hb_itor* i1, const hb_itor* i2) { return tree_iterator_compare(i1, i2); }
 const void* hb_itor_key(const hb_itor* itor) { return tree_iterator_key(itor); }
 void** hb_itor_datum(hb_itor* itor) { return tree_iterator_datum(itor); }
+
+bool
+hb_itor_remove(hb_itor* itor)
+{
+    hb_node* const node = itor->node;
+    if (!node)
+	return false;
+    remove_node(itor->tree, node);
+    itor->node = NULL;
+    return true;
+}
