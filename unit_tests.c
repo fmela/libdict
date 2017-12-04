@@ -73,9 +73,33 @@ static CU_SuiteInfo test_suites[] = {
     CU_SUITE_INFO_NULL
 };
 
+static size_t bytes_malloced = 0;
+
+static void*
+custom_malloc(size_t n)
+{
+    size_t* p = malloc(sizeof(size_t) + n);
+    assert(p);
+    bytes_malloced += n;
+    p[0] = n;
+    return &p[1];
+}
+
+static void
+custom_free(void* p)
+{
+    assert(p);
+    size_t* sp = p;
+    bytes_malloced -= sp[-1];
+    free(sp - 1);
+}
+
 int
 main()
 {
+    dict_malloc_func = custom_malloc;
+    dict_free_func = custom_free;
+
     if (CU_initialize_registry() != CUE_SUCCESS ||
 	CU_register_suites(test_suites) != CUE_SUCCESS) {
 	fprintf(stderr, "Failed to initialize tests!\n");
@@ -565,88 +589,121 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bo
 void test_basic_hashtable_1bucket()
 {
     for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 1), unsorted_keys, n, false);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 1), sorted_keys, n, true);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
     }
 }
 
 void test_basic_hashtable2_1bucket()
 {
     for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 1), unsorted_keys, n, false);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 1), sorted_keys, n, true);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
     }
 }
 
 void test_basic_hashtable_nbuckets()
 {
     for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 7), unsorted_keys, n, false);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(hashtable_dict_new(dict_str_cmp, dict_str_hash, 7), sorted_keys, n, true);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
     }
 }
 
 void test_basic_hashtable2_nbuckets()
 {
     for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 7), unsorted_keys, n, false);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(hashtable2_dict_new(dict_str_cmp, dict_str_hash, 7), sorted_keys, n, true);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
     }
 }
 
 void test_basic_height_balanced_tree()
 {
     for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(hb_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(hb_dict_new(dict_str_cmp), sorted_keys, n, true);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
     }
 }
 
 void test_basic_path_reduction_tree()
 {
     for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(pr_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(pr_dict_new(dict_str_cmp), sorted_keys, n, true);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
     }
 }
 
 void test_basic_red_black_tree()
 {
     for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(rb_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(rb_dict_new(dict_str_cmp), sorted_keys, n, true);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
     }
 }
 
 void test_basic_skiplist()
 {
     for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(skiplist_dict_new(dict_str_cmp, 13), unsorted_keys, n, false);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(skiplist_dict_new(dict_str_cmp, 13), sorted_keys, n, true);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
     }
 }
 
 void test_basic_splay_tree()
 {
     for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(sp_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(sp_dict_new(dict_str_cmp), sorted_keys, n, true);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
     }
 }
 
 void test_basic_treap()
 {
     for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(tr_dict_new(dict_str_cmp, NULL), unsorted_keys, n, false);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(tr_dict_new(dict_str_cmp, NULL), sorted_keys, n, true);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
     }
 }
 
 void test_basic_weight_balanced_tree()
 {
     for (unsigned n = 0; n <= NUM_SORTED_KEYS; ++n) {
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(wb_dict_new(dict_str_cmp), unsorted_keys, n, false);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
 	test_basic(wb_dict_new(dict_str_cmp), sorted_keys, n, true);
+	CU_ASSERT_EQUAL(bytes_malloced, 0);
     }
 }
 
