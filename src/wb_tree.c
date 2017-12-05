@@ -323,7 +323,7 @@ wb_tree_remove(wb_tree* tree, const void* key)
 }
 
 size_t wb_tree_clear(wb_tree* tree, dict_delete_func delete_func) { return tree_clear(tree, delete_func); }
-size_t wb_tree_traverse(wb_tree* tree, dict_visit_func visit) { return tree_traverse(tree, visit); }
+size_t wb_tree_traverse(wb_tree* tree, dict_visit_func visit, void* user_data) { return tree_traverse(tree, visit, user_data); }
 
 bool
 wb_tree_select(wb_tree* tree, size_t n, const void** key, void** datum)

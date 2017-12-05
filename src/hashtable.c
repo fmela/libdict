@@ -260,13 +260,13 @@ hashtable_clear(hashtable* table, dict_delete_func delete_func)
 }
 
 size_t
-hashtable_traverse(hashtable* table, dict_visit_func visit)
+hashtable_traverse(hashtable* table, dict_visit_func visit, void* user_data)
 {
     size_t count = 0;
     for (unsigned i = 0; i < table->size; i++)
 	for (hash_node* node = table->table[i]; node; node = node->next) {
 	    ++count;
-	    if (!visit(node->key, node->datum))
+	    if (!visit(node->key, node->datum, user_data))
 		return count;
 	}
     return count;

@@ -419,7 +419,11 @@ hb_tree_remove(hb_tree* tree, const void* key)
     return result;
 }
 
-size_t hb_tree_traverse(hb_tree* tree, dict_visit_func visit) { return tree_traverse(tree, visit); }
+size_t
+hb_tree_traverse(hb_tree* tree, dict_visit_func visit, void* user_data)
+{
+    return tree_traverse(tree, visit, user_data);
+}
 
 bool
 hb_tree_select(hb_tree *tree, size_t n, const void **key, void **datum)

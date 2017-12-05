@@ -249,7 +249,7 @@ tree_search_gt(void* Tree, const void* key)
 }
 
 size_t
-tree_traverse(void* Tree, dict_visit_func visit)
+tree_traverse(void* Tree, dict_visit_func visit, void* user_data)
 {
     ASSERT(visit != NULL);
 
@@ -259,7 +259,7 @@ tree_traverse(void* Tree, dict_visit_func visit)
 	tree_node* node = tree_node_min(t->root);
 	do {
 	    ++count;
-	    if (!visit(node->key, node->datum))
+	    if (!visit(node->key, node->datum, user_data))
 		break;
 	    node = tree_node_next(node);
 	} while (node);

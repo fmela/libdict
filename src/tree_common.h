@@ -96,7 +96,7 @@ void*	    tree_search_gt_node(void *tree, const void *key);
 /* Traverses the tree in order, calling |visit| with each key and value pair,
  * stopping if |visit| returns false. Returns the number of times |visit| was
  * called. */
-size_t	    tree_traverse(void *tree, dict_visit_func visit);
+size_t	    tree_traverse(void *tree, dict_visit_func visit, void* user_data);
 /* Put the key and datum of the |n|th element of |tree| into |key| and |datum|
  * and return true, or, if n is greater than or equal to the number of elements,
  * return false. */

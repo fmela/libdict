@@ -375,7 +375,7 @@ sp_tree_remove(sp_tree* tree, const void* key)
     return result;
 }
 
-size_t sp_tree_traverse(sp_tree* tree, dict_visit_func visit) { return tree_traverse(tree, visit); }
+size_t sp_tree_traverse(sp_tree* tree, dict_visit_func visit, void* user_data) { return tree_traverse(tree, visit, user_data); }
 bool sp_tree_select(sp_tree* tree, size_t n, const void** key, void** datum) { return tree_select(tree, n, key, datum); }
 size_t sp_tree_count(const sp_tree* tree) { return tree_count(tree); }
 size_t sp_tree_min_path_length(const sp_tree* tree) { return tree_min_path_length(tree); }

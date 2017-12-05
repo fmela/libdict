@@ -314,14 +314,14 @@ hashtable2_clear(hashtable2* table, dict_delete_func delete_func)
 }
 
 size_t
-hashtable2_traverse(hashtable2* table, dict_visit_func visit)
+hashtable2_traverse(hashtable2* table, dict_visit_func visit, void* user_data)
 {
     size_t count = 0;
     hash_node *node = table->table;
     for (hash_node *const end = table->table + table->size; node != end; ++node) {
 	if (node->hash) {
 	    ++count;
-	    if (!visit(node->key, node->datum))
+	    if (!visit(node->key, node->datum, user_data))
 		break;
 	}
     }

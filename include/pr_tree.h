@@ -48,8 +48,8 @@ void**		pr_tree_search_gt(pr_tree* tree, const void* key);
 dict_remove_result
 		pr_tree_remove(pr_tree* tree, const void* key);
 size_t		pr_tree_clear(pr_tree* tree, dict_delete_func delete_func);
-size_t		pr_tree_traverse(pr_tree* tree, dict_visit_func visit);
-bool		pr_tree_select(pr_tree* tree, size_t n, const void** key, void** datum);
+size_t		pr_tree_traverse(pr_tree* tree, dict_visit_func visit, void* user_data);
+bool        pr_tree_select(pr_tree* tree, size_t n, const void** key, void** datum);
 size_t		pr_tree_count(const pr_tree* tree);
 size_t		pr_tree_min_path_length(const pr_tree* tree);
 size_t		pr_tree_max_path_length(const pr_tree* tree);
