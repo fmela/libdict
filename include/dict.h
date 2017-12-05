@@ -95,7 +95,7 @@ typedef size_t      (*dict_count_func)(const void* obj);
 typedef bool	    (*dict_verify_func)(const void* obj);
 
 typedef struct {
-    const bool          sorted;
+    const bool		sorted;
     dict_inew_func      inew;
     dict_dfree_func     dfree;
     dict_insert_func    insert;
@@ -163,7 +163,7 @@ typedef struct {
 #define dict_search_gt(dct,key)	    ((dct)->_vtable->search_gt ? (dct)->_vtable->search_gt((dct)->_object, (key)) : NULL)
 #define dict_remove(dct,key)	    ((dct)->_vtable->remove((dct)->_object, (key)))
 #define dict_clear(dct,func)	    ((dct)->_vtable->clear((dct)->_object, (func)))
-#define dict_traverse(dct,func,user_data)	    ((dct)->_vtable->traverse((dct)->_object, (func), (user_data)))
+#define dict_traverse(dct,func,ud)  ((dct)->_vtable->traverse((dct)->_object, (func), (ud)))
 #define dict_select(dct,n,key,d)    ((dct)->_vtable->select && (dct)->_vtable->select((dct)->_object, (n), (key), (d)))
 #define dict_count(dct)		    ((dct)->_vtable->count((dct)->_object))
 #define dict_verify(dct)	    ((dct)->_vtable->verify((dct)->_object))

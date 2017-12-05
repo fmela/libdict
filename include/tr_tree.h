@@ -49,7 +49,7 @@ dict_remove_result
 		tr_tree_remove(tr_tree* tree, const void* key);
 size_t		tr_tree_clear(tr_tree* tree, dict_delete_func delete_func);
 size_t		tr_tree_traverse(tr_tree* tree, dict_visit_func visit, void* user_data);
-bool        tr_tree_select(tr_tree* tree, size_t n, const void** key, void** datum);
+bool		tr_tree_select(tr_tree* tree, size_t n, const void** key, void** datum);
 size_t		tr_tree_count(const tr_tree* tree);
 size_t		tr_tree_min_path_length(const tr_tree* tree);
 size_t		tr_tree_max_path_length(const tr_tree* tree);
