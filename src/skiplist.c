@@ -427,12 +427,12 @@ skiplist_clear(skiplist* list, dict_delete_func delete_func)
 }
 
 size_t
-skiplist_traverse(skiplist* list, dict_visit_func visit)
+skiplist_traverse(skiplist* list, dict_visit_func visit, void* user_data)
 {
     size_t count = 0;
     for (skip_node* node = list->head->link[0]; node; node = node->link[0]) {
 	++count;
-	if (!visit(node->key, node->datum))
+	if (!visit(node->key, node->datum, user_data))
 	    break;
     }
     return count;

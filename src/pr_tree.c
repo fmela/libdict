@@ -330,7 +330,12 @@ pr_tree_remove(pr_tree* tree, const void* key)
 }
 
 size_t pr_tree_clear(pr_tree* tree, dict_delete_func delete_func) { return tree_clear(tree, delete_func); }
-size_t pr_tree_traverse(pr_tree* tree, dict_visit_func visit) { return tree_traverse(tree, visit); }
+
+size_t
+pr_tree_traverse(pr_tree* tree, dict_visit_func visit, void* user_data)
+{
+    return tree_traverse(tree, visit, user_data);
+}
 
 bool
 pr_tree_select(pr_tree* tree, size_t n, const void** key, void** datum)

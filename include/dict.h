@@ -56,7 +56,7 @@ typedef int	    (*dict_compare_func)(const void*, const void*);
  * from a dictionary. */
 typedef void	    (*dict_delete_func)(void*, void*);
 /* A pointer to a function used for iterating over dictionary contents. */
-typedef bool	    (*dict_visit_func)(const void*, void*);
+typedef bool	    (*dict_visit_func)(const void*, void*, void*);
 /* A pointer to a function that returns the hash value of a key. */
 typedef unsigned    (*dict_hash_func)(const void*);
 /* A pointer to a function that returns the priority of a key. */
@@ -89,7 +89,7 @@ typedef void**      (*dict_search_func)(void* obj, const void* key);
 typedef dict_remove_result
 		    (*dict_remove_func)(void* obj, const void* key);
 typedef size_t      (*dict_clear_func)(void* obj, dict_delete_func delete_func);
-typedef size_t      (*dict_traverse_func)(void* obj, dict_visit_func visit);
+typedef size_t      (*dict_traverse_func)(void* obj, dict_visit_func visit, void* user_data);
 typedef bool	    (*dict_select_func)(void *obj, size_t n, const void** key, void** datum);
 typedef size_t      (*dict_count_func)(const void* obj);
 typedef bool	    (*dict_verify_func)(const void* obj);
@@ -163,7 +163,7 @@ typedef struct {
 #define dict_search_gt(dct,key)	    ((dct)->_vtable->search_gt ? (dct)->_vtable->search_gt((dct)->_object, (key)) : NULL)
 #define dict_remove(dct,key)	    ((dct)->_vtable->remove((dct)->_object, (key)))
 #define dict_clear(dct,func)	    ((dct)->_vtable->clear((dct)->_object, (func)))
-#define dict_traverse(dct,func)	    ((dct)->_vtable->traverse((dct)->_object, (func)))
+#define dict_traverse(dct,func,user_data)	    ((dct)->_vtable->traverse((dct)->_object, (func), (user_data)))
 #define dict_select(dct,n,key,d)    ((dct)->_vtable->select && (dct)->_vtable->select((dct)->_object, (n), (key), (d)))
 #define dict_count(dct)		    ((dct)->_vtable->count((dct)->_object))
 #define dict_verify(dct)	    ((dct)->_vtable->verify((dct)->_object))

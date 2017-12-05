@@ -350,7 +350,7 @@ size_t rb_tree_max_path_length(const rb_tree* tree) { return tree_max_path_lengt
 size_t rb_tree_total_path_length(const rb_tree* tree) { return tree_total_path_length(tree); }
 
 size_t
-rb_tree_traverse(rb_tree* tree, dict_visit_func visit)
+rb_tree_traverse(rb_tree* tree, dict_visit_func visit, void* user_data)
 {
     if (tree->root == NULL)
 	return 0;
@@ -359,7 +359,7 @@ rb_tree_traverse(rb_tree* tree, dict_visit_func visit)
     rb_node* node = tree_node_min(tree->root);
     for (; node != NULL; node = node_next(node)) {
 	++count;
-	if (!visit(node->key, node->datum))
+	if (!visit(node->key, node->datum, user_data))
 	    break;
     }
     return count;

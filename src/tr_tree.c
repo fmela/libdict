@@ -215,7 +215,7 @@ void** tr_tree_search_le(tr_tree* tree, const void* key) { return tree_search_le
 void** tr_tree_search_lt(tr_tree* tree, const void* key) { return tree_search_lt(tree, key); }
 void** tr_tree_search_ge(tr_tree* tree, const void* key) { return tree_search_ge(tree, key); }
 void** tr_tree_search_gt(tr_tree* tree, const void* key) { return tree_search_gt(tree, key); }
-size_t tr_tree_traverse(tr_tree* tree, dict_visit_func visit) { return tree_traverse(tree, visit); }
+size_t tr_tree_traverse(tr_tree* tree, dict_visit_func visit, void* user_data) { return tree_traverse(tree, visit, user_data); }
 bool tr_tree_select(tr_tree* tree, size_t n, const void** key, void** datum) { return tree_select(tree, n, key, datum); }
 size_t tr_tree_count(const tr_tree* tree) { return tree_count(tree); }
 size_t tr_tree_min_path_length(const tr_tree* tree) { return tree_min_path_length(tree); }

@@ -44,7 +44,7 @@ void**		hashtable_search(hashtable* table, const void* key);
 dict_remove_result
 		hashtable_remove(hashtable* table, const void* key);
 size_t		hashtable_clear(hashtable* table, dict_delete_func delete_func);
-size_t		hashtable_traverse(hashtable* table, dict_visit_func visit);
+size_t		hashtable_traverse(hashtable* table, dict_visit_func visit, void* user_data);
 size_t		hashtable_count(const hashtable* table);
 size_t		hashtable_size(const hashtable* table);
 size_t		hashtable_slots_used(const hashtable* table);

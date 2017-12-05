@@ -48,7 +48,7 @@ void**		skiplist_search_gt(skiplist* list, const void* key);
 dict_remove_result
 		skiplist_remove(skiplist* list, const void* key);
 size_t		skiplist_clear(skiplist* list, dict_delete_func delete_func);
-size_t		skiplist_traverse(skiplist* list, dict_visit_func visit);
+size_t		skiplist_traverse(skiplist* list, dict_visit_func visit, void* user_data);
 size_t		skiplist_count(const skiplist* list);
 bool		skiplist_verify(const skiplist* list);
 
