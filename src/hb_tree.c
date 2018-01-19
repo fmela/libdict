@@ -628,10 +628,9 @@ void** hb_itor_datum(hb_itor* itor) { return tree_iterator_datum(itor); }
 bool
 hb_itor_remove(hb_itor* itor)
 {
-    hb_node* const node = itor->node;
-    if (!node)
+    if (!itor->node)
 	return false;
-    remove_node(itor->tree, node);
+    remove_node(itor->tree, itor->node);
     itor->node = NULL;
     return true;
 }
