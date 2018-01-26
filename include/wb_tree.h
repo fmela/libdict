@@ -77,6 +77,7 @@ bool		wb_itor_search_ge(wb_itor* itor, const void* key);
 bool		wb_itor_search_gt(wb_itor* itor, const void* key);
 const void*	wb_itor_key(const wb_itor* itor);
 void**		wb_itor_datum(wb_itor* itor);
+int		wb_itor_compare(const wb_itor* i1, const wb_itor* i2);
 bool		wb_itor_remove(wb_itor* itor);
 
 END_DECL

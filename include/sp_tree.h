@@ -77,6 +77,7 @@ bool		sp_itor_search_ge(sp_itor* itor, const void* key);
 bool		sp_itor_search_gt(sp_itor* itor, const void* key);
 const void*	sp_itor_key(const sp_itor* itor);
 void**		sp_itor_datum(sp_itor* itor);
+int             sp_itor_compare(const sp_itor* i1, const sp_itor* i2);
 bool		sp_itor_remove(sp_itor* itor);
 
 END_DECL

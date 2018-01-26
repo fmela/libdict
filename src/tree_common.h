@@ -128,6 +128,7 @@ bool	    tree_iterator_search_le(void *iterator, const void *key);
 bool	    tree_iterator_search_lt(void *iterator, const void *key);
 bool	    tree_iterator_search_ge(void *iterator, const void *key);
 bool	    tree_iterator_search_gt(void *iterator, const void *key);
+int         tree_iterator_compare(const void* iterator1, const void* iterator2);
 const void* tree_iterator_key(const void *iterator);
 void**	    tree_iterator_datum(void *iterator);
 

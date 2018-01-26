@@ -263,6 +263,7 @@ test_search(dict *dct, dict_itor *itor, const char *key, const char *value)
 	    CU_ASSERT_TRUE(dict_itor_search(itor, key));
 	    CU_ASSERT_TRUE(dict_itor_valid(itor));
 	    CU_ASSERT_EQUAL(dict_itor_key(itor), key);
+	    CU_ASSERT_PTR_NOT_NULL(dict_itor_datum(itor));
 	    CU_ASSERT_EQUAL(*dict_itor_datum(itor), value);
 	}
     }
@@ -402,6 +403,7 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bo
     CU_ASSERT_TRUE(dict_verify(dct));
 
     dict_itor *itor = dict_itor_new(dct);
+    CU_ASSERT_PTR_NOT_NULL(itor);
     CU_ASSERT_FALSE(dict_itor_valid(itor));
 
     CU_ASSERT_FALSE(dict_itor_next(itor));
@@ -454,17 +456,63 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bo
     }
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
 
-    CU_ASSERT_PTR_NOT_NULL(itor);
+    dict_itor *first = dict_itor_new(dct);
+    CU_ASSERT_PTR_NOT_NULL(first);
+    CU_ASSERT_FALSE(dict_itor_valid(first));
+    if (nkeys > 0) {
+	CU_ASSERT_TRUE(dict_itor_first(first));
+	CU_ASSERT_TRUE(dict_itor_valid(first));
+    } else {
+	CU_ASSERT_FALSE(dict_itor_first(first));
+	CU_ASSERT_FALSE(dict_itor_valid(first));
+    }
+
+    dict_itor *last = dict_itor_new(dct);
+    CU_ASSERT_PTR_NOT_NULL(last);
+    CU_ASSERT_FALSE(dict_itor_valid(last));
+    if (nkeys > 0) {
+	CU_ASSERT_TRUE(dict_itor_last(last));
+	CU_ASSERT_TRUE(dict_itor_valid(last));
+    } else {
+	CU_ASSERT_FALSE(dict_itor_last(last));
+	CU_ASSERT_FALSE(dict_itor_valid(last));
+    }
+    if (dict_is_sorted(dct)) {
+	if (nkeys <= 1) {
+	    CU_ASSERT_TRUE(dict_itor_compare(first, last) == 0);
+	    CU_ASSERT_TRUE(dict_itor_compare(last, first) == 0);
+	} else {
+	    CU_ASSERT_TRUE(dict_itor_compare(first, last) < 0);
+	    CU_ASSERT_TRUE(dict_itor_compare(last, first) > 0);
+	}
+    }
+
     char *last_key = NULL;
     unsigned n = 0;
     for (dict_itor_first(itor); dict_itor_valid(itor); dict_itor_next(itor)) {
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_key(itor));
 	CU_ASSERT_PTR_NOT_NULL(dict_itor_datum(itor));
 	CU_ASSERT_PTR_NOT_NULL(*dict_itor_datum(itor));
-
-	if (dict_is_sorted(dct) && keys_sorted) {
-	    CU_ASSERT_EQUAL(dict_itor_key(itor), keys[n].key);
-	    CU_ASSERT_EQUAL(*dict_itor_datum(itor), keys[n].value);
+	if (dict_is_sorted(dct)) {
+	    CU_ASSERT_TRUE(dict_itor_compare(itor, itor) == 0);
+	    if (n == 0) {
+		CU_ASSERT_TRUE(dict_itor_compare(itor, first) == 0);
+		CU_ASSERT_TRUE(dict_itor_compare(first, itor) == 0);
+	    } else {
+		CU_ASSERT_TRUE(dict_itor_compare(itor, first) > 0);
+		CU_ASSERT_TRUE(dict_itor_compare(first, itor) < 0);
+	    }
+	    if (n == nkeys - 1) {
+		CU_ASSERT_TRUE(dict_itor_compare(itor, last) == 0);
+		CU_ASSERT_TRUE(dict_itor_compare(last, itor) == 0);
+	    } else {
+		CU_ASSERT_TRUE(dict_itor_compare(itor, last) < 0);
+		CU_ASSERT_TRUE(dict_itor_compare(last, itor) > 0);
+	    }
+	    if (keys_sorted) {
+		CU_ASSERT_EQUAL(dict_itor_key(itor), keys[n].key);
+		CU_ASSERT_EQUAL(*dict_itor_datum(itor), keys[n].value);
+	    }
 	}
 	unsigned keys_matched = 0;
 	for (unsigned i = 0; i < nkeys; ++i) {
@@ -580,8 +628,41 @@ void test_basic(dict *dct, const struct key_info *keys, const unsigned nkeys, bo
 
 	CU_ASSERT_TRUE(dict_verify(dct));
     }
+    CU_ASSERT_EQUAL(dict_count(dct), nkeys);
+
     test_closest_lookup(dct, nkeys, keys_sorted);
+
+    for (unsigned i = 0; i < nkeys; ++i) {
+	CU_ASSERT_TRUE(dict_itor_search(itor, keys[i].key));
+	CU_ASSERT_TRUE(dict_itor_valid(itor));
+	CU_ASSERT_EQUAL(dict_itor_key(itor), keys[i].key);
+	CU_ASSERT_PTR_NOT_NULL(dict_itor_datum(itor));
+	CU_ASSERT_EQUAL(*dict_itor_datum(itor), keys[i].value);
+
+	CU_ASSERT_TRUE(dict_itor_remove(itor));
+	CU_ASSERT_FALSE(dict_itor_valid(itor));
+
+	CU_ASSERT_FALSE(dict_itor_search(itor, keys[i].key));
+	CU_ASSERT_FALSE(dict_itor_valid(itor));
+    }
+    CU_ASSERT_EQUAL(dict_count(dct), 0);
+
+    for (unsigned i = 0; i < nkeys; ++i) {
+	test_search(dct, itor, keys[i].key, NULL);
+
+	dict_insert_result result = dict_insert(dct, keys[i].key);
+	CU_ASSERT_TRUE(result.inserted);
+	CU_ASSERT_PTR_NOT_NULL(result.datum_ptr);
+	CU_ASSERT_PTR_NULL(*result.datum_ptr);
+	*result.datum_ptr = keys[i].value;
+
+	CU_ASSERT_TRUE(dict_verify(dct));
+    }
+    CU_ASSERT_EQUAL(dict_count(dct), nkeys);
+
     dict_itor_free(itor);
+    dict_itor_free(first);
+    dict_itor_free(last);
     CU_ASSERT_EQUAL(dict_count(dct), nkeys);
     CU_ASSERT_EQUAL(dict_free(dct, NULL), nkeys);
 }

@@ -81,6 +81,7 @@ bool		skiplist_itor_search_ge(skiplist_itor* itor, const void* key);
 bool		skiplist_itor_search_gt(skiplist_itor* itor, const void* key);
 const void*	skiplist_itor_key(const skiplist_itor* itor);
 void**		skiplist_itor_datum(skiplist_itor* itor);
+int             skiplist_itor_compare(const skiplist_itor* it1, const skiplist_itor* it2);
 bool		skiplist_itor_remove(skiplist_itor* itor);
 
 END_DECL

@@ -102,7 +102,7 @@ static const itor_vtable hashtable_itor_vtable = {
     (dict_isearch_func)	    NULL,/* itor_search_lt: not supported */
     (dict_isearch_func)	    NULL,/* itor_search_ge: not supported */
     (dict_isearch_func)	    NULL,/* itor_search_gt: not supported */
-    (dict_iremove_func)	    NULL,/* hashtable_itor_remove not implemented yet */
+    (dict_iremove_func)	    hashtable_itor_remove,/* hashtable_itor_remove not implemented yet */
     (dict_icompare_func)    NULL,/* hashtable_itor_compare not implemented yet */
 };
 
@@ -210,6 +210,21 @@ hashtable_search(hashtable* table, const void* key)
     return NULL;
 }
 
+static void
+remove_node(hashtable* table, hash_node* node, unsigned mhash)
+{
+    if (node->prev)
+	node->prev->next = node->next;
+    else
+	table->table[mhash] = node->next;
+
+    if (node->next)
+	node->next->prev = node->prev;
+
+    FREE(node);
+    table->count--;
+}
+
 dict_remove_result
 hashtable_remove(hashtable* table, const void* key)
 {
@@ -217,23 +232,12 @@ hashtable_remove(hashtable* table, const void* key)
     const unsigned mhash = hash % table->size;
 
     hash_node* node = table->table[mhash];
-    hash_node* prev = NULL;
     while (node && hash >= node->hash) {
 	if (hash == node->hash && table->cmp_func(key, node->key) == 0) {
-	    if (prev)
-		prev->next = node->next;
-	    else
-		table->table[mhash] = node->next;
-
-	    if (node->next)
-		node->next->prev = prev;
-
 	    dict_remove_result result = { node->key, node->datum, true };
-	    FREE(node);
-	    table->count--;
+	    remove_node(table, node, mhash);
 	    return result;
 	}
-	prev = node;
 	node = node->next;
     }
     return (dict_remove_result) { NULL, NULL, false };
@@ -528,4 +532,14 @@ void**
 hashtable_itor_datum(hashtable_itor* itor)
 {
     return itor->node ? &itor->node->datum : NULL;
+}
+
+bool
+hashtable_itor_remove(hashtable_itor* itor)
+{
+    if (!itor->node)
+	return false;
+    remove_node(itor->table, itor->node, itor->node->hash % itor->table->size);
+    itor->node = NULL;
+    return true;
 }

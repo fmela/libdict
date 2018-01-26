@@ -94,8 +94,8 @@ static const itor_vtable skiplist_itor_vtable = {
     (dict_isearch_func)	    skiplist_itor_search_lt,
     (dict_isearch_func)	    skiplist_itor_search_ge,
     (dict_isearch_func)	    skiplist_itor_search_gt,
-    (dict_iremove_func)	    NULL,/* skiplist_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL,/* skiplist_itor_compare not implemented yet */
+    (dict_iremove_func)	    skiplist_itor_remove,
+    (dict_icompare_func)    skiplist_itor_compare,
 };
 
 static inline skip_node*   node_new(void* key, unsigned link_count);
@@ -639,6 +639,29 @@ void**
 skiplist_itor_datum(skiplist_itor* itor)
 {
     return itor->node ? &itor->node->datum : NULL;
+}
+
+int
+skiplist_itor_compare(const skiplist_itor* itor1, const skiplist_itor* itor2)
+{
+    ASSERT(itor1->list == itor2->list);
+    if (!itor1->node)
+	return !itor2->node ? 0 : -1;
+    if (!itor2->node)
+	return 1;
+    return itor1->list->cmp_func(itor1->node->key, itor2->node->key);
+}
+
+bool
+skiplist_itor_remove(skiplist_itor* itor)
+{
+    if (!itor->node)
+	return false;
+    /* XXX make this smarter */
+    dict_remove_result result = skiplist_remove(itor->list, itor->node->key);
+    ASSERT(result.removed);
+    itor->node = NULL;
+    return true;
 }
 
 static inline skip_node*

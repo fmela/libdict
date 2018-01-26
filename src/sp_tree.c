@@ -98,8 +98,8 @@ static const itor_vtable sp_tree_itor_vtable = {
     (dict_isearch_func)	    tree_iterator_search_lt,
     (dict_isearch_func)	    tree_iterator_search_ge,
     (dict_isearch_func)	    tree_iterator_search_gt,
-    (dict_iremove_func)	    NULL,/* sp_itor_remove not implemented yet */
-    (dict_icompare_func)    NULL,/* sp_itor_compare not implemented yet */
+    (dict_iremove_func)	    sp_itor_remove,
+    (dict_icompare_func)    tree_iterator_compare
 };
 
 static sp_node*	node_new(void* key);
@@ -336,13 +336,9 @@ sp_tree_search_gt(sp_tree* tree, const void* key)
     return NULL;
 }
 
-dict_remove_result
-sp_tree_remove(sp_tree* tree, const void* key)
+static void
+remove_node(sp_tree* tree, sp_node* node)
 {
-    sp_node* node = tree_search_node(tree, key);
-    if (!node)
-	return (dict_remove_result) { NULL, NULL, false };
-
     sp_node* out;
     if (!node->llink || !node->rlink) {
 	out = node;
@@ -369,9 +365,18 @@ sp_tree_remove(sp_tree* tree, const void* key)
 	ASSERT(tree->root == temp);
     }
 
-    dict_remove_result result = { out->key, out->datum, true };
     FREE(out);
     tree->count--;
+}
+
+dict_remove_result
+sp_tree_remove(sp_tree* tree, const void* key)
+{
+    sp_node* node = tree_search_node(tree, key);
+    if (!node)
+	return (dict_remove_result) { NULL, NULL, false };
+    dict_remove_result result = { node->key, node->datum, true };
+    remove_node(tree, node);
     return result;
 }
 
@@ -474,3 +479,19 @@ bool sp_itor_search_ge(sp_itor* itor, const void* key) { return tree_iterator_se
 bool sp_itor_search_gt(sp_itor* itor, const void* key) { return tree_iterator_search_gt(itor, key); }
 const void* sp_itor_key(const sp_itor* itor) { return tree_iterator_key(itor); }
 void** sp_itor_datum(sp_itor* itor) { return tree_iterator_datum(itor); }
+
+int
+sp_itor_compare(const sp_itor* i1, const sp_itor* i2)
+{
+    return tree_iterator_compare(i1, i2);
+}
+
+bool
+sp_itor_remove(sp_itor* itor)
+{
+    if (!itor->node)
+	return false;
+    remove_node(itor->tree, itor->node);
+    itor->node = NULL;
+    return true;
+}
