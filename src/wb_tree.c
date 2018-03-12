@@ -458,11 +458,10 @@ bool wb_itor_valid(const wb_itor* itor) { return tree_iterator_valid(itor); }
 void wb_itor_invalidate(wb_itor* itor) { tree_iterator_invalidate(itor); }
 bool wb_itor_next(wb_itor* itor) { return tree_iterator_next(itor); }
 bool wb_itor_prev(wb_itor* itor) { return tree_iterator_prev(itor); }
-bool wb_itor_nextn(wb_itor* itor, size_t count) { return tree_iterator_nextn(itor, count); }
-bool wb_itor_prevn(wb_itor* itor, size_t count) { return tree_iterator_prevn(itor, count); }
+bool wb_itor_nextn(wb_itor* itor, size_t count) { return tree_iterator_nextn(itor, count); } /* TODO: speed up */
+bool wb_itor_prevn(wb_itor* itor, size_t count) { return tree_iterator_prevn(itor, count); } /* TODO: speed up */
 bool wb_itor_first(wb_itor* itor) { return tree_iterator_first(itor); }
 bool wb_itor_last(wb_itor* itor) { return tree_iterator_last(itor); }
-/* TODO: use algorithm from wb_tree_search() */
 bool wb_itor_search(wb_itor* itor, const void* key) { return tree_iterator_search(itor, key); }
 bool wb_itor_search_le(wb_itor* itor, const void* key) { return tree_iterator_search_le(itor, key); }
 bool wb_itor_search_lt(wb_itor* itor, const void* key) { return tree_iterator_search_lt(itor, key); }

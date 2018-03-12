@@ -519,8 +519,8 @@ bool pr_itor_valid(const pr_itor* itor) { return tree_iterator_valid(itor); }
 void pr_itor_invalidate(pr_itor* itor) { tree_iterator_invalidate(itor); }
 bool pr_itor_next(pr_itor* itor) { return tree_iterator_next(itor); }
 bool pr_itor_prev(pr_itor* itor) { return tree_iterator_prev(itor); }
-bool pr_itor_nextn(pr_itor* itor, size_t count) { return tree_iterator_nextn(itor, count); }
-bool pr_itor_prevn(pr_itor* itor, size_t count) { return tree_iterator_prevn(itor, count); }
+bool pr_itor_nextn(pr_itor* itor, size_t count) { return tree_iterator_nextn(itor, count); } /* TODO: speed up */
+bool pr_itor_prevn(pr_itor* itor, size_t count) { return tree_iterator_prevn(itor, count); } /* TODO: speed up */
 bool pr_itor_first(pr_itor* itor) { return tree_iterator_first(itor); }
 bool pr_itor_last(pr_itor* itor) { return tree_iterator_last(itor); }
 bool pr_itor_search(pr_itor* itor, const void* key) { return tree_iterator_search(itor, key); }
