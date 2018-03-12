@@ -149,14 +149,6 @@ wb_dict_new(dict_compare_func cmp_func)
     return dct;
 }
 
-size_t
-wb_tree_free(wb_tree* tree, dict_delete_func delete_func)
-{
-    const size_t count = tree_clear(tree, delete_func);
-    FREE(tree);
-    return count;
-}
-
 void** wb_tree_search(wb_tree* tree, const void* key) { return tree_search(tree, key); }
 void** wb_tree_search_le(wb_tree* tree, const void* key) { return tree_search_le(tree, key); }
 void** wb_tree_search_lt(wb_tree* tree, const void* key) { return tree_search_lt(tree, key); }
@@ -328,6 +320,7 @@ wb_tree_remove(wb_tree* tree, const void* key)
     return result;
 }
 
+size_t wb_tree_free(wb_tree* tree, dict_delete_func delete_func) { return tree_free(tree, delete_func); }
 size_t wb_tree_clear(wb_tree* tree, dict_delete_func delete_func) { return tree_clear(tree, delete_func); }
 size_t wb_tree_traverse(wb_tree* tree, dict_visit_func visit, void* user_data) { return tree_traverse(tree, visit, user_data); }
 

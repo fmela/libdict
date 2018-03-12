@@ -59,7 +59,7 @@ struct hb_itor {
 static const dict_vtable hb_tree_vtable = {
     true,
     (dict_inew_func)	    hb_dict_itor_new,
-    (dict_dfree_func)	    tree_free,
+    (dict_dfree_func)	    hb_tree_free,
     (dict_insert_func)	    hb_tree_insert,
     (dict_search_func)	    tree_search,
     (dict_search_func)	    tree_search_le,
@@ -67,7 +67,7 @@ static const dict_vtable hb_tree_vtable = {
     (dict_search_func)	    tree_search_ge,
     (dict_search_func)	    tree_search_gt,
     (dict_remove_func)	    hb_tree_remove,
-    (dict_clear_func)	    tree_clear,
+    (dict_clear_func)	    hb_tree_clear,
     (dict_traverse_func)    hb_tree_traverse,
     (dict_select_func)	    hb_tree_select,
     (dict_count_func)	    tree_count,
@@ -130,8 +130,37 @@ hb_dict_new(dict_compare_func cmp_func)
     return dct;
 }
 
-size_t hb_tree_free(hb_tree* tree, dict_delete_func delete_func) { return tree_free(tree, delete_func); }
-size_t hb_tree_clear(hb_tree* tree, dict_delete_func delete_func) { return tree_clear(tree, delete_func); }
+size_t
+hb_tree_free(hb_tree* tree, dict_delete_func delete_func) {
+    const size_t count = hb_tree_clear(tree, delete_func);
+    FREE(tree);
+    return count;
+}
+
+size_t
+hb_tree_clear(hb_tree* tree, dict_delete_func delete_func)
+{
+    const size_t count = tree->count;
+
+    hb_node* node = tree->root;
+    while (node) {
+	if (node->llink || node->rlink) {
+	    node = node->llink ? node->llink : node->rlink;
+	    continue;
+	}
+
+	if (delete_func)
+	    delete_func(node->key, node->datum);
+
+	hb_node* const parent = PARENT(node);
+	FREE(node);
+	*(parent ? (parent->llink == node ? &parent->llink : &parent->rlink) : &tree->root) = NULL;
+	node = parent;
+    }
+    ASSERT(tree->root == NULL);
+    tree->count = 0;
+    return count;
+}
 
 /* L: rotate |q| left */
 static bool

@@ -129,7 +129,7 @@ tree_search_node(void* Tree, const void* key)
 {
     tree* t = Tree;
     for (tree_node* node = t->root; node;) {
-	int cmp = t->cmp_func(key, node->key);
+	const int cmp = t->cmp_func(key, node->key);
 	if (cmp < 0)
 	    node = node->llink;
 	else if (cmp)
@@ -153,7 +153,7 @@ tree_search_le_node(void* Tree, const void* key)
     tree* t = Tree;
     tree_node* node = t->root, *ret = NULL;
     while (node) {
-	int cmp = t->cmp_func(key, node->key);
+	const int cmp = t->cmp_func(key, node->key);
 	if (cmp == 0)
 	    return node;
 	if (cmp < 0) {
@@ -179,7 +179,7 @@ tree_search_lt_node(void* Tree, const void* key)
     tree* t = Tree;
     tree_node* node = t->root, *ret = NULL;
     while (node) {
-	int cmp = t->cmp_func(key, node->key);
+	const int cmp = t->cmp_func(key, node->key);
 	if (cmp <= 0) {
 	    node = node->llink;
 	} else {
@@ -203,7 +203,7 @@ tree_search_ge_node(void* Tree, const void* key)
     tree* t = Tree;
     tree_node* node = t->root, *ret = NULL;
     while (node) {
-	int cmp = t->cmp_func(key, node->key);
+	const int cmp = t->cmp_func(key, node->key);
 	if (cmp == 0) {
 	    return node;
 	}
@@ -230,7 +230,7 @@ tree_search_gt_node(void* Tree, const void* key)
     tree* t = Tree;
     tree_node* node = t->root, *ret = NULL;
     while (node) {
-	int cmp = t->cmp_func(key, node->key);
+	const int cmp = t->cmp_func(key, node->key);
 	if (cmp < 0) {
 	    ret = node;
 	    node = node->llink;
@@ -292,20 +292,6 @@ tree_select(void *Tree, size_t n, const void **key, void **datum)
     return true;
 }
 
-static void
-tree_node_free(tree_node* node, dict_delete_func delete_func)
-{
-    tree_node* const llink = node->llink;
-    tree_node* const rlink = node->rlink;
-    if (delete_func)
-	delete_func(node->key, node->datum);
-    FREE(node);
-    if (llink)
-	tree_node_free(llink, delete_func);
-    if (rlink)
-	tree_node_free(rlink, delete_func);
-}
-
 size_t
 tree_count(const void* Tree)
 {
@@ -317,11 +303,24 @@ tree_clear(void* Tree, dict_delete_func delete_func)
 {
     tree* t = Tree;
     const size_t count = t->count;
-    if (t->root) {
-	tree_node_free(t->root, delete_func);
-	t->root = NULL;
-	t->count = 0;
+
+    tree_node* node = t->root;
+    while (node) {
+	if (node->llink || node->rlink) {
+	    node = node->llink ? node->llink : node->rlink;
+	    continue;
+	}
+
+	if (delete_func)
+	    delete_func(node->key, node->datum);
+
+	tree_node* const parent = node->parent;
+	FREE(node);
+	*(parent ? (parent->llink == node ? &parent->llink : &parent->rlink) : &t->root) = NULL;
+	node = parent;
     }
+    ASSERT(t->root == NULL);
+    t->count = 0;
     return count;
 }
 

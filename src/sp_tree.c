@@ -279,12 +279,22 @@ sp_tree_insert(sp_tree* tree, void* key)
 void**
 sp_tree_search(sp_tree* tree, const void* key)
 {
-    sp_node* node = tree_search_node(tree, key);
-    if (node) {
-	splay(tree, node);
-	ASSERT(tree->root == node);
-	return &node->datum;
+    sp_node* parent = NULL;
+    for (sp_node* node = tree->root; node;) {
+	parent = node;
+	const int cmp = tree->cmp_func(key, node->key);
+	if (cmp < 0)
+	    node = node->llink;
+	else if (cmp)
+	    node = node->rlink;
+	else {
+	    splay(tree, node);
+	    ASSERT(tree->root == node);
+	    return &node->datum;
+	}
     }
+    if (parent)
+	splay(tree, parent);
     return NULL;
 }
 
