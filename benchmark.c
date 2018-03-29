@@ -18,6 +18,7 @@
 #include "dict.h"
 #include "dict_private.h"
 #include "tree_common.h"
+#include "util.h"
 
 static const char appname[] = "benchmark";
 
@@ -53,6 +54,8 @@ static size_t malloced = 0;
 int
 main(int argc, char **argv)
 {
+    bool shuffle_keys = true;
+
     if (argc != 3) {
 	fprintf(stderr, "usage: %s [type] [input]\n", appname);
 	fprintf(stderr, "type: specifies the dictionary type:\n");
@@ -199,7 +202,7 @@ main(int argc, char **argv)
 
     dict_itor_free(itor);
 
-    /* shuffle(words, nwords); */
+    if (shuffle_keys) shuffle(words, nwords);
 
     ASSERT(dict_verify(dct));
     comp_count = hash_count = 0; /* Ignore comparisons/hashes incurred by dict_verify() */
@@ -253,7 +256,7 @@ main(int argc, char **argv)
     ASSERT(dict_verify(dct));
     comp_count = hash_count = 0; /* Ignore comparisons/hashes incurred by dict_verify() */
 
-    /* shuffle(words, nwords); */
+    if (shuffle_keys) shuffle(words, nwords);
 
     timer_start(&start);
     for (unsigned i = 0; i < nwords; i++) {
