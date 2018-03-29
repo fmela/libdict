@@ -1,14 +1,16 @@
 #ifndef UTIL_H__
 #define UTIL_H__
 
-void shuffle(char **p, unsigned size);
+#include <assert.h>
+
+void shuffle(char **p, size_t size);
 bool is_prime(unsigned n);
 bool next_permutation(unsigned a[], unsigned n);
 
-void shuffle(char **p, unsigned size)
+void shuffle(char **p, size_t size)
 {
-    for (unsigned i = 0; i < size - 1; i++) {
-	unsigned n = (unsigned) rand() % (size - i);
+    for (size_t i = 0; i < size - 1; i++) {
+	size_t n = (size_t) rand() % (size - i);
 	char *t = p[i+n]; p[i+n] = p[i]; p[i] = t;
     }
 }
