@@ -29,7 +29,7 @@
 #define LIBDICT_DICT_H__
 
 #if __STDC_VERSION__ < 199901L
-#define restrict /* nothing */
+#	define restrict /* nothing */
 #endif
 
 #if defined(__cplusplus) || defined(c_plusplus)
