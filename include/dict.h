@@ -28,6 +28,10 @@
 #ifndef LIBDICT_DICT_H__
 #define LIBDICT_DICT_H__
 
+#if __STDC_VERSION__ < 199901L
+#	define restrict /* nothing */
+#endif
+
 #if defined(__cplusplus) || defined(c_plusplus)
 # define BEGIN_DECL     extern "C" {
 # define END_DECL       }
