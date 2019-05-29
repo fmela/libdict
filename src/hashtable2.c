@@ -31,7 +31,6 @@
 
 #include "hashtable2.h"
 
-#include <stdbool.h>
 #include <string.h> /* For memset() */
 #include "dict_private.h"
 #include "hashtable_common.h"
