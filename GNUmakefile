@@ -37,10 +37,12 @@ ifeq ($(findstring clang,$(CC)),clang)
 else # gcc
   WARNINGS := -Wall -Wextra
 endif
-AR ?= ar
 WARNINGS := $(WARNINGS) -Werror -ansi -pedantic
 CFLAGS := $(WARNINGS) -std=c11 -O2 -pipe $(INCLUDES)
 LDFLAGS :=
+
+AR ?= ar
+ARFLAGS ?= cru
 
 INSTALL_PREFIX ?= /usr/local
 INSTALL_BINDIR = $(INSTALL_PREFIX)/bin
@@ -65,10 +67,10 @@ $(OUTPUT_DIR):
 	[ -d $(OUTPUT_DIR) ] || mkdir -m 755 $(OUTPUT_DIR)
 
 $(STATIC_LIB): $(OUTPUT_DIR) $(STATIC_OBJ)
-	$(AR) crU $(STATIC_LIB) $(STATIC_OBJ)
+	$(AR) $(ARFLAGS) $(STATIC_LIB) $(STATIC_OBJ)
 
 $(PROFIL_LIB): $(OUTPUT_DIR) $(PROFIL_OBJ)
-	$(AR) crU $(PROFIL_LIB) $(PROFIL_OBJ)
+	$(AR) $(ARFLAGS) $(PROFIL_LIB) $(PROFIL_OBJ)
 
 $(SHARED_LIB): $(OUTPUT_DIR) $(SHARED_OBJ)
 	$(CC) -shared -o $(SHARED_LIB) $(SHARED_OBJ)
